@@ -1,0 +1,22 @@
+# EditorConfig configuration file
+# More information is available at http://editorconfig.org
+#
+# To use this file ensure your editor supports EditorCOnfig natively or via a
+# plugin.
+
+# top-most EditorConfig file
+root = true
+
+[*]
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.go]
+indent_size = 8
+indent_style = tab
+
+[*.md]
+trim_trailing_whitespace = false
