@@ -67,5 +67,3 @@ plugins:
   # legal
   git-legal:
     enabled: true
-
-exclude_patterns:
