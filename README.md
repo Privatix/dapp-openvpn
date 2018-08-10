@@ -1,5 +1,5 @@
 [![Go report](https://goreportcard.com/badge/github.com/Privatix/dapp-openvpn)](https://goreportcard.com/badge/github.com/Privatix/dapp-openvpn)
-[![Maintainability](https://api.codeclimate.com/v1/badges/7e76f071e5408b13ea53/maintainability)](https://codeclimate.com/github/Privatix/dapp-openvpn/maintainability)
+[![Maintainability](https://api.codeclimate.com/v1/badges/af4e29689d76d8ccf974/maintainability)](https://codeclimate.com/github/Privatix/dapp-openvpn/maintainability)
 [![GoDoc](https://godoc.org/github.com/Privatix/dapp-openvpn?status.svg)](https://godoc.org/github.com/Privatix/dapp-openvpn)
 
 
