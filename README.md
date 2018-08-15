@@ -2,7 +2,6 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/af4e29689d76d8ccf974/maintainability)](https://codeclimate.com/github/Privatix/dapp-openvpn/maintainability)
 [![GoDoc](https://godoc.org/github.com/Privatix/dapp-openvpn?status.svg)](https://godoc.org/github.com/Privatix/dapp-openvpn)
 
-
 # OpenVPN Service Adapter
 
 OpenVPN service adapter is an executable which integrates OpenVPN as a service
@@ -71,9 +70,10 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 * [ababo](https://github.com/ababo)
 * [dzeckelev](https://github.com/dzeckelev)
 
-See also the list of [contributors](https://github.com/Privatix/dapp-openvpn/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/Privatix/dapp-openvpn/contributors) 
+who participated in this project.
 
 # License
 
-This project is licensed under the **GPL-3.0 License** - see the [COPYING](COPYING) file for details.
-
+This project is licensed under the **GPL-3.0 License** - see the 
+[COPYING](COPYING) file for details.
