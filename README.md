@@ -70,10 +70,10 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 * [ababo](https://github.com/ababo)
 * [dzeckelev](https://github.com/dzeckelev)
 
-See also the list of [contributors](https://github.com/Privatix/dapp-openvpn/contributors) 
+See also the list of [contributors](https://github.com/Privatix/dapp-openvpn/contributors)
 who participated in this project.
 
 # License
 
-This project is licensed under the **GPL-3.0 License** - see the 
+This project is licensed under the **GPL-3.0 License** - see the
 [COPYING](COPYING) file for details.
