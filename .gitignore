@@ -12,3 +12,6 @@
 *.out
 *.iml
 .idea
+
+bin
+*_reform.go
