@@ -5,8 +5,12 @@ PROJECT_PATH=$GOPATH/src/${PROJECT}
 PROJECT_BIN=${PROJECT_PATH}/bin
 GIT_COMMIT=$(git rev-list -1 HEAD)
 GIT_RELEASE=$(git tag -l --points-at HEAD)
-ADAPTER_MAIN=/cmd/adapter
-INSTALLER_MAIN=/cmd/installer
+ADAPTER_MAIN=/adapter
+INSTALLER_MAIN=/installer
+
+cd "${PROJECT_PATH}" || exit
+dep ensure
+go generate ./...
 
 rm -drf "${PROJECT_BIN}"
 mkdir -p "${PROJECT_BIN}/adapter" "${PROJECT_BIN}/installer"

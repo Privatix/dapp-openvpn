@@ -1,0 +1,5 @@
+ignored = ["github.com/satori/go.uuid"]
+
+[[constraint]]
+  name = "github.com/privatix/dappctrl"
+  branch = "develop" # TODO(maxim) change to master
