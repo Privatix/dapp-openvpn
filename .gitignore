@@ -15,3 +15,5 @@
 
 bin
 *_reform.go
+
+\.DS_Store

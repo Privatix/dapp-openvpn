@@ -1,4 +1,4 @@
-[![Go report](https://goreportcard.com/badge/github.com/Privatix/dapp-openvpn)](https://goreportcard.com/badge/github.com/Privatix/dapp-openvpn)
+[![Go report](http://goreportcard.com/badge/github.com/Privatix/dapp-openvpn)](https://goreportcard.com/report/github.com/Privatix/dapp-openvpn)
 [![Maintainability](https://api.codeclimate.com/v1/badges/af4e29689d76d8ccf974/maintainability)](https://codeclimate.com/github/Privatix/dapp-openvpn/maintainability)
 [![GoDoc](https://godoc.org/github.com/Privatix/dapp-openvpn?status.svg)](https://godoc.org/github.com/Privatix/dapp-openvpn)
 
@@ -21,36 +21,13 @@ adapter.
 Build the adapter:
 
 ```bash
-export GIT_COMMIT=$(git rev-list -1 HEAD) && \
-export GIT_RELEASE=$(git tag -l --points-at HEAD) && \
-  go install -ldflags "-X main.Commit=$GIT_COMMIT \
-   -X main.Version=$GIT_RELEASE"
+/scripts/build.sh
 ```
 
 #### Additional steps for agent
 
-Insert a new product into a database of the corresponding agent. Then modify
-the adapter configuration file:
-
-```bash
-CONF_FILE=$HOME/go/src/github.com/privatix/dapp-openvpn/dapp-openvpn.config.json
-LOCAL_CONF_FILE=$HOME/dappvpn.config.json
-PRODUCT_ID=<uuid> # ID of a newly inserted product.
-PRODUCT_PASS=<password> # Password of a newly inserted product.
-
-jq ".Server.Username=\"$PRODUCT_ID\" | .Server.Password=\"$PRODUCT_PASS\"" $CONF_FILE > $LOCAL_CONF_FILE
-```
-
-Add the following lines to the `OpenVPN`-server configuration file
-(substituting file paths):
-
-```
-auth-user-pass-verify "/path/to/dapp-openvpn -config=/path/to/local/config" via-file
-client-connect "/path/to/dapp-openvpn -config=/path/to/local/config"
-client-disconnect "/path/to/dapp-openvpn -config=/path/to/local/config"
-script-security 3
-management localhost 7505
-```
+On the agent side it necessary to perform the following steps:
+[additional steps](https://github.com/Privatix/dapp-openvpn/wiki/Additional-steps-for-an-agent)
 
 ### Running the agent service
 
