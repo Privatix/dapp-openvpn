@@ -13,7 +13,14 @@
 *.iml
 .idea
 
+# Path for binaries
 bin
+
+# Reform files
 *_reform.go
+
+# Go dependency management tool files
+/vendor
+Gopkg.lock
 
 \.DS_Store
