@@ -21,7 +21,7 @@ adapter.
 Build the adapter:
 
 ```bash
-/scripts/build.sh
+/scripts/install.sh
 ```
 
 #### Additional steps for agent
