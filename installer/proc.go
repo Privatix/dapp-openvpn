@@ -26,8 +26,8 @@ const (
 	serverProduct = "server.json"
 	clientProduct = "client.json"
 
-	agentAdapterConfig  = "adapter.conf"
-	clientAdapterConfig = "adapter.conf"
+	agentAdapterConfig  = "dappvpn.config.json"
+	clientAdapterConfig = "dappvpn.config.json"
 
 	jsonIdent = "    "
 

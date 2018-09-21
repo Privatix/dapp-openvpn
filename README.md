@@ -16,12 +16,20 @@ adapter.
 
 - Install OpenVPN 2.4+.
 
-### Installation
+### Building Executables
 
-Build the adapter:
+Switch to the dapp-openvpn repository root directory.
+
+You can build all binaries using the go tool, placing the resulting binary in `$GOPATH/bin`:
 
 ```bash
-/scripts/install.sh
+./scripts/install.sh
+```
+
+You can build all binaries using the go tool, placing the resulting binary in `./bin`:
+
+```bash
+./scripts/build.sh
 ```
 
 #### Additional steps for agent
@@ -33,6 +41,42 @@ On the agent side it necessary to perform the following steps:
 
 - Start the `OpenVPN`-server.
 - Start the `dapp-openvpn` in the background with the configuration provided.
+
+## Command Line Options
+
+### Installer
+
+```bash
+Usage of installer:
+  -agent
+        Whether to install agent
+  -connstr string
+        PostgreSQL connection string (default "user=postgres dbname=dappctrl sslmode=disable")
+  -rootdir string
+        Full path to root directory of service adapter
+  -setauth
+        Generate authentication credentials for service adapter
+```
+
+### dapppvn (adapter)
+
+```bash
+Usage of dappvpn:
+  -channel string
+        Channel ID for client mode
+  -config string
+        Configuration file (default "dappvpn.config.json")
+  -version
+        Prints current dappctrl version
+```
+
+## Tests
+
+Run tests for all packages.
+
+```bash
+./scripts/run_tests.sh
+```
 
 # Contributing
 
