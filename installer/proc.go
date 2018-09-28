@@ -36,8 +36,8 @@ const (
 )
 
 func processor(dir string, adjust bool,
-	db *reform.DB, agent bool) error {
-	srvProduct, cliProduct, err := handler(dir, db)
+	tx *reform.TX, agent bool) error {
+	srvProduct, cliProduct, err := handler(dir, tx)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func processor(dir string, adjust bool,
 	}
 
 	for _, product := range []*data.Product{srvProduct, cliProduct} {
-		err = importProduct(db, product)
+		err = importProduct(tx, product)
 		if err != nil {
 			return err
 		}
@@ -72,7 +72,7 @@ func processor(dir string, adjust bool,
 	return nil
 }
 
-func handler(dir string, db *reform.DB) (srvProduct,
+func handler(dir string, tx *reform.TX) (srvProduct,
 	cliProduct *data.Product, err error) {
 	err = validateRoot(dir)
 	if err != nil {
@@ -82,7 +82,7 @@ func handler(dir string, db *reform.DB) (srvProduct,
 	offerTplFile := filepath.Join(dir, templatePath, offeringTemplate)
 	accessTplFile := filepath.Join(dir, templatePath, accessTemplate)
 
-	offerTpl, _, err := templates(db, offerTplFile, accessTplFile)
+	offerTpl, _, err := templates(tx, offerTplFile, accessTplFile)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -112,14 +112,14 @@ func adjustment(product *data.Product, configFile string) error {
 	return util.WriteJSONFile(configFile, "", jsonIdent, &cfg)
 }
 
-func templates(db *reform.DB, offer,
+func templates(tx *reform.TX, offer,
 	access string) (offerTpl, accessTpl *data.Template, err error) {
-	offerTpl, err = importTemplate(offer, db)
+	offerTpl, err = importTemplate(offer, tx)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	accessTpl, err = importTemplate(access, db)
+	accessTpl, err = importTemplate(access, tx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -228,7 +228,7 @@ func productConcord(product *data.Product, tplID string) bool {
 	return *product.OfferTplID == tplID
 }
 
-func importTemplate(file string, db *reform.DB) (*data.Template, error) {
+func importTemplate(file string, tx *reform.TX) (*data.Template, error) {
 	var template *data.Template
 
 	err := util.ReadJSONFile(file, &template)
@@ -236,15 +236,15 @@ func importTemplate(file string, db *reform.DB) (*data.Template, error) {
 		return nil, err
 	}
 
-	err = db.Insert(template)
+	err = tx.Insert(template)
 	if err != nil {
 		return nil, err
 	}
 	return template, err
 }
 
-func importProduct(db *reform.DB, product *data.Product) error {
-	return db.Insert(product)
+func importProduct(tx *reform.TX, product *data.Product) error {
+	return tx.Insert(product)
 }
 
 func productFromFile(file string) (product *data.Product, err error) {
