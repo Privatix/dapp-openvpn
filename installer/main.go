@@ -1,13 +1,18 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"fmt"
+
+	"gopkg.in/reform.v1"
 
 	"github.com/privatix/dappctrl/data"
 )
 
 //go:generate go generate ../vendor/github.com/privatix/dappctrl/data/schema.go
+
+const appVersion = "0.12.0"
 
 // Errors.
 var (
@@ -34,8 +39,40 @@ func main() {
 	}
 	defer data.CloseDB(db)
 
-	err = processor(*dir, *setAuth, db, *agent)
-	if err != nil {
+	if err := db.InTransaction(func(t *reform.TX) error {
+		if err := processor(*dir, *setAuth, t, *agent); err != nil {
+			return err
+		}
+		return writeAppVersion(t)
+	}); err != nil {
 		panic(err)
 	}
+}
+
+func writeAppVersion(tx *reform.TX) error {
+	versionSetting := &data.Setting{}
+	err := tx.FindOneTo(versionSetting, "key", data.SettingAppVersion)
+	if err == sql.ErrNoRows {
+		err = tx.Insert(&data.Setting{
+			Key:         data.SettingAppVersion,
+			Value:       appVersion,
+			Permissions: data.ReadOnly,
+			Name:        "App version",
+		})
+	} else if err == nil {
+		fmt.Printf("%s before update: %v\n",
+			data.SettingAppVersion, versionSetting.Value)
+
+		versionSetting.Value = appVersion
+		err = tx.Update(versionSetting)
+	}
+
+	if err != nil {
+		fmt.Println("failed to write app version: ", err)
+		return err
+	}
+
+	fmt.Printf("%s after update: %v\n",
+		data.SettingAppVersion, appVersion)
+	return err
 }
