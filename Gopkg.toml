@@ -2,4 +2,4 @@ ignored = ["github.com/satori/go.uuid"]
 
 [[constraint]]
   name = "github.com/privatix/dappctrl"
-  revision = "56f0eb6a01a5f89888c906312af9abc5d418be56" # TODO(maxim) change to master
+  branch = "develop" # TODO(maxim) change to master
