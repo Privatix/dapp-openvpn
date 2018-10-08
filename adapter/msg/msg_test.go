@@ -15,7 +15,7 @@ import (
 
 var (
 	conf struct {
-		FileLog       *log.FileConfig
+		StderrLog     *log.WriterConfig
 		Pusher        *Config
 		VPNMonitor    *mon.Config
 		TestVPNConfig map[string]string
@@ -32,14 +32,14 @@ func newTestVPNConfig() map[string]string {
 func TestMain(m *testing.M) {
 	var err error
 
-	conf.FileLog = log.NewFileConfig()
+	conf.StderrLog = log.NewWriterConfig()
 	conf.Pusher = NewConfig()
 	conf.VPNMonitor = mon.NewConfig()
 	conf.TestVPNConfig = newTestVPNConfig()
 
 	util.ReadTestConfig(&conf)
 
-	logger, err = log.NewStderrLogger(conf.FileLog)
+	logger, err = log.NewStderrLogger(conf.StderrLog)
 	if err != nil {
 		panic(err)
 	}

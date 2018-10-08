@@ -42,6 +42,62 @@ On the agent side it necessary to perform the following steps:
 - Start the `OpenVPN`-server.
 - Start the `dapp-openvpn` in the background with the configuration provided.
 
+## Build package
+
+The package can be compiled for a specific operating system.
+A `xgo`() is used to use cross-platform compilation.
+
+To create package archive and descriptor:
+
+#### Install dep dependency management tool
+
+linux:
+```bash
+curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+```
+
+macos:
+```bash
+brew install dep
+brew upgrade dep
+```
+
+windows:
+
+Latest release can be downloaded from this link: https://github.com/golang/dep/releases
+
+Run dep application:
+
+Go to the root directory of the project and run command:
+```bash
+dep ensure
+```
+
+#### Install statik
+
+```
+go get github.com/rakyll/statik
+```
+
+Generate statik filesystem:
+```
+go generate ./... # or go generate .\... for windows host os
+```
+
+
+#### Run builder
+```
+go run builder.go -agent=false \
+                  -os=macos \
+                  -keystore=/home/user/pk \
+                  -auth="qwerty" \
+                  -version=1_1 \
+                  -min_core_version=0_123 \
+                  -max_core_version=1_123
+```
+
+Archive and descriptor can be found in `build` directory.
+
 ## Command Line Options
 
 ### Installer
@@ -58,16 +114,36 @@ Usage of installer:
         Generate authentication credentials for service adapter
 ```
 
-### dapppvn (adapter)
+### dapp-openvpn (adapter)
 
 ```bash
-Usage of dappvpn:
+Usage of dapp-openvpn:
   -channel string
         Channel ID for client mode
   -config string
         Configuration file (default "dappvpn.config.json")
   -version
         Prints current dappctrl version
+```
+
+### builder
+```bash
+Usage of builder for dapp-openvpn:
+  -agent
+        Whether to install agent.
+  -auth string
+        Password to decrypt JSON private key.
+  -keystore string
+        Full path to JSON private key file.
+  -max_core_version string
+        Maximum version of Privatix core application for compatibility.
+  -min_core_version string
+        Minimal version of Privatix core application for compatibility. (default "undefined")
+  -os string
+        Target OS: linux, windows or macos (xgo usage). If is empty, a package will be created for a current operating system.
+  -version string
+        Product package distributive version. (default "undefined")
+
 ```
 
 ## Tests
