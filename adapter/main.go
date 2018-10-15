@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -19,9 +20,11 @@ import (
 	"github.com/privatix/dappctrl/version"
 
 	"github.com/privatix/dapp-openvpn/adapter/config"
+	vpndata "github.com/privatix/dapp-openvpn/adapter/data"
 	"github.com/privatix/dapp-openvpn/adapter/mon"
 	"github.com/privatix/dapp-openvpn/adapter/msg"
 	"github.com/privatix/dapp-openvpn/adapter/prepare"
+	"github.com/privatix/dapp-openvpn/adapter/tc"
 )
 
 // Values for versioning.
@@ -35,6 +38,7 @@ var (
 	conn    connector.Connector
 	channel string
 	logger  log.Logger
+	tctrl   *tc.TrafficControl
 	fatal   = make(chan string)
 )
 
@@ -64,6 +68,8 @@ func main() {
 	}
 
 	conn = connector.NewConnector(conf.Connector, logger)
+
+	tctrl = tc.NewTrafficControl(conf.TC, logger)
 
 	switch os.Getenv("script_type") {
 	case "user-pass-verify":
@@ -107,9 +113,26 @@ func handleConnect() {
 		ClientPort: uint16(port),
 	}
 
-	err = conn.StartSession(args)
+	res, err := conn.StartSession(args)
 	if err != nil {
 		logger.Fatal("failed to start session: " + err.Error())
+	}
+
+	if len(channel) != 0 || res.Offering.AdditionalParams == nil {
+		return
+	}
+
+	var params vpndata.OfferingParams
+	err = json.Unmarshal(res.Offering.AdditionalParams, &params)
+	if err != nil {
+		logger.Add("offering_params", res.Offering.AdditionalParams).Fatal(
+			"failed to unmarshal offering params: " + err.Error())
+	}
+
+	err = tctrl.SetRateLimit(os.Getenv("dev"), os.Getenv("trusted_ip"),
+		params.MinUploadMbits, params.MinDownloadMbits)
+	if err != nil {
+		logger.Fatal("failed to set rate limit: " + err.Error())
 	}
 }
 
@@ -135,6 +158,11 @@ func handleDisconnect() {
 	if err != nil {
 		logger.Fatal("failed to stop session: " + err.Error())
 	}
+
+	err = tctrl.UnsetRateLimit(os.Getenv("dev"), os.Getenv("trusted_ip"))
+	if err != nil {
+		logger.Fatal("failed to unset rate limit: " + err.Error())
+	}
 }
 
 func handleMonStarted(ch string) bool {
@@ -144,7 +172,7 @@ func handleMonStarted(ch string) bool {
 		ClientID: ch,
 	}
 
-	err := conn.StartSession(args)
+	_, err := conn.StartSession(args)
 	if err != nil {
 		logger.Fatal("failed to start session: " + err.Error())
 		return false

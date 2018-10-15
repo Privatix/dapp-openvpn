@@ -8,6 +8,7 @@ import (
 
 	"github.com/privatix/dapp-openvpn/adapter/mon"
 	"github.com/privatix/dapp-openvpn/adapter/msg"
+	"github.com/privatix/dapp-openvpn/adapter/tc"
 )
 
 type ovpnConfig struct {
@@ -25,6 +26,7 @@ type Config struct {
 	OpenVPN    *ovpnConfig // OpenVPN settings for client mode.
 	Pusher     *msg.Config
 	Connector  *connector.Config
+	TC         *tc.Config
 }
 
 // NewConfig creates default dapp-openvpn configuration.
@@ -40,5 +42,6 @@ func NewConfig() *Config {
 		},
 		Pusher:    msg.NewConfig(),
 		Connector: connector.DefaultConfig(),
+		TC:        tc.NewConfig(),
 	}
 }
