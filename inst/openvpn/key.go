@@ -13,17 +13,10 @@ import (
 	"time"
 )
 
-func buildServerCertificate(path string) error {
+func buildServerCertificate(path string, subject pkix.Name) error {
 	ca := &x509.Certificate{
-		SerialNumber: big.NewInt(1653),
-		Subject: pkix.Name{
-			Organization:  []string{"ORGANIZATION_NAME"},
-			Country:       []string{"COUNTRY_CODE"},
-			Province:      []string{"PROVINCE"},
-			Locality:      []string{"CITY"},
-			StreetAddress: []string{"ADDRESS"},
-			PostalCode:    []string{"POSTAL_CODE"},
-		},
+		SerialNumber:          big.NewInt(1653),
+		Subject:               subject,
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(10, 0, 0),
 		IsCA:                  true,
@@ -38,14 +31,7 @@ func buildServerCertificate(path string) error {
 
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(1658),
-		Subject: pkix.Name{
-			Organization:  []string{"ORGANIZATION_NAME"},
-			Country:       []string{"COUNTRY_CODE"},
-			Province:      []string{"PROVINCE"},
-			Locality:      []string{"CITY"},
-			StreetAddress: []string{"ADDRESS"},
-			PostalCode:    []string{"POSTAL_CODE"},
-		},
+		Subject:      subject,
 		NotBefore:    time.Now(),
 		NotAfter:     time.Now().AddDate(10, 0, 0),
 		SubjectKeyId: []byte{1, 2, 3, 4, 6},

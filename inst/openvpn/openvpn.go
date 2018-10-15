@@ -1,6 +1,7 @@
 package openvpn
 
 import (
+	"crypto/x509/pkix"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,14 +14,14 @@ import (
 
 // OpenVPN has a openvpn configuration.
 type OpenVPN struct {
-	Path string
-	Role string
-	Tap  *tapInterface
-
+	Path      string
+	Role      string
+	Tap       *tapInterface
 	Port      int
 	Proto     string
 	Interface string
 	ServerIP  string
+	Subject   *pkix.Name
 }
 
 // NewOpenVPN creates a default OpenVPN configuration.
@@ -32,6 +33,9 @@ func NewOpenVPN() *OpenVPN {
 		Port:     1194,
 		Proto:    "udp",
 		ServerIP: "10.8.0.0",
+		Subject: &pkix.Name{
+			Organization: []string{"Privatix"},
+		},
 	}
 }
 
@@ -83,7 +87,7 @@ func (o *OpenVPN) createSertificate() error {
 	}
 
 	path := filepath.Join(o.Path, "ssl")
-	if err := buildServerCertificate(path); err != nil {
+	if err := buildServerCertificate(path, *o.Subject); err != nil {
 		return err
 	}
 
