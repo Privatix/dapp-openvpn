@@ -23,11 +23,11 @@ cert {{.Path}}/config/server.crt
 key {{.Path}}/config/server.key
 dh {{.Path}}/config/dh2048.pem
 management {{.Managment.IP}} {{.Managment.Port}}
-auth-user-pass-verify "{{.Path}}/bin/dappvpn -config={{.Path}}/config/dappvpn.config.json" via-file
+auth-user-pass-verify "{{.Path}}/bin/dappvpn.exe -config={{.Path}}/config/dappvpn.config.json" via-file
 client-cert-not-required
 username-as-common-name
-client-connect "{{.Path}}/bin/dappvpn -config={{.Path}}/config/dappvpn.config.json"
-client-disconnect "{{.Path}}/bin/dappvpn -config={{.Path}}/config/dappvpn.config.json"
+client-connect "{{.Path}}/bin/dappvpn.exe -config={{.Path}}/config/dappvpn.config.json"
+client-disconnect "{{.Path}}/bin/dappvpn.exe -config={{.Path}}/config/dappvpn.config.json"
 script-security 3
 tls-server
 server {{.Server.IP}} {{.Server.Mask}}
