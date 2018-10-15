@@ -7,7 +7,7 @@ import (
 // Operator aliases a runner function.
 type Operator struct {
 	Run    func(*OpenVPN) error
-	Cancel func(*OpenVPN)
+	Cancel func(*OpenVPN) error
 }
 
 // Flow is a slice of Operators that can be applied in sequence.
@@ -20,13 +20,19 @@ func (o Operator) Exec(in *OpenVPN) error {
 
 // Run executes the flow operators runner function.
 func (flow Flow) Run(in *OpenVPN, logger log.Logger) error {
+	rollback := func(f Flow) {
+		for _, v := range f {
+			defer v.Cancel(in)
+		}
+	}
+
 	var err error
-	for _, m := range flow {
+	for i, m := range flow {
 		err = m.Exec(in)
+
 		if err != nil {
 			logger.Error(err.Error())
-			m.Cancel(in)
-			//todo rollback
+			rollback(flow[:i+1])
 			break
 		}
 	}
@@ -34,9 +40,9 @@ func (flow Flow) Run(in *OpenVPN, logger log.Logger) error {
 }
 
 // NewOperator creates a new operator instance.
-func NewOperator(run func(*OpenVPN) error, cancel func(*OpenVPN)) *Operator {
+func NewOperator(run func(*OpenVPN) error, cancel func(*OpenVPN) error) *Operator {
 	if cancel == nil {
-		cancel = func(in *OpenVPN) {}
+		cancel = func(in *OpenVPN) error { return nil }
 	}
 	return &Operator{Run: run, Cancel: cancel}
 }

@@ -105,6 +105,21 @@ func (o *OpenVPN) Configurate() error {
 	return templ.Execute(file, &o)
 }
 
+// RemoveConfig removes openvpn configuration.
+func (o *OpenVPN) RemoveConfig() error {
+	if o.isClient() {
+		return nil
+	}
+
+	os.Remove(filepath.Join(o.Path, "config/dh2048.pem"))
+	os.Remove(filepath.Join(o.Path, "config/ca.crt"))
+	os.Remove(filepath.Join(o.Path, "config/ca.key"))
+	os.Remove(filepath.Join(o.Path, "config/"+o.Role+".crt"))
+	os.Remove(filepath.Join(o.Path, "config/"+o.Role+".key"))
+	os.Remove(filepath.Join(o.Path, "config/"+o.Role+".conf"))
+	return nil
+}
+
 func (o *OpenVPN) createSertificate() error {
 	path := filepath.Join(o.Path, "config")
 	if err := buildServerCertificate(path, *o.Subject); err != nil {

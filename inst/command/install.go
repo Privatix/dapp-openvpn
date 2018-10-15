@@ -16,9 +16,9 @@ func installFlow() openvpn.Flow {
 	return openvpn.Flow{
 		openvpn.NewOperator(processedInstallFlags, nil),
 		openvpn.NewOperator(validateToInstall, nil),
-		openvpn.NewOperator(installTap, nil),
-		openvpn.NewOperator(configurate, nil),
-		openvpn.NewOperator(registerService, nil),
+		openvpn.NewOperator(installTap, removeTap),
+		openvpn.NewOperator(configurate, removeConfig),
+		openvpn.NewOperator(registerService, removeService),
 	}
 }
 
@@ -62,6 +62,10 @@ func configurate(o *openvpn.OpenVPN) error {
 		return fmt.Errorf("failed to configure openvpn: %v", err)
 	}
 	return nil
+}
+
+func removeConfig(o *openvpn.OpenVPN) error {
+	return o.RemoveConfig()
 }
 
 func registerService(o *openvpn.OpenVPN) error {
