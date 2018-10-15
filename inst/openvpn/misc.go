@@ -4,49 +4,45 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"net"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
 const ovpnPrefix = "dapp_ovpn"
 
 const serverTemplate = `
+local {{.Host.IP}}
+port {{.Host.Port}}
+proto {{.Proto}}
 dev tun
 dev-node "{{.Tap.Interface}}"
-proto {{.Proto}}
-port {{.Port}}
+ca {{.Path}}/config/ca.crt
+cert {{.Path}}/config/server.crt
+key {{.Path}}/config/server.key
+dh {{.Path}}/config/dh2048.pem
+management {{.Managment.IP}} {{.Managment.Port}}
+auth-user-pass-verify "{{.Path}}/bin/dappvpn -config={{.Path}}/config/dappvpn.config.json" via-file
+client-cert-not-required
+username-as-common-name
+client-connect "{{.Path}}/bin/dappvpn -config={{.Path}}/config/dappvpn.config.json"
+client-disconnect "{{.Path}}/bin/dappvpn -config={{.Path}}/config/dappvpn.config.json"
+script-security 3
 tls-server
-server {{.ServerIP}} 255.255.255.0
-comp-lzo
-dh {{.Path}}/ssl/dh2048.pem
-ca {{.Path}}/ssl/ca.crt
-cert {{.Path}}/ssl/server.crt
-key {{.Path}}/ssl/server.key
-tls-auth {{.Path}}/ssl/ta.key 0
-tun-mtu 1500
-tun-mtu-extra 32
-mssfix 1450
+server {{.Server.IP}} {{.Server.Mask}}
+push "route {{.Server.IP}} {{.Server.Mask}}"
+push "redirect-gateway def1"
+ifconfig-pool-persist ipp.txt
 keepalive 10 120
-status {{.Path}}/log/openvpn-status.log
-log {{.Path}}/log/openvpn.log
-verb 3
-`
-
-const clientTemplate = `
-dev tun
-dev-node "{{.Tap.Interface}}"
-proto {{.Proto}}
-tls-client
-remote 11.8.0.1 1194
 comp-lzo
-ca {{.Path}}/ca.crt
-tls-auth {{.Path}}/ta.key 1
-tun-mtu 1500
-tun-mtu-extra 32
-mssfix 1450
-keepalive 10 120
+persist-key
+persist-tun
+user root
+group root
 status {{.Path}}/log/openvpn-status.log
-log {{.Path}}/log/openvpn.log
+log {{.Path}}/log/server.log
+log-append {{.Path}}/log/server-append.log
 verb 3
 `
 
@@ -97,4 +93,22 @@ func isServiceStop(service string) (bool, error) {
 	}
 
 	return strings.Contains(string(output), "STOPPED"), nil
+}
+
+func freePort(h host) int {
+	port := h.Port
+	for i := port; i < 65535; i++ {
+		ln, err := net.Listen(h.Protocol, h.IP+":"+strconv.Itoa(i))
+		if err != nil {
+			continue
+		}
+
+		if err := ln.Close(); err != nil {
+			continue
+		}
+		port = i
+		break
+	}
+
+	return port
 }

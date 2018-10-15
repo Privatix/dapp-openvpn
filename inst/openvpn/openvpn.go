@@ -20,21 +20,42 @@ type OpenVPN struct {
 	Port      int
 	Proto     string
 	Interface string
-	ServerIP  string
 	Subject   *pkix.Name
+	Host      *host
+	Managment *host
+	Server    *host
+}
+
+type host struct {
+	IP       string
+	Port     int
+	Mask     string
+	Protocol string
 }
 
 // NewOpenVPN creates a default OpenVPN configuration.
 func NewOpenVPN() *OpenVPN {
 	return &OpenVPN{
-		Path:     ".",
-		Tap:      &tapInterface{},
-		Role:     "server",
-		Port:     1194,
-		Proto:    "udp",
-		ServerIP: "10.8.0.0",
+		Path:  ".",
+		Tap:   &tapInterface{},
+		Role:  "server",
+		Proto: "udp",
 		Subject: &pkix.Name{
 			Organization: []string{"Privatix"},
+		},
+		Host: &host{
+			IP:       "0.0.0.0",
+			Port:     443,
+			Protocol: "tcp",
+		},
+		Managment: &host{
+			IP:       "127.0.0.1",
+			Port:     7505,
+			Protocol: "tcp",
+		},
+		Server: &host{
+			IP:   "10.217.3.0",
+			Mask: "255.255.255.0",
 		},
 	}
 }
@@ -58,53 +79,42 @@ func (o *OpenVPN) RemoveTap() (err error) {
 
 // Configurate configurates openvpn config files.
 func (o *OpenVPN) Configurate() error {
+	if o.isClient() {
+		return nil
+	}
+
 	if err := o.createSertificate(); err != nil {
 		return err
 	}
 
-	file, err := os.Create(filepath.Join(o.Path, "config/openvpn.conf"))
+	file, err := os.Create(filepath.Join(o.Path, "config/"+o.Role+".conf"))
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	temp := serverTemplate
-	if o.isClient() {
-		temp = clientTemplate
-	}
-
-	templ, err := template.New("ovpnTemplate").Parse(temp)
+	templ, err := template.New("ovpnTemplate").Parse(serverTemplate)
 	if err != nil {
 		return err
 	}
+
+	// set dynamic port
+	o.Managment.Port = freePort(*o.Managment)
+	o.Host.Port = freePort(*o.Host)
 
 	return templ.Execute(file, &o)
 }
 
 func (o *OpenVPN) createSertificate() error {
-	if o.isClient() {
-		return nil
-	}
-
-	path := filepath.Join(o.Path, "ssl")
+	path := filepath.Join(o.Path, "config")
 	if err := buildServerCertificate(path, *o.Subject); err != nil {
 		return err
 	}
 
-	//generate DH param
+	//generate Diffie Hellman param
 	ossl := filepath.Join(o.Path, "bin/openssl")
 	dh := filepath.Join(path, "dh2048.pem")
-	err := exec.Command(ossl, "dhparam", "-out", dh, "2048").Run()
-	if err != nil {
-		return err
-	}
-
-	// generate secret key
-	ovpn := filepath.Join(o.Path, "bin/openvpn")
-	ta := filepath.Join(path, "ta.key")
-	cmd := exec.Command(ovpn, "--genkey", "--secret", ta)
-
-	return cmd.Run()
+	return exec.Command(ossl, "dhparam", "-out", dh, "2048").Run()
 }
 
 func (o *OpenVPN) isClient() bool {
@@ -121,7 +131,7 @@ func (o *OpenVPN) RegisterService() error {
 		Name:        svcName,
 		Description: "dapp openvpn " + svcName,
 		Command:     filepath.Join(o.Path, "bin/openvpn"),
-		Args:        []string{"--config", filepath.Join(o.Path, "config/openvpn.conf")},
+		Args:        []string{"--config", filepath.Join(o.Path, "config/"+o.Role+".conf")},
 		AutoStart:   true,
 	}
 
