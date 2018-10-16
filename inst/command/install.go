@@ -14,11 +14,11 @@ import (
 
 func installFlow() openvpn.Flow {
 	return openvpn.Flow{
-		openvpn.NewOperator(processedInstallFlags, nil),
-		openvpn.NewOperator(validateToInstall, nil),
-		openvpn.NewOperator(installTap, removeTap),
-		openvpn.NewOperator(configurate, removeConfig),
-		openvpn.NewOperator(registerService, removeService),
+		openvpn.NewOperator("processed flags", processedInstallFlags, nil),
+		openvpn.NewOperator("validate", validateToInstall, nil),
+		openvpn.NewOperator("install tap", installTap, removeTap),
+		openvpn.NewOperator("configuration", configurate, removeConfig),
+		openvpn.NewOperator("registration", registerService, removeService),
 	}
 }
 

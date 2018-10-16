@@ -19,8 +19,10 @@ func Execute(logger log.Logger, args []string) {
 
 	switch strings.ToLower(args[0]) {
 	case "install":
+		logger.Info("start install process")
 		flow = installFlow()
 	case "remove":
+		logger.Info("start remove process")
 		flow = removeFlow()
 	default:
 		fmt.Println(rootHelp)
@@ -29,7 +31,7 @@ func Execute(logger log.Logger, args []string) {
 
 	ovpn := openvpn.NewOpenVPN()
 	if err := flow.Run(ovpn, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to execute command: %v", err))
+		logger.Error(fmt.Sprintf("%v", err))
 		os.Exit(2)
 	}
 

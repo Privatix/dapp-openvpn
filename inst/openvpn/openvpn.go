@@ -95,7 +95,7 @@ func (o *OpenVPN) Configurate() error {
 		return err
 	}
 
-	// set dynamic port
+	// Set dynamic port.
 	o.Managment.Port = freePort(*o.Managment)
 	o.Host.Port = freePort(*o.Host)
 
@@ -123,7 +123,7 @@ func (o *OpenVPN) createSertificate() error {
 		return err
 	}
 
-	//generate Diffie Hellman param
+	// Generate Diffie Hellman param.
 	ossl := filepath.Join(o.Path, "bin/openssl")
 	dh := filepath.Join(path, "dh2048.pem")
 	return exec.Command(ossl, "dhparam", "-out", dh, "2048").Run()

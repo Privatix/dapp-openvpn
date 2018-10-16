@@ -59,7 +59,7 @@ func buildCA(ca *x509.Certificate, path string) error {
 		return err
 	}
 
-	// Public key
+	// Public key.
 	certOut, err := os.Create(filepath.Join(path, "ca.crt"))
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func buildCA(ca *x509.Certificate, path string) error {
 		return err
 	}
 
-	// Private key
+	// Private key.
 	keyOut, err := os.OpenFile(filepath.Join(path, "ca.key"),
 		os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
@@ -84,7 +84,7 @@ func buildCA(ca *x509.Certificate, path string) error {
 }
 
 func buildCertificate(cert *x509.Certificate, name, path string) error {
-	// Load CA
+	// Load CA.
 	catls, err := tls.LoadX509KeyPair(
 		filepath.Join(path, "ca.crt"),
 		filepath.Join(path, "ca.key"),
@@ -101,11 +101,11 @@ func buildCertificate(cert *x509.Certificate, name, path string) error {
 	if err != nil {
 		return err
 	}
-	// Sign the certificate
+	// Sign the certificate.
 	bytes, err := x509.CreateCertificate(rand.Reader, cert, ca,
 		&priv.PublicKey, catls.PrivateKey)
 
-	// Public key
+	// Public key.
 	certOut, err := os.Create(filepath.Join(path, name+".crt"))
 	if err != nil {
 		return err
@@ -117,7 +117,7 @@ func buildCertificate(cert *x509.Certificate, name, path string) error {
 		return err
 	}
 
-	// Private key
+	// Private key.
 	keyOut, err := os.OpenFile(filepath.Join(path, name+".key"),
 		os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {

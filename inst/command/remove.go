@@ -12,12 +12,12 @@ import (
 
 func removeFlow() openvpn.Flow {
 	return openvpn.Flow{
-		openvpn.NewOperator(processedRemoveFlags, nil),
-		openvpn.NewOperator(validateToRemove, nil),
-		openvpn.NewOperator(stopService, nil),
-		openvpn.NewOperator(removeTap, nil),
-		openvpn.NewOperator(removeService, nil),
-		openvpn.NewOperator(removeFolder, nil),
+		openvpn.NewOperator("processed flags", processedRemoveFlags, nil),
+		openvpn.NewOperator("validate", validateToRemove, nil),
+		openvpn.NewOperator("stop service", stopService, nil),
+		openvpn.NewOperator("remove tap", removeTap, nil),
+		openvpn.NewOperator("remove service", removeService, nil),
+		//openvpn.NewOperator("remove folder", removeFolder, nil),
 	}
 }
 
