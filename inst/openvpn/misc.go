@@ -33,7 +33,7 @@ tls-server
 server {{.Server.IP}} {{.Server.Mask}}
 push "route {{.Server.IP}} {{.Server.Mask}}"
 push "redirect-gateway def1"
-ifconfig-pool-persist ipp.txt
+ifconfig-pool-persist {{.Path}}/config/ipp.txt
 keepalive 10 120
 comp-lzo
 persist-key
