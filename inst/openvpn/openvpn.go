@@ -40,9 +40,6 @@ func NewOpenVPN() *OpenVPN {
 		Tap:   &tapInterface{},
 		Role:  "server",
 		Proto: "udp",
-		Subject: &pkix.Name{
-			Organization: []string{"Privatix"},
-		},
 		Host: &host{
 			IP:       "0.0.0.0",
 			Port:     443,
@@ -122,7 +119,7 @@ func (o *OpenVPN) RemoveConfig() error {
 
 func (o *OpenVPN) createSertificate() error {
 	path := filepath.Join(o.Path, "config")
-	if err := buildServerCertificate(path, *o.Subject); err != nil {
+	if err := buildServerCertificate(path); err != nil {
 		return err
 	}
 

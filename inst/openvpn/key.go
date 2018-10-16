@@ -13,10 +13,15 @@ import (
 	"time"
 )
 
-func buildServerCertificate(path string, subject pkix.Name) error {
+func buildServerCertificate(path string) error {
+	commonName, err := os.Hostname()
+	if err != nil {
+		return err
+	}
+
 	ca := &x509.Certificate{
 		SerialNumber:          big.NewInt(1653),
-		Subject:               subject,
+		Subject:               pkix.Name{CommonName: commonName},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(10, 0, 0),
 		IsCA:                  true,
@@ -31,7 +36,7 @@ func buildServerCertificate(path string, subject pkix.Name) error {
 
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(1658),
-		Subject:      subject,
+		Subject:      pkix.Name{CommonName: commonName},
 		NotBefore:    time.Now(),
 		NotAfter:     time.Now().AddDate(10, 0, 0),
 		SubjectKeyId: []byte{1, 2, 3, 4, 6},
@@ -43,7 +48,7 @@ func buildServerCertificate(path string, subject pkix.Name) error {
 }
 
 func buildCA(ca *x509.Certificate, path string) error {
-	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	priv, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return err
 	}
@@ -92,7 +97,7 @@ func buildCertificate(cert *x509.Certificate, name, path string) error {
 		return err
 	}
 
-	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	priv, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return err
 	}
