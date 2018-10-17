@@ -8,16 +8,17 @@ import (
 	"strings"
 
 	"github.com/privatix/dapp-openvpn/inst/openvpn"
+	"github.com/privatix/dapp-openvpn/inst/pipeline"
 )
 
-func removeFlow() openvpn.Flow {
-	return openvpn.Flow{
-		openvpn.NewOperator("processed flags", processedRemoveFlags, nil),
-		openvpn.NewOperator("validate", validateToRemove, nil),
-		openvpn.NewOperator("stop service", stopService, nil),
-		openvpn.NewOperator("remove tap", removeTap, nil),
-		openvpn.NewOperator("remove service", removeService, nil),
-		//openvpn.NewOperator("remove folder", removeFolder, nil),
+func removeFlow() pipeline.Flow {
+	return pipeline.Flow{
+		newOperator("processed flags", processedRemoveFlags, nil),
+		newOperator("validate", validateToRemove, nil),
+		newOperator("stop service", stopService, nil),
+		newOperator("remove tap", removeTap, nil),
+		newOperator("remove service", removeService, nil),
+		//newOperator("remove folder", removeFolder, nil),
 	}
 }
 

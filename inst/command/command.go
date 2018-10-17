@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/privatix/dapp-openvpn/inst/openvpn"
+	"github.com/privatix/dapp-openvpn/inst/pipeline"
 	"github.com/privatix/dappctrl/util/log"
 )
 
@@ -15,7 +16,7 @@ func Execute(logger log.Logger, args []string) {
 		args = append(args, "help")
 	}
 
-	var flow openvpn.Flow
+	var flow pipeline.Flow
 
 	switch strings.ToLower(args[0]) {
 	case "install":

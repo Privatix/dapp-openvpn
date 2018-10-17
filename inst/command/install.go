@@ -9,16 +9,17 @@ import (
 	"strings"
 
 	"github.com/privatix/dapp-openvpn/inst/openvpn"
+	"github.com/privatix/dapp-openvpn/inst/pipeline"
 	"github.com/privatix/dappctrl/util"
 )
 
-func installFlow() openvpn.Flow {
-	return openvpn.Flow{
-		openvpn.NewOperator("processed flags", processedInstallFlags, nil),
-		openvpn.NewOperator("validate", validateToInstall, nil),
-		openvpn.NewOperator("install tap", installTap, removeTap),
-		openvpn.NewOperator("configuration", configurate, removeConfig),
-		openvpn.NewOperator("registration", registerService, removeService),
+func installFlow() pipeline.Flow {
+	return pipeline.Flow{
+		newOperator("processed flags", processedInstallFlags, nil),
+		newOperator("validate", validateToInstall, nil),
+		newOperator("install tap", installTap, removeTap),
+		newOperator("configuration", configurate, removeConfig),
+		newOperator("registration", registerService, removeService),
 	}
 }
 
