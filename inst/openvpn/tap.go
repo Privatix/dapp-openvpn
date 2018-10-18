@@ -6,8 +6,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 )
+
+const serverTapNamePrefix = "Privatix VPN Server"
+const clientTapNamePrefix = "Privatix VPN Client"
 
 type tapInterface struct {
 	DeviceID  string
@@ -24,11 +28,9 @@ func installedTapInterfaces(tap string) ([]string, error) {
 	return matchTAPInterface(string(output)), nil
 }
 
-func installTAP(path string) (*tapInterface, error) {
-	tapInterfaceName := ovpnName(path)
-
-	driver := filepath.Join(path, "driver/OemVista.inf")
-	tapExec := filepath.Join(path, "bin/tapinstall")
+func installTAP(path, role string) (*tapInterface, error) {
+	driver := filepath.Join(path, "bin/openvpn/driver/OemVista.inf")
+	tapExec := filepath.Join(path, "bin/openvpn/tapinstall")
 
 	before, err := installedTapInterfaces(tapExec)
 	if err != nil {
@@ -50,13 +52,27 @@ func installTAP(path string) (*tapInterface, error) {
 	}
 
 	deviceID := diff(before, after)
+
+	return newTAP(deviceID, role)
+}
+
+func newTAP(deviceID, role string) (*tapInterface, error) {
+	id, err := strconv.ParseInt(deviceID[len(deviceID)-4:], 10, 64)
+	if err != nil {
+		return nil, errors.New("failed to parse device id")
+	}
+
+	tapInterfaceName := clientTapNamePrefix
+	if strings.EqualFold(role, "server") {
+		tapInterfaceName = serverTapNamePrefix
+	}
+	if id > 0 {
+		tapInterfaceName = fmt.Sprintf("%s %v", tapInterfaceName, id)
+	}
+
 	fmt.Println("device", deviceID)
 	fmt.Println("interface", tapInterfaceName)
 
-	return newTAP(deviceID, tapInterfaceName)
-}
-
-func newTAP(deviceID, tapInterfaceName string) (*tapInterface, error) {
 	if err := renameTapInterface(deviceID, tapInterfaceName); err != nil {
 		return nil, err
 	}
@@ -84,11 +100,7 @@ func renameTapInterface(device, name string) error {
 	cmd := exec.Command("netsh", "interface", "set", "interface",
 		"name="+oldName, "newname="+name)
 
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	return nil
+	return cmd.Run()
 }
 
 func deviceID(name string) (string, error) {
@@ -111,9 +123,9 @@ func deviceID(name string) (string, error) {
 }
 
 func (tap *tapInterface) remove(path string) error {
-	tapExec := filepath.Join(path, "bin/tapinstall")
+	tapExec := filepath.Join(path, "bin/openvpn/tapinstall")
 	if len(tap.DeviceID) == 0 {
-		tap.DeviceID, _ = deviceID(ovpnName(path))
+		tap.DeviceID, _ = deviceID(tap.Interface)
 		if len(tap.DeviceID) == 0 {
 			return errors.New("undefined tap device id")
 		}

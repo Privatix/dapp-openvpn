@@ -33,8 +33,10 @@ func Execute(logger log.Logger, args []string) {
 	ovpn := openvpn.NewOpenVPN()
 	if err := flow.Run(ovpn, logger); err != nil {
 		logger.Error(fmt.Sprintf("%v", err))
+		fmt.Println("failed to execute command")
 		os.Exit(2)
 	}
 
+	fmt.Println("command was successfully executed")
 	logger.Info("command was successfully executed")
 }

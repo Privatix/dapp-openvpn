@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"github.com/privatix/dapp-openvpn/inst/openvpn"
 	"github.com/privatix/dapp-openvpn/inst/pipeline"
 )
@@ -18,6 +19,7 @@ func removeFlow() pipeline.Flow {
 		newOperator("stop service", stopService, nil),
 		newOperator("remove tap", removeTap, nil),
 		newOperator("remove service", removeService, nil),
+		newOperator("remove env", removeEnv, nil),
 		//newOperator("remove folder", removeFolder, nil),
 	}
 }
@@ -43,6 +45,20 @@ func validateToRemove(o *openvpn.OpenVPN) error {
 		return err
 	}
 	o.Path = filepath.ToSlash(strings.ToLower(path))
+
+	err = godotenv.Load(filepath.Join(o.Path, "config/.env"))
+	if err != nil {
+		return err
+	}
+
+	w := os.Getenv("WORKDIR")
+	if !strings.EqualFold(o.Path, w) {
+		return fmt.Errorf("env workdir %s is not equal to the path", w)
+	}
+	o.Tap.DeviceID = os.Getenv("DEVICE")
+	o.Tap.Interface = os.Getenv("INTERFACE")
+	o.Service = os.Getenv("SERVICE")
+
 	return nil
 }
 
@@ -65,6 +81,10 @@ func removeService(o *openvpn.OpenVPN) error {
 		return fmt.Errorf("failed to remove service: %v", err)
 	}
 	return nil
+}
+
+func removeEnv(o *openvpn.OpenVPN) error {
+	return os.Remove(filepath.Join(o.Path, "config/.env"))
 }
 
 func removeFolder(o *openvpn.OpenVPN) error {

@@ -13,7 +13,7 @@ import (
 func main() {
 	logConfig := &log.FileConfig{
 		WriterConfig: log.NewWriterConfig(),
-		Filename:     "installer-%Y-%m-%d.log",
+		Filename:     "../log/installer-%Y-%m-%d.log",
 		FileMode:     0644,
 	}
 

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"github.com/privatix/dapp-openvpn/inst/openvpn"
 	"github.com/privatix/dapp-openvpn/inst/pipeline"
 	"github.com/privatix/dappctrl/util"
@@ -20,6 +21,7 @@ func installFlow() pipeline.Flow {
 		newOperator("install tap", installTap, removeTap),
 		newOperator("configuration", configurate, removeConfig),
 		newOperator("registration", registerService, removeService),
+		newOperator("create env", createEnv, removeEnv),
 	}
 }
 
@@ -44,9 +46,10 @@ func validateToInstall(o *openvpn.OpenVPN) error {
 	}
 	o.Path = filepath.ToSlash(strings.ToLower(path))
 
-	deviceID, _ := o.DeviceID()
-	if len(deviceID) > 0 {
-		err = errors.New("tap was installed at this workdir")
+	godotenv.Load(filepath.Join(o.Path, "config/.env"))
+
+	if strings.EqualFold(o.Path, os.Getenv("WORKDIR")) {
+		err = errors.New("openvpn was installed at this workdir")
 	}
 	return err
 }
@@ -73,5 +76,21 @@ func registerService(o *openvpn.OpenVPN) error {
 	if err := o.RegisterService(); err != nil {
 		return fmt.Errorf("failed to register service: %v", err)
 	}
+	return nil
+}
+
+func createEnv(o *openvpn.OpenVPN) error {
+	env := make(map[string]string)
+
+	env["WORKDIR"] = o.Path
+	env["DEVICE"] = o.Tap.DeviceID
+	env["INTERFACE"] = o.Tap.Interface
+	env["SERVICE"] = o.Service
+
+	err := godotenv.Write(env, filepath.Join(o.Path, "config/.env"))
+	if err != nil {
+		return fmt.Errorf("failed to create env file: %v", err)
+	}
+
 	return nil
 }

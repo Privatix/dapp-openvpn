@@ -1,9 +1,7 @@
 package openvpn
 
 import (
-	"crypto/x509/pkix"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -19,11 +17,10 @@ type OpenVPN struct {
 	Tap       *tapInterface
 	Port      int
 	Proto     string
-	Interface string
-	Subject   *pkix.Name
 	Host      *host
 	Managment *host
 	Server    *host
+	Service   string
 }
 
 type host struct {
@@ -57,15 +54,9 @@ func NewOpenVPN() *OpenVPN {
 	}
 }
 
-// DeviceID returns a register openvpn device ID.
-func (o *OpenVPN) DeviceID() (string, error) {
-	svcName := ovpnName(o.Path)
-	return deviceID(svcName)
-}
-
 // InstallTap installs a new tap interface.
 func (o *OpenVPN) InstallTap() (err error) {
-	o.Tap, err = installTAP(o.Path)
+	o.Tap, err = installTAP(o.Path, o.Role)
 	return err
 }
 
@@ -124,7 +115,7 @@ func (o *OpenVPN) createSertificate() error {
 	}
 
 	// Generate Diffie Hellman param.
-	ossl := filepath.Join(o.Path, "bin/openssl")
+	ossl := filepath.Join(o.Path, "bin/openvpn/openssl")
 	dh := filepath.Join(path, "dh2048.pem")
 	return exec.Command(ossl, "dhparam", "-out", dh, "2048").Run()
 }
@@ -135,36 +126,39 @@ func (o *OpenVPN) isClient() bool {
 
 // RegisterService registries a openvpn service.
 func (o *OpenVPN) RegisterService() error {
-	svcName := ovpnName(o.Path)
+	o.Service = ovpnName(o.Path)
 	ovpnsvc := filepath.Join(o.Path, "bin/winsvc.exe")
 	s := &service{
-		ID:          svcName,
+		ID:          o.Service,
 		GUID:        ovpnsvc,
-		Name:        svcName,
-		Description: "dapp openvpn " + svcName,
-		Command:     filepath.Join(o.Path, "bin/openvpn"),
-		Args:        []string{"--config", filepath.Join(o.Path, "config/"+o.Role+".conf")},
-		AutoStart:   true,
+		Name:        o.Tap.Interface,
+		Description: "dapp openvpn " + o.Service,
+		Command:     filepath.Join(o.Path, "bin/openvpn/openvpn"),
+		Args: []string{
+			"--config",
+			filepath.Join(o.Path, "config/"+o.Role+".conf"),
+		},
+		AutoStart: true,
 	}
 
 	bytes, err := json.Marshal(s)
 	if err != nil {
 		return err
 	}
-	fileName := filepath.Join(o.Path, "bin/winsvc.config.json")
+	fileName := filepath.Join(o.Path, "config/winsvc.config.json")
 	if err := ioutil.WriteFile(fileName, bytes, 0644); err != nil {
 		return err
 	}
 
-	cmd := exec.Command("sc", "create", svcName, "binpath="+ovpnsvc,
+	cmd := exec.Command("sc", "create", o.Service,
+		"binpath="+ovpnsvc+" -config "+fileName,
 		"type=own", "start=auto", "depend=tap0901/dhcp")
 	return cmd.Run()
 }
 
 // StopService stops openvpn service.
 func (o *OpenVPN) StopService() error {
-	service := ovpnName(o.Path)
-	ok, err := isServiceRun(service)
+	ok, err := isServiceRun(o.Service)
 	if err != nil {
 		return err
 	}
@@ -172,12 +166,10 @@ func (o *OpenVPN) StopService() error {
 		return nil
 	}
 
-	return exec.Command("sc", "stop", service).Run()
+	return exec.Command("sc", "stop", o.Service).Run()
 }
 
 // RemoveService removes the openvpn service.
 func (o *OpenVPN) RemoveService() error {
-	service := ovpnName(o.Path)
-	fmt.Println(service)
-	return exec.Command("sc", "delete", service).Run()
+	return exec.Command("sc", "delete", o.Service).Run()
 }
