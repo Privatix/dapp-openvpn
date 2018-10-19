@@ -27,3 +27,11 @@ Flags:
 	--help		Display help information
 	--workdir	Product install directory
 `
+
+const (
+	envFile      = "config/.env"
+	envWorkDir   = "WORKDIR"
+	envDevice    = "DEVICE"
+	envInterface = "INTERFACE"
+	envServcie   = "SERVICE"
+)

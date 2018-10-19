@@ -8,6 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+	"time"
+
+	"github.com/privatix/dapp-openvpn/inst/openvpn/path"
+	"github.com/privatix/dapp-openvpn/statik"
 )
 
 // OpenVPN has a openvpn configuration.
@@ -21,6 +25,13 @@ type OpenVPN struct {
 	Managment *host
 	Server    *host
 	Service   string
+	Validity  *validity
+}
+
+type validity struct {
+	Year  int
+	Month int
+	Day   int
 }
 
 type host struct {
@@ -51,6 +62,9 @@ func NewOpenVPN() *OpenVPN {
 			IP:   "10.217.3.0",
 			Mask: "255.255.255.0",
 		},
+		Validity: &validity{
+			Year: 10,
+		},
 	}
 }
 
@@ -71,24 +85,29 @@ func (o *OpenVPN) Configurate() error {
 		return nil
 	}
 
-	if err := o.createSertificate(); err != nil {
+	if err := o.createCertificate(); err != nil {
 		return err
 	}
 
-	file, err := os.Create(filepath.Join(o.Path, "config/"+o.Role+".conf"))
+	file, err := os.Create(filepath.Join(o.Path, path.RoleConfig(o.Role)))
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	templ, err := template.New("ovpnTemplate").Parse(serverTemplate)
+	data, err := statik.ReadFile(path.ServerConfigTemplate)
+	if err != nil {
+		return err
+	}
+
+	templ, err := template.New("ovpnTemplate").Parse(string(data))
 	if err != nil {
 		return err
 	}
 
 	// Set dynamic port.
-	o.Managment.Port = freePort(*o.Managment)
-	o.Host.Port = freePort(*o.Host)
+	o.Managment.Port = nextFreePort(*o.Managment)
+	o.Host.Port = nextFreePort(*o.Host)
 
 	return templ.Execute(file, &o)
 }
@@ -99,24 +118,32 @@ func (o *OpenVPN) RemoveConfig() error {
 		return nil
 	}
 
-	os.Remove(filepath.Join(o.Path, "config/dh2048.pem"))
-	os.Remove(filepath.Join(o.Path, "config/ca.crt"))
-	os.Remove(filepath.Join(o.Path, "config/ca.key"))
-	os.Remove(filepath.Join(o.Path, "config/"+o.Role+".crt"))
-	os.Remove(filepath.Join(o.Path, "config/"+o.Role+".key"))
-	os.Remove(filepath.Join(o.Path, "config/"+o.Role+".conf"))
+	pathsToRemove := []string{
+		path.DHParam,
+		path.CACertificate,
+		path.CAKey,
+		path.RoleCertificate(o.Role),
+		path.RoleKey(o.Role),
+		path.RoleConfig(o.Role),
+	}
+	for _, path := range pathsToRemove {
+		os.Remove(filepath.Join(o.Path, path))
+	}
+
 	return nil
 }
 
-func (o *OpenVPN) createSertificate() error {
-	path := filepath.Join(o.Path, "config")
-	if err := buildServerCertificate(path); err != nil {
+func (o *OpenVPN) createCertificate() error {
+	p := filepath.Join(o.Path, "config")
+	t := time.Now().AddDate(o.Validity.Year,
+		o.Validity.Month, o.Validity.Day)
+	if err := buildServerCertificate(p, t); err != nil {
 		return err
 	}
 
 	// Generate Diffie Hellman param.
-	ossl := filepath.Join(o.Path, "bin/openvpn/openssl")
-	dh := filepath.Join(path, "dh2048.pem")
+	ossl := filepath.Join(o.Path, path.OpenSSL)
+	dh := filepath.Join(p, "dh2048.pem")
 	return exec.Command(ossl, "dhparam", "-out", dh, "2048").Run()
 }
 
@@ -127,16 +154,16 @@ func (o *OpenVPN) isClient() bool {
 // RegisterService registries a openvpn service.
 func (o *OpenVPN) RegisterService() error {
 	o.Service = ovpnName(o.Path)
-	ovpnsvc := filepath.Join(o.Path, "bin/winsvc.exe")
+	ovpnsvc := filepath.Join(o.Path, path.ServiceWrapper)
 	s := &service{
 		ID:          o.Service,
 		GUID:        ovpnsvc,
 		Name:        o.Tap.Interface,
 		Description: "dapp openvpn " + o.Service,
-		Command:     filepath.Join(o.Path, "bin/openvpn/openvpn"),
+		Command:     filepath.Join(o.Path, path.OpenVPN),
 		Args: []string{
 			"--config",
-			filepath.Join(o.Path, "config/"+o.Role+".conf"),
+			filepath.Join(o.Path, path.RoleConfig(o.Role)),
 		},
 		AutoStart: true,
 	}
@@ -145,7 +172,7 @@ func (o *OpenVPN) RegisterService() error {
 	if err != nil {
 		return err
 	}
-	fileName := filepath.Join(o.Path, "config/winsvc.config.json")
+	fileName := filepath.Join(o.Path, path.ServiceWrapperConfig)
 	if err := ioutil.WriteFile(fileName, bytes, 0644); err != nil {
 		return err
 	}

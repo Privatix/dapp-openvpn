@@ -7,27 +7,34 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"math"
 	"math/big"
 	"os"
 	"path/filepath"
 	"time"
 )
 
-func buildServerCertificate(path string) error {
+func randomNumber() int64 {
+	r, _ := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+	return r.Int64()
+}
+
+func buildServerCertificate(path string, expired time.Time) error {
 	commonName, err := os.Hostname()
 	if err != nil {
 		return err
 	}
 
 	ca := &x509.Certificate{
-		SerialNumber:          big.NewInt(1653),
-		Subject:               pkix.Name{CommonName: commonName},
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().AddDate(10, 0, 0),
-		IsCA:                  true,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		SerialNumber: big.NewInt(randomNumber()),
+		Subject:      pkix.Name{CommonName: commonName},
+		NotBefore:    time.Now(),
+		NotAfter:     expired,
+		IsCA:         true,
 		BasicConstraintsValid: true,
+		ExtKeyUsage: []x509.ExtKeyUsage{
+			x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 	}
 
 	if err := buildCA(ca, path); err != nil {
@@ -35,13 +42,14 @@ func buildServerCertificate(path string) error {
 	}
 
 	cert := &x509.Certificate{
-		SerialNumber: big.NewInt(1658),
+		SerialNumber: big.NewInt(randomNumber()),
 		Subject:      pkix.Name{CommonName: commonName},
 		NotBefore:    time.Now(),
-		NotAfter:     time.Now().AddDate(10, 0, 0),
+		NotAfter:     expired,
 		SubjectKeyId: []byte{1, 2, 3, 4, 6},
-		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:     x509.KeyUsageDigitalSignature,
+		ExtKeyUsage: []x509.ExtKeyUsage{
+			x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage: x509.KeyUsageDigitalSignature,
 	}
 
 	return buildCertificate(cert, "server", path)

@@ -9,9 +9,10 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	"github.com/privatix/dappctrl/util"
+
 	"github.com/privatix/dapp-openvpn/inst/openvpn"
 	"github.com/privatix/dapp-openvpn/inst/pipeline"
-	"github.com/privatix/dappctrl/util"
 )
 
 func installFlow() pipeline.Flow {
@@ -39,16 +40,26 @@ func processedInstallFlags(ovpn *openvpn.OpenVPN) error {
 	return util.ReadJSONFile(*configFile, &ovpn)
 }
 
-func validateToInstall(o *openvpn.OpenVPN) error {
+func validatePath(o *openvpn.OpenVPN) error {
 	path, err := filepath.Abs(o.Path)
 	if err != nil {
 		return err
 	}
 	o.Path = filepath.ToSlash(strings.ToLower(path))
+	return nil
+}
 
-	godotenv.Load(filepath.Join(o.Path, "config/.env"))
+func validateToInstall(o *openvpn.OpenVPN) error {
+	err := validatePath(o)
+	if err != nil {
+		return err
+	}
 
-	if strings.EqualFold(o.Path, os.Getenv("WORKDIR")) {
+	// When installing the environment file may not be.
+	// It is created on the installation finalize.
+	_ = godotenv.Load(filepath.Join(o.Path, envFile))
+
+	if strings.EqualFold(o.Path, os.Getenv(envWorkDir)) {
 		err = errors.New("openvpn was installed at this workdir")
 	}
 	return err
@@ -82,12 +93,12 @@ func registerService(o *openvpn.OpenVPN) error {
 func createEnv(o *openvpn.OpenVPN) error {
 	env := make(map[string]string)
 
-	env["WORKDIR"] = o.Path
-	env["DEVICE"] = o.Tap.DeviceID
-	env["INTERFACE"] = o.Tap.Interface
-	env["SERVICE"] = o.Service
+	env[envWorkDir] = o.Path
+	env[envDevice] = o.Tap.DeviceID
+	env[envInterface] = o.Tap.Interface
+	env[envServcie] = o.Service
 
-	err := godotenv.Write(env, filepath.Join(o.Path, "config/.env"))
+	err := godotenv.Write(env, filepath.Join(o.Path, envFile))
 	if err != nil {
 		return fmt.Errorf("failed to create env file: %v", err)
 	}

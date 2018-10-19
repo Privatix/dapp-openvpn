@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/privatix/dapp-openvpn/inst/openvpn/path"
 )
 
 const serverTapNamePrefix = "Privatix VPN Server"
@@ -28,9 +30,9 @@ func installedTapInterfaces(tap string) ([]string, error) {
 	return matchTAPInterface(string(output)), nil
 }
 
-func installTAP(path, role string) (*tapInterface, error) {
-	driver := filepath.Join(path, "bin/openvpn/driver/OemVista.inf")
-	tapExec := filepath.Join(path, "bin/openvpn/tapinstall")
+func installTAP(p, role string) (*tapInterface, error) {
+	driver := filepath.Join(p, path.OemVista)
+	tapExec := filepath.Join(p, path.TapInstall)
 
 	before, err := installedTapInterfaces(tapExec)
 	if err != nil {
@@ -122,8 +124,8 @@ func deviceID(name string) (string, error) {
 	return device, nil
 }
 
-func (tap *tapInterface) remove(path string) error {
-	tapExec := filepath.Join(path, "bin/openvpn/tapinstall")
+func (tap *tapInterface) remove(p string) error {
+	tapExec := filepath.Join(p, path.TapInstall)
 	if len(tap.DeviceID) == 0 {
 		tap.DeviceID, _ = deviceID(tap.Interface)
 		if len(tap.DeviceID) == 0 {
