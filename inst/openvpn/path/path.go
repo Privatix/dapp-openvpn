@@ -15,10 +15,6 @@ const (
 	CACertificate = `config/ca.crt`
 	// CAKey file location
 	CAKey = `config/ca.key`
-	// ServiceWrapper file location
-	ServiceWrapper = `bin/winsvc.exe`
-	// ServiceWrapperConfig file location
-	ServiceWrapperConfig = `config/winsvc.config.json`
 	// ServerConfigTemplate file location
 	ServerConfigTemplate = `/ovpn/templates/server-config.tpl`
 )
