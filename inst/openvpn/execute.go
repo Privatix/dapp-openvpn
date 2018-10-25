@@ -18,19 +18,21 @@ type execute struct {
 
 // Start is a start method of executable service.
 func (e *execute) Start() {
-	go func() error {
-		ovpn := filepath.Join(e.Path, path.OpenVPN)
-		config := filepath.Join(e.Path, path.RoleConfig(e.Role))
-		cmd := exec.Command(ovpn, "--config", config)
+	go runOpenVPN(e)
+}
 
-		if err := cmd.Start(); err != nil {
-			return err
-		}
+func runOpenVPN(e *execute) error {
+	ovpn := filepath.Join(e.Path, path.OpenVPN)
+	config := filepath.Join(e.Path, path.RoleConfig(e.Role))
+	cmd := exec.Command(ovpn, "--config", config)
 
-		e.Process = cmd.Process
+	if err := cmd.Start(); err != nil {
+		return err
+	}
 
-		return cmd.Wait()
-	}()
+	e.Process = cmd.Process
+
+	return cmd.Wait()
 }
 
 // Run is a run method of executable service.
@@ -41,6 +43,8 @@ func (e *execute) Run() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
 	defer close(interrupt)
+
+	go runOpenVPN(e)
 
 	for {
 		select {
