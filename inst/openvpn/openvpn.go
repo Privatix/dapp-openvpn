@@ -29,6 +29,8 @@ type OpenVPN struct {
 	Service   string
 	Validity  *validity
 	IsWindows bool
+	User      string
+	Group     string
 }
 
 type validity struct {
@@ -98,6 +100,10 @@ func (o *OpenVPN) Configurate() error {
 		return err
 	}
 
+	return o.createConfig()
+}
+
+func (o *OpenVPN) createConfig() error {
 	file, err := os.Create(filepath.Join(o.Path, path.RoleConfig(o.Role)))
 	if err != nil {
 		return err
@@ -117,6 +123,13 @@ func (o *OpenVPN) Configurate() error {
 	// Set dynamic port.
 	o.Managment.Port = nextFreePort(*o.Managment)
 	o.Host.Port = nextFreePort(*o.Host)
+
+	if !o.IsWindows {
+		o.User, o.Group, err = getUserGroup()
+		if err != nil {
+			return err
+		}
+	}
 
 	return templ.Execute(file, &o)
 }

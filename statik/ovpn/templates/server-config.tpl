@@ -9,7 +9,7 @@ key {{.Path}}/config/server.key
 dh {{.Path}}/config/dh2048.pem
 management {{.Managment.IP}} {{.Managment.Port}}
 auth-user-pass-verify "{{.Path}}/bin/dappvpn{{if .IsWindows}}.exe{{end}} -config={{.Path}}/config/dappvpn.config.json" via-file
-client-cert-not-required
+verify-client-cert none
 username-as-common-name
 client-connect "{{.Path}}/bin/dappvpn{{if .IsWindows}}.exe{{end}} -config={{.Path}}/config/dappvpn.config.json"
 client-disconnect "{{.Path}}/bin/dappvpn{{if .IsWindows}}.exe{{end}} -config={{.Path}}/config/dappvpn.config.json"
@@ -23,8 +23,8 @@ keepalive 10 120
 comp-lzo
 persist-key
 persist-tun
-{{if .IsWindows}}#{{end}}user root
-{{if .IsWindows}}#{{end}}group root
+{{if .IsWindows}}#{{end}}user {{.User}}
+{{if .IsWindows}}#{{end}}group {{.Group}}
 status {{.Path}}/log/openvpn-status.log
 log {{.Path}}/log/server.log
 log-append {{.Path}}/log/server-append.log

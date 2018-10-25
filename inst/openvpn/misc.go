@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"net"
+	"os/user"
 	"strconv"
 )
 
@@ -40,4 +41,18 @@ func nextFreePort(h host) int {
 	}
 
 	return port
+}
+
+func getUserGroup() (string, string, error) {
+	u, err := user.Current()
+	if err != nil {
+		return "", "", err
+	}
+
+	g, err := user.LookupGroupId(u.Gid)
+	if err != nil {
+		return u.Username, "", err
+	}
+
+	return u.Username, g.Name, nil
 }
