@@ -43,12 +43,8 @@ func startService(o *openvpn.OpenVPN) error {
 }
 
 func runService(o *openvpn.OpenVPN) error {
-	s, err := o.RunService()
-	if err != nil {
+	if s, err := o.RunService(); err != nil {
 		return fmt.Errorf("failed to run service: %v %v", s, err)
-	}
-	if len(s) > 0 {
-		return fmt.Errorf(s)
 	}
 	return nil
 }

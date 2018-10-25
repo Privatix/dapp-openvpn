@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strings"
-	"syscall"
 	"text/template"
 	"time"
 
@@ -181,7 +179,7 @@ func (o *OpenVPN) InstallService() (string, error) {
 		return "", err
 	}
 
-	return service.Install("run")
+	return service.Install("run", "-workdir", o.Path)
 }
 
 // StartService starts openvpn service.
@@ -203,23 +201,12 @@ func (o *OpenVPN) RunService() (string, error) {
 		return "", nil
 	}
 
-	// Set up channel on which to send signal notifications.
-	// We must use a buffered channel or risk missing the signal
-	// if we're not ready to receive when the signal is sent.
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
-
-	ovpn := filepath.Join(o.Path, path.OpenVPN)
-	config := filepath.Join(o.Path, path.RoleConfig(o.Role))
-	cmd := exec.Command(ovpn, "--config", config)
-
-	if err := cmd.Run(); err != nil {
-		return "failed to execute openvpn", err
+	service, err := daemon.New(o.Service, "")
+	if err != nil {
+		return "", err
 	}
 
-	// Waiting for interrupt by system signal.
-	killSignal := <-interrupt
-	return fmt.Sprintf("service exited. got signal: %v", killSignal), nil
+	return service.Run(&execute{Path: o.Path, Role: o.Role})
 }
 
 // StopService stops openvpn service.
