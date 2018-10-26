@@ -36,5 +36,6 @@ const (
 	envWorkDir   = "WORKDIR"
 	envDevice    = "DEVICE"
 	envInterface = "INTERFACE"
-	envServcie   = "SERVICE"
+	envService   = "SERVICE"
+	envRole      = "ROLE"
 )

@@ -145,7 +145,8 @@ func checkInstallation(o *openvpn.OpenVPN) error {
 	}
 	o.Tap.DeviceID = os.Getenv(envDevice)
 	o.Tap.Interface = os.Getenv(envInterface)
-	o.Service = os.Getenv(envServcie)
+	o.Service = os.Getenv(envService)
+	o.Role = os.Getenv(envRole)
 
 	return nil
 }
@@ -156,7 +157,8 @@ func createEnv(o *openvpn.OpenVPN) error {
 	env[envWorkDir] = o.Path
 	env[envDevice] = o.Tap.DeviceID
 	env[envInterface] = o.Tap.Interface
-	env[envServcie] = o.Service
+	env[envService] = o.Service
+	env[envRole] = o.Role
 
 	err := godotenv.Write(env, filepath.Join(o.Path, envFile))
 	if err != nil {
