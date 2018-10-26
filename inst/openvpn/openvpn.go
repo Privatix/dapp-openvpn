@@ -1,14 +1,16 @@
 package openvpn
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/takama/daemon"
 
 	"github.com/privatix/dapp-openvpn/inst/openvpn/path"
 	"github.com/privatix/dapp-openvpn/statik"
@@ -26,6 +28,9 @@ type OpenVPN struct {
 	Server    *host
 	Service   string
 	Validity  *validity
+	IsWindows bool
+	User      string
+	Group     string
 }
 
 type validity struct {
@@ -65,18 +70,24 @@ func NewOpenVPN() *OpenVPN {
 		Validity: &validity{
 			Year: 10,
 		},
+		IsWindows: strings.EqualFold(runtime.GOOS, "windows"),
 	}
 }
 
 // InstallTap installs a new tap interface.
 func (o *OpenVPN) InstallTap() (err error) {
-	o.Tap, err = installTAP(o.Path, o.Role)
+	if o.IsWindows {
+		o.Tap, err = installTAP(o.Path, o.Role)
+	}
 	return err
 }
 
 // RemoveTap removes the tap interface.
 func (o *OpenVPN) RemoveTap() (err error) {
-	return o.Tap.remove(o.Path)
+	if o.IsWindows {
+		err = o.Tap.remove(o.Path)
+	}
+	return err
 }
 
 // Configurate configurates openvpn config files.
@@ -89,6 +100,10 @@ func (o *OpenVPN) Configurate() error {
 		return err
 	}
 
+	return o.createConfig()
+}
+
+func (o *OpenVPN) createConfig() error {
 	file, err := os.Create(filepath.Join(o.Path, path.RoleConfig(o.Role)))
 	if err != nil {
 		return err
@@ -108,6 +123,13 @@ func (o *OpenVPN) Configurate() error {
 	// Set dynamic port.
 	o.Managment.Port = nextFreePort(*o.Managment)
 	o.Host.Port = nextFreePort(*o.Host)
+
+	if !o.IsWindows {
+		o.User, o.Group, err = getUserGroup()
+		if err != nil {
+			return err
+		}
+	}
 
 	return templ.Execute(file, &o)
 }
@@ -151,52 +173,87 @@ func (o *OpenVPN) isClient() bool {
 	return !strings.EqualFold(o.Role, "server")
 }
 
-// RegisterService registries a openvpn service.
-func (o *OpenVPN) RegisterService() error {
-	o.Service = ovpnName(o.Path)
-	ovpnsvc := filepath.Join(o.Path, path.ServiceWrapper)
-	s := &service{
-		ID:          o.Service,
-		GUID:        ovpnsvc,
-		Name:        o.Tap.Interface,
-		Description: "dapp openvpn " + o.Service,
-		Command:     filepath.Join(o.Path, path.OpenVPN),
-		Args: []string{
-			"--config",
-			filepath.Join(o.Path, path.RoleConfig(o.Role)),
-		},
-		AutoStart: true,
+// InstallService installs a openvpn service.
+func (o *OpenVPN) InstallService() (string, error) {
+	if o.isClient() {
+		return "", nil
 	}
 
-	bytes, err := json.Marshal(s)
+	var dependencies []string
+	o.Service = serviceName(o.Path)
+	descr := fmt.Sprintf("dapp-openvpn %s %s", o.Service, o.Tap.Interface)
+
+	if o.IsWindows {
+		dependencies = []string{"tap0901", "dhcp"}
+	}
+
+	service, err := daemon.New(o.Service, descr, dependencies...)
 	if err != nil {
-		return err
-	}
-	fileName := filepath.Join(o.Path, path.ServiceWrapperConfig)
-	if err := ioutil.WriteFile(fileName, bytes, 0644); err != nil {
-		return err
+		return "", err
 	}
 
-	cmd := exec.Command("sc", "create", o.Service,
-		"binpath="+ovpnsvc+" -config "+fileName,
-		"type=own", "start=auto", "depend=tap0901/dhcp")
-	return cmd.Run()
+	return service.Install("run", "-workdir", o.Path)
+}
+
+// StartService starts openvpn service.
+func (o *OpenVPN) StartService() (string, error) {
+	if o.isClient() {
+		return "", nil
+	}
+
+	service, err := daemon.New(o.Service, "")
+	if err != nil {
+		return "", err
+	}
+	return service.Start()
+}
+
+// RunService executes openvpn service.
+func (o *OpenVPN) RunService() (string, error) {
+	if o.isClient() {
+		return "", nil
+	}
+
+	service, err := daemon.New(o.Service, "")
+	if err != nil {
+		return "", err
+	}
+
+	return service.Run(&execute{Path: o.Path, Role: o.Role})
 }
 
 // StopService stops openvpn service.
-func (o *OpenVPN) StopService() error {
-	ok, err := isServiceRun(o.Service)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		return nil
+func (o *OpenVPN) StopService() (string, error) {
+	if o.isClient() {
+		return "", nil
 	}
 
-	return exec.Command("sc", "stop", o.Service).Run()
+	service, err := daemon.New(o.Service, "")
+	if err != nil {
+		return "", err
+	}
+
+	status, err := service.Status()
+	if err != nil {
+		return "", err
+	}
+
+	if !strings.Contains(strings.ToLower(status), "running") {
+		return "", nil
+	}
+
+	return service.Stop()
 }
 
 // RemoveService removes the openvpn service.
-func (o *OpenVPN) RemoveService() error {
-	return exec.Command("sc", "delete", o.Service).Run()
+func (o *OpenVPN) RemoveService() (string, error) {
+	if o.isClient() {
+		return "", nil
+	}
+
+	service, err := daemon.New(o.Service, "")
+	if err != nil {
+		return "", err
+	}
+	return service.Remove()
 }

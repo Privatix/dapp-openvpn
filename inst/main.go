@@ -1,11 +1,12 @@
-// +build windows
-
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/privatix/dappctrl/util/log"
 
@@ -18,9 +19,21 @@ func createLogger() (log.Logger, io.Closer, error) {
 		return nil, nil, err
 	}
 
+	f := flag.NewFlagSet("", flag.ContinueOnError)
+	p := f.String("workdir", "..", "Product install directory")
+
+	if len(os.Args) > 2 && !strings.EqualFold(os.Args[1], "install") {
+		f.Parse(os.Args[2:])
+	}
+
+	path, _ := filepath.Abs(*p)
+	path = filepath.ToSlash(strings.ToLower(path))
+
+	fileName := filepath.Join(path, "log/installer-%Y-%m-%d.log")
+
 	logConfig := &log.FileConfig{
 		WriterConfig: log.NewWriterConfig(),
-		Filename:     "../log/installer-%Y-%m-%d.log",
+		Filename:     fileName,
 		FileMode:     0644,
 	}
 

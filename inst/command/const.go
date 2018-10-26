@@ -6,6 +6,9 @@ Usage:
 Available Commands:
   install     Install product package
   remove      Remove product package
+  run	      Run service
+  start	      Start service
+  stop	      Stop service
 Flags:
   --help      Display help information
   --version   Display the current version of this CLI
@@ -20,9 +23,9 @@ Flags:
 	--help		Display help information
 `
 
-const removeHelp = `
+const templateHelp = `
 Usage:
-	installer remove [flags]
+	installer %s [flags]
 Flags:
 	--help		Display help information
 	--workdir	Product install directory
@@ -33,5 +36,6 @@ const (
 	envWorkDir   = "WORKDIR"
 	envDevice    = "DEVICE"
 	envInterface = "INTERFACE"
-	envServcie   = "SERVICE"
+	envService   = "SERVICE"
+	envRole      = "ROLE"
 )
