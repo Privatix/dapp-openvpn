@@ -81,9 +81,8 @@ go get github.com/rakyll/statik
 
 Generate statik filesystem:
 ```
-go generate ./... # or go generate .\... for windows host os
+go generate ./...
 ```
-
 
 #### Run builder
 ```

@@ -332,8 +332,7 @@ func runCommands() {
 
 	run := []*command{
 		{"dep", []string{"ensure"}, ""},
-		{"go", []string{"generate",
-			"." + string(filepath.Separator) + "..."}, ""},
+		{"go", []string{"generate", "./..."}, ""},
 		adapterBuild,
 		installerBuild,
 	}
