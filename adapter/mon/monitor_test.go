@@ -29,7 +29,7 @@ func newTestConfig() *testConfig {
 
 var (
 	conf struct {
-		FileLog        *log.FileConfig
+		StderrLog      *log.WriterConfig
 		VPNMonitor     *Config
 		VPNMonitorTest *testConfig
 	}
@@ -298,13 +298,13 @@ func TestKill(t *testing.T) {
 func TestMain(m *testing.M) {
 	var err error
 
-	conf.FileLog = log.NewFileConfig()
+	conf.StderrLog = log.NewWriterConfig()
 	conf.VPNMonitor = NewConfig()
 	conf.VPNMonitorTest = newTestConfig()
 
 	util.ReadTestConfig(&conf)
 
-	logger, err = log.NewStderrLogger(conf.FileLog)
+	logger, err = log.NewStderrLogger(conf.StderrLog)
 	if err != nil {
 		panic(err)
 	}

@@ -24,7 +24,7 @@ const (
 
 var (
 	conf struct {
-		FileLog    *log.FileConfig
+		StderrLog  *log.WriterConfig
 		VPNMonitor *mon.Config
 	}
 
@@ -65,7 +65,7 @@ func TestClientConfig(t *testing.T) {
 	adapterConfig.Connector.Password = data.TestPassword
 	adapterConfig.OpenVPN.ConfigRoot = rootDir
 	adapterConfig.Monitor = conf.VPNMonitor
-	adapterConfig.FileLog = conf.FileLog
+	adapterConfig.FileLog.WriterConfig = conf.StderrLog
 
 	conn.Endpoint = data.NewTestEndpoint(channel, util.NewUUID())
 
@@ -83,12 +83,12 @@ func TestClientConfig(t *testing.T) {
 func TestMain(m *testing.M) {
 	var err error
 
-	conf.FileLog = log.NewFileConfig()
+	conf.StderrLog = log.NewWriterConfig()
 	conf.VPNMonitor = mon.NewConfig()
 
 	util.ReadTestConfig(&conf)
 
-	logger, err = log.NewStderrLogger(conf.FileLog)
+	logger, err = log.NewStderrLogger(conf.StderrLog)
 	if err != nil {
 		panic(err)
 	}

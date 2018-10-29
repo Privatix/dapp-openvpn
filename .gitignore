@@ -14,7 +14,10 @@
 .idea
 
 # Path for binaries
-bin
+/bin
+
+# Path fo package files
+/build
 
 # Reform files
 *_reform.go
