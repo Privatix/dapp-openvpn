@@ -10,6 +10,10 @@ ADAPTER_NAME=dappvpn
 INSTALLER_NAME=installer
 
 cd "${PROJECT_PATH}" || exit
+go get -d ${PROJECT}/...
+go get -u gopkg.in/reform.v1/reform
+go get -u github.com/rakyll/statik
+curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 dep ensure
 go generate ./...
 
