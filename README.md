@@ -33,7 +33,10 @@ You can build all binaries using the go tool, placing the resulting binary in `.
 ```
 
 ### Run installer
-
+Installer is responsible for:
+1. import templates: offering, access (to dappctrl database)
+2. import product and link it to templates (to dappctrl database)
+3. generate adapter config with proper authentication (same as in dappctrl database product table)
 To install `dapp-openvpn` to `dappctrl`, please run the following script:
 
 ```bash
