@@ -103,8 +103,6 @@ Archive and descriptor can be found in `build` directory.
 
 ```bash
 Usage of installer:
-  -agent
-        Whether to install agent
   -connstr string
         PostgreSQL connection string (default "user=postgres dbname=dappctrl sslmode=disable")
   -rootdir string

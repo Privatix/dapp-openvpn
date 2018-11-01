@@ -22,7 +22,6 @@ var (
 )
 
 func main() {
-	agent := flag.Bool("agent", false, "Whether to install agent")
 	conn := flag.String("connstr",
 		"user=postgres dbname=dappctrl sslmode=disable",
 		"PostgreSQL connection string")
@@ -40,7 +39,7 @@ func main() {
 	defer data.CloseDB(db)
 
 	if err := db.InTransaction(func(t *reform.TX) error {
-		if err := processor(*dir, *setAuth, t, *agent); err != nil {
+		if err := processor(*dir, *setAuth, t); err != nil {
 			return err
 		}
 		return writeAppVersion(t)
