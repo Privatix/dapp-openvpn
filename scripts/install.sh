@@ -7,7 +7,7 @@ GIT_RELEASE=$(git tag -l --points-at HEAD)
 ADAPTER_MAIN=/adapter
 INSTALLER_MAIN=/installer
 ADAPTER_NAME=dappvpn
-INSTALLER_NAME=installer
+INSTALLER_NAME=dapp-openvpn-inst
 
 cd "${PROJECT_PATH}" || exit
 go get -d ${PROJECT}/...

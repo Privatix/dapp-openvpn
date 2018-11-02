@@ -104,10 +104,10 @@ Archive and descriptor can be found in `build` directory.
 
 ## Command Line Options
 
-### Installer
+### dapp-openvpn-inst
 
 ```bash
-Usage of installer:
+Usage of dapp-openvpn-inst:
   -connstr string
         PostgreSQL connection string (default "user=postgres dbname=dappctrl sslmode=disable")
   -rootdir string
