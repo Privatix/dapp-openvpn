@@ -26,12 +26,6 @@ You can build all binaries using the go tool, placing the resulting binary in `$
 ./scripts/install.sh
 ```
 
-You can build all binaries using the go tool, placing the resulting binary in `./bin`:
-
-```bash
-./scripts/build.sh
-```
-
 ### Run installer
 Installer is responsible for:
 1. import templates: offering, access (to dappctrl database)
