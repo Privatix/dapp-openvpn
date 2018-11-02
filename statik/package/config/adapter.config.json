@@ -34,7 +34,7 @@
         "TimeOut": 12
     },
     "Connector": {
-        "Addr": "localhost:80",
+        "Addr": "localhost:8000",
         "TLS": null,
         "Username": "4b26dc82-ffb6-4ff1-99d8-f0eaac0b0532",
         "Password": "secret"
