@@ -32,6 +32,17 @@ You can build all binaries using the go tool, placing the resulting binary in `.
 ./scripts/build.sh
 ```
 
+### Run installer
+Installer is responsible for:
+1. import templates: offering, access (to dappctrl database)
+2. import product and link it to templates (to dappctrl database)
+3. generate adapter config with proper authentication (same as in dappctrl database product table)
+To install `dapp-openvpn` to `dappctrl`, please run the following script:
+
+```bash
+./scripts/run_installer.sh
+```
+
 #### Additional steps for agent
 
 On the agent side it necessary to perform the following steps:
@@ -40,7 +51,7 @@ On the agent side it necessary to perform the following steps:
 ### Running the agent service
 
 - Start the `OpenVPN`-server.
-- Start the `dapp-openvpn` in the background with the configuration provided.
+- Start the `dapp-openvpn` in the background with the configuration provided by the installer.
 
 ## Build package
 
@@ -81,9 +92,8 @@ go get github.com/rakyll/statik
 
 Generate statik filesystem:
 ```
-go generate ./... # or go generate .\... for windows host os
+go generate ./...
 ```
-
 
 #### Run builder
 ```
@@ -104,8 +114,6 @@ Archive and descriptor can be found in `build` directory.
 
 ```bash
 Usage of installer:
-  -agent
-        Whether to install agent
   -connstr string
         PostgreSQL connection string (default "user=postgres dbname=dappctrl sslmode=disable")
   -rootdir string

@@ -30,7 +30,9 @@ go build -o installer
 
 # Usage
 
-Place `installer` in the appropriate folder, according to the package distribution folder structure.
+Place `installer` and `installer.config.json` in the appropriate folder, according to the package distribution folder structure.
+
+Configurate `installer.config.json` (see [details on the configuration description](./docs/config.md)).
 
 Simply run `installer <COMMAND>`
 
@@ -40,16 +42,17 @@ Simply run `installer <COMMAND>`
 Usage:
 	installer [command] [flags]
 Available Commands:
-	install		Install product package
-	remove		Remove product package
-	run			Run service
-	start		Start service
-	stop		Stop service
+	install     Install product package
+	remove      Remove product package
+	run         Run service
+	start       Start service
+	stop        Stop service
 Flags:
-	--help		Display help information
-	--version	Display the current version of this CLI
+	--help      Display help information
+	--version   Display the current version of this CLI
 Use "installer [command] --help" for more information about a command.
  ```
+More information about [installation](./docs/index.md).
 
 # Contributing
 

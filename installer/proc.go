@@ -26,8 +26,8 @@ const (
 	serverProduct = "server.json"
 	clientProduct = "client.json"
 
-	agentAdapterConfig  = "dappvpn.config.json"
-	clientAdapterConfig = "dappvpn.config.json"
+	agentAdapterConfig  = "dappvpn.agent.config.json"
+	clientAdapterConfig = "dappvpn.client.config.json"
 
 	jsonIdent = "    "
 
@@ -35,30 +35,28 @@ const (
 	saltLength     = 9 * 1e18
 )
 
-func processor(dir string, adjust bool,
-	tx *reform.TX, agent bool) error {
+type item struct {
+	product *data.Product
+	config  string
+}
+
+func processor(dir string, adjust bool, tx *reform.TX) error {
 	srvProduct, cliProduct, err := handler(dir, tx)
 	if err != nil {
 		return err
 	}
 
 	if adjust {
-		var product *data.Product
-		var adapterConfig string
-
-		if agent {
-			product = srvProduct
-			adapterConfig = agentAdapterConfig
-		} else {
-			product = cliProduct
-			adapterConfig = clientAdapterConfig
+		items := []*item{
+			{srvProduct, filepath.Join(dir, agentAdapterConfig)},
+			{cliProduct, filepath.Join(dir, clientAdapterConfig)},
 		}
 
-		configFile := filepath.Join(dir, adapterConfig)
-
-		err = adjustment(product, configFile)
-		if err != nil {
-			return err
+		for k := range items {
+			err = adjustment(items[k].product, items[k].config)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -193,9 +191,10 @@ func validateDir(name string, expect map[string]bool) error {
 
 func validateRoot(dir string) error {
 	rootItems := map[string]bool{
-		templatePath:       false,
-		productPath:        false,
-		agentAdapterConfig: true,
+		templatePath:        false,
+		productPath:         false,
+		agentAdapterConfig:  true,
+		clientAdapterConfig: true,
 	}
 
 	err := validateDir(dir, rootItems)
