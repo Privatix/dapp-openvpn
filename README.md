@@ -23,7 +23,7 @@ Switch to the dapp-openvpn repository root directory.
 You can build all binaries using the go tool, placing the resulting binary in `$GOPATH/bin`:
 
 ```bash
-./scripts/install.sh
+./scripts/build.sh
 ```
 
 ### Run installer
