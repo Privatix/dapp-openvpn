@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
 PROJECT=github.com/privatix/dapp-openvpn
-PROJECT_PATH=$GOPATH/src/${PROJECT}
+
+if [ -z "${DAPP_OPENVPN_DIR}" ]
+then
+    DAPP_OPENVPN_DIR=$GOPATH/src/${PROJECT}
+fi
 
 GIT_COMMIT=$(git rev-list -1 HEAD)
 GIT_RELEASE=$(git tag -l --points-at HEAD)
@@ -15,7 +19,7 @@ INSTALLER_NAME=dapp-openvpn-inst
 
 OPENVPN_INSTALLER_NAME=openvpn-inst
 
-cd "${PROJECT_PATH}" || exit
+cd "${DAPP_OPENVPN_DIR}" || exit
 
 go get -d ${PROJECT}/...
 go get -u gopkg.in/reform.v1/reform
