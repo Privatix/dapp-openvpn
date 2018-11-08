@@ -1,5 +1,6 @@
 {
     "ChannelDir": ".",
+    "ClientMode": true,
     "FileLog": {
         "Level": "info",
         "StackLevel": "error",
