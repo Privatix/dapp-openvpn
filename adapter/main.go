@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/privatix/dappctrl/sesssrv"
@@ -63,8 +64,6 @@ func main() {
 
 	fconfig := flag.String(
 		"config", "dappvpn.config.json", "Configuration file")
-	// Client mode is active when the parameter below is set.
-	fchannel := flag.String("channel", "", "Channel ID for client mode")
 	flag.Parse()
 
 	version.Print(*v, Commit, Version)
@@ -73,8 +72,6 @@ func main() {
 	if err := util.ReadJSONFile(*fconfig, &conf); err != nil {
 		panic(fmt.Sprintf("failed to read configuration: %s\n", err))
 	}
-
-	channel = *fchannel
 
 	var err error
 
@@ -236,40 +233,55 @@ func handleMonByteCount(ch string, up, down uint64) bool {
 }
 
 func handleMonitor(confFile string) {
-	logger := logger.Add("method", "handleMonitor")
+	if conf.ClientMode {
+		handleClientMonitor()
+	} else {
+		handleAgentMonitor(confFile)
+	}
+}
 
-	handleSession := func(ch string, event int, up, down uint64) bool {
-		switch event {
-		case mon.SessionStarted:
-			return handleMonStarted(ch)
-		case mon.SessionStopped:
-			return handleMonStopped(ch, up, down)
-		case mon.SessionByteCount:
-			return handleMonByteCount(ch, up, down)
-		default:
-			return false
-		}
+func handleSession(ch string, event int, up, down uint64) bool {
+	switch event {
+	case mon.SessionStarted:
+		return handleMonStarted(ch)
+	case mon.SessionStopped:
+		return handleMonStopped(ch, up, down)
+	case mon.SessionByteCount:
+		return handleMonByteCount(ch, up, down)
+	default:
+		return false
+	}
+}
+
+func handlePusher(ctx context.Context, dir string) {
+	logger := logger.Add("method", "handlePusher", "directory", dir)
+
+	pusher := msg.NewPusher(conf.Pusher, logger, conn)
+
+	err := pusher.PushConfiguration(ctx)
+	if err != nil {
+		logger.Error("failed to push app config to" +
+			" dappctrl")
+		return
 	}
 
+	err = msg.Done(dir)
+	if err == nil {
+		return
+	}
+
+	logger.Add("file", msg.PushedFile).Error(
+		"failed to save file in directory: " + err.Error())
+}
+
+func handleAgentMonitor(confFile string) {
 	dir := filepath.Dir(confFile)
 
-	if len(channel) == 0 && !msg.IsDone(dir) {
+	if !msg.IsDone(dir) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
 		go handlePusher(ctx, dir)
-	}
-
-	if len(channel) != 0 {
-		if err := prepare.ClientConfig(
-			logger, channel, conn, conf); err != nil {
-			logger.Fatal("failed to prepare client" +
-				" configuration: " + err.Error())
-		}
-
-		oVpn := launchOpenVPN()
-		defer oVpn.Kill()
-		time.Sleep(conf.OpenVPN.StartDelay * time.Millisecond)
 	}
 
 	monitor := mon.NewMonitor(conf.Monitor, logger, handleSession, channel)
@@ -281,9 +293,45 @@ func handleMonitor(confFile string) {
 	logger.Fatal(<-fatal)
 }
 
-func launchOpenVPN() *os.Process {
-	logger := logger.Add("method", "launchOpenVPN")
+var (
+	mtx     sync.Mutex
+	ovpnCmd *exec.Cmd
+)
 
+func handleClientMonitor() {
+	for {
+		time.Sleep(conf.HeartbeatPeriod * time.Millisecond)
+
+		res, err := conn.Heartbeat()
+		if err != nil {
+			logger.Error("heartbeat request failed: " + err.Error())
+			break
+		}
+
+		mtx.Lock()
+
+		if res.Command == sesssrv.HeartbeatStart && ovpnCmd == nil {
+			err := prepare.ClientConfig(
+				logger, res.Channel, conn, conf)
+			if err != nil {
+				msg := "failed to prepare client config: "
+				logger.Fatal(msg + err.Error())
+			}
+
+			ovpnCmd = launchOpenVPN(res.Channel)
+		} else if res.Command == sesssrv.HeartbeatStop &&
+			ovpnCmd != nil {
+			if err := ovpnCmd.Process.Kill(); err != nil {
+				msg := "failed to kill OpenVPN: "
+				logger.Error(msg + err.Error())
+			}
+		}
+
+		mtx.Unlock()
+	}
+}
+
+func launchOpenVPN(channel string) *exec.Cmd {
 	if len(conf.OpenVPN.Name) == 0 {
 		logger.Fatal("no OpenVPN command provided")
 	}
@@ -311,41 +359,32 @@ func launchOpenVPN() *os.Process {
 	go func() {
 		scanner := bufio.NewScanner(io.MultiReader(stdout, stderr))
 		for scanner.Scan() {
-			io.WriteString(
-				os.Stderr, "openvpn: "+scanner.Text()+"\n")
+			line := "openvpn: " + scanner.Text() + "\n"
+			io.WriteString(os.Stderr, line)
 		}
 		if err := scanner.Err(); err != nil {
-			m := "failed to read from openVPN stdout/stderr: %s"
-			fatal <- fmt.Sprintf(m, err)
+			msg := "failed to read from openVPN stdout/stderr: "
+			logger.Warn(msg + err.Error())
 		}
 		stdout.Close()
 		stderr.Close()
 	}()
 
 	go func() {
-		fatal <- fmt.Sprintf("OpenVPN exited: %v", cmd.Wait())
+		logger.Warn(fmt.Sprintf("OpenVPN exited: %v", cmd.Wait()))
+		handleMonStopped(channel, 0, 0)
+		mtx.Lock()
+		ovpnCmd = nil
+		mtx.Unlock()
 	}()
 
-	return cmd.Process
-}
+	time.Sleep(conf.OpenVPN.StartDelay * time.Millisecond)
 
-func handlePusher(ctx context.Context, dir string) {
-	logger := logger.Add("method", "handlePusher", "directory", dir)
+	monitor := mon.NewMonitor(conf.Monitor, logger, handleSession, channel)
+	go func() {
+		err := monitor.MonitorTraffic()
+		logger.Warn("failed to monitor vpn traffic: " + err.Error())
+	}()
 
-	pusher := msg.NewPusher(conf.Pusher, logger, conn)
-
-	err := pusher.PushConfiguration(ctx)
-	if err != nil {
-		logger.Error("failed to push app config to" +
-			" dappctrl")
-		return
-	}
-
-	err = msg.Done(dir)
-	if err == nil {
-		return
-	}
-
-	logger.Add("file", msg.PushedFile).Error(
-		"failed to save file in directory: " + err.Error())
+	return cmd
 }
