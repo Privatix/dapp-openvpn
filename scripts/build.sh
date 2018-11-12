@@ -26,6 +26,7 @@ go get -u gopkg.in/reform.v1/reform
 go get -u github.com/rakyll/statik
 
 curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+rm -f Gopkg.lock
 dep ensure
 
 go generate ./...
