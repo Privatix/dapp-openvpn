@@ -34,9 +34,11 @@ type Config struct {
 // NewConfig creates default dapp-openvpn configuration.
 func NewConfig() *Config {
 	return &Config{
-		ChannelDir: ".",
-		FileLog:    log.NewFileConfig(),
-		Monitor:    mon.NewConfig(),
+		ChannelDir:      ".",
+		ClientMode:      false,
+		HeartbeatPeriod: 2000,
+		FileLog:         log.NewFileConfig(),
+		Monitor:         mon.NewConfig(),
 		OpenVPN: &ovpnConfig{
 			Name:       "openvpn",
 			ConfigRoot: "/etc/openvpn/config",
