@@ -32,11 +32,19 @@ func createService(o *openvpn.OpenVPN) error {
 	if s, err := o.InstallService(); err != nil {
 		return fmt.Errorf("failed to install service: %v %v", s, err)
 	}
+
+	if s, err := o.DappVPN.InstallService(o.Role, o.Path); err != nil {
+		return fmt.Errorf("failed to install service: %v %v", s, err)
+	}
 	return nil
 }
 
 func startService(o *openvpn.OpenVPN) error {
 	if s, err := o.StartService(); err != nil {
+		return fmt.Errorf("failed to start service: %v %v", s, err)
+	}
+
+	if s, err := o.DappVPN.StartService(); err != nil {
 		return fmt.Errorf("failed to start service: %v %v", s, err)
 	}
 	return nil
@@ -49,7 +57,19 @@ func runService(o *openvpn.OpenVPN) error {
 	return nil
 }
 
+func runDappVPN(o *openvpn.OpenVPN) error {
+	if s, err := o.DappVPN.RunService(o.Role, o.Path); err != nil {
+		return fmt.Errorf("failed to run service: %v %v", s, err)
+	}
+	return nil
+}
+
 func stopService(o *openvpn.OpenVPN) error {
+	if s, err := o.DappVPN.StopService(); err != nil {
+		return fmt.Errorf("failed to stop dappvpn service: %v %v",
+			s, err)
+	}
+
 	if s, err := o.StopService(); err != nil {
 		return fmt.Errorf("failed to stop service: %v %v", s, err)
 	}
@@ -57,6 +77,11 @@ func stopService(o *openvpn.OpenVPN) error {
 }
 
 func removeService(o *openvpn.OpenVPN) error {
+	if s, err := o.DappVPN.RemoveService(); err != nil {
+		return fmt.Errorf("failed to remove dappvpn service: %v %v",
+			s, err)
+	}
+
 	if s, err := o.RemoveService(); err != nil {
 		return fmt.Errorf("failed to remove service: %v %v", s, err)
 	}
@@ -106,6 +131,10 @@ func createConfig(o *openvpn.OpenVPN) error {
 	if err := o.Configurate(); err != nil {
 		return fmt.Errorf("failed to configure openvpn: %v", err)
 	}
+
+	if err := o.DappVPN.Configurate(o); err != nil {
+		return fmt.Errorf("failed to configure dappvpn: %v", err)
+	}
 	return nil
 }
 
@@ -147,6 +176,7 @@ func checkInstallation(o *openvpn.OpenVPN) error {
 	o.Tap.Interface = os.Getenv(envInterface)
 	o.Service = os.Getenv(envService)
 	o.Role = os.Getenv(envRole)
+	o.DappVPN.Service = os.Getenv(envDappVPN)
 
 	return nil
 }
@@ -159,6 +189,7 @@ func createEnv(o *openvpn.OpenVPN) error {
 	env[envInterface] = o.Tap.Interface
 	env[envService] = o.Service
 	env[envRole] = o.Role
+	env[envDappVPN] = o.DappVPN.Service
 
 	err := godotenv.Write(env, filepath.Join(o.Path, envFile))
 	if err != nil {

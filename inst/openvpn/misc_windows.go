@@ -2,6 +2,6 @@ package openvpn
 
 import "fmt"
 
-func serviceName(path string) string {
-	return fmt.Sprintf("%s_%s", ovpnPrefix, hash(path))
+func serviceName(prefix, path string) string {
+	return fmt.Sprintf("%s_%s", prefix, hash(path))
 }

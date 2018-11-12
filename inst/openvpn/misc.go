@@ -3,12 +3,15 @@ package openvpn
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"encoding/json"
+	"fmt"
 	"net"
+	"os"
 	"os/user"
+	"reflect"
 	"strconv"
+	"strings"
 )
-
-const ovpnPrefix = "dapp_ovpn"
 
 func diff(a, b []string) string {
 	for i, v := range b {
@@ -55,4 +58,45 @@ func getUserGroup() (string, string, error) {
 	}
 
 	return u.Username, g.Name, nil
+}
+
+func setConfigurationValues(jsonMap map[string]interface{},
+	settings map[string]interface{}) error {
+	for key, value := range settings {
+		path := strings.Split(key, ".")
+		length := len(path) - 1
+		m := jsonMap
+		for i := 0; i < length; i++ {
+			item, ok := m[path[i]]
+			if ok && reflect.TypeOf(m) == reflect.TypeOf(item) {
+				m, _ = item.(map[string]interface{})
+				continue
+			}
+			return fmt.Errorf("failed to set config params: %s", key)
+		}
+		m[path[length]] = value
+	}
+	return nil
+}
+
+func connectorAddr(config string) (string, error) {
+	read, err := os.Open(config)
+	if err != nil {
+		return "", err
+	}
+	defer read.Close()
+
+	jsonMap := make(map[string]interface{})
+
+	json.NewDecoder(read).Decode(&jsonMap)
+
+	srv, ok := jsonMap["SessionServer"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("SessionServer params not found")
+	}
+	addr, ok := srv["Addr"]
+	if !ok {
+		return "", fmt.Errorf("Addr params not found")
+	}
+	return addr.(string), nil
 }

@@ -13,22 +13,23 @@ import (
 type execute struct {
 	Path    string
 	Role    string
+	Type    string
 	Process *os.Process
 }
 
 // Start is a start method of executable service.
 func (e *execute) Start() {
 	go func() {
-		if err := runOpenVPN(e); err != nil {
+		if err := run(e); err != nil {
 			os.Exit(2)
 		}
 	}()
 }
 
-func runOpenVPN(e *execute) error {
-	ovpn := filepath.Join(e.Path, path.OpenVPN)
-	config := filepath.Join(e.Path, path.RoleConfig(e.Role))
-	cmd := exec.Command(ovpn, "--config", config)
+func run(e *execute) error {
+	vpn := filepath.Join(e.Path, path.VPN(e.Type))
+	config := filepath.Join(e.Path, path.VPNConfig(e.Type, e.Role))
+	cmd := exec.Command(vpn, "--config", config)
 
 	if err := cmd.Start(); err != nil {
 		return err
@@ -48,7 +49,7 @@ func (e *execute) Run() {
 	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
 	defer close(interrupt)
 
-	go runOpenVPN(e)
+	go run(e)
 
 	for {
 		select {

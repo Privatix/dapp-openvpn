@@ -38,4 +38,5 @@ const (
 	envInterface = "INTERFACE"
 	envService   = "SERVICE"
 	envRole      = "ROLE"
+	envDappVPN   = "DAPPVPN"
 )

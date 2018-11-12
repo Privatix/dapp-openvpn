@@ -27,6 +27,7 @@ type OpenVPN struct {
 	Managment *host
 	Server    *host
 	Service   string
+	DappVPN   *DappVPN
 	Validity  *validity
 	IsWindows bool
 	User      string
@@ -68,6 +69,7 @@ func NewOpenVPN() *OpenVPN {
 			Year: 10,
 		},
 		IsWindows: strings.EqualFold(runtime.GOOS, "windows"),
+		DappVPN:   NewDappVPN(),
 	}
 }
 
@@ -181,10 +183,11 @@ func (o *OpenVPN) InstallService() (string, error) {
 	}
 
 	var dependencies []string
-	o.Service = serviceName(o.Path)
-	descr := fmt.Sprintf("dapp-openvpn %s %s", o.Service, o.Tap.Interface)
+	o.Service = serviceName(path.OVPN, o.Path)
+	descr := fmt.Sprintf("Privatix %s OpenVPN %s", o.Role, hash(o.Path))
 
 	if o.IsWindows {
+		o.Service = fmt.Sprintf("Privatix OpenVPN %s", hash(o.Path))
 		dependencies = []string{"tap0901", "dhcp"}
 	}
 

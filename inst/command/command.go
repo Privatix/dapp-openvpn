@@ -35,6 +35,9 @@ func Execute(logger log.Logger, args []string) {
 	case "run":
 		logger.Info("run process")
 		flow = runFlow()
+	case "run-dappvpn":
+		logger.Info("run dappvpn process")
+		flow = runDappVPNFlow()
 	default:
 		fmt.Println(rootHelp)
 		return
@@ -92,5 +95,13 @@ func runFlow() pipeline.Flow {
 		newOperator("processed flags", processedCommonFlags, nil),
 		newOperator("validate", checkInstallation, nil),
 		newOperator("run service", runService, nil),
+	}
+}
+
+func runDappVPNFlow() pipeline.Flow {
+	return pipeline.Flow{
+		newOperator("processed flags", processedCommonFlags, nil),
+		newOperator("validate", checkInstallation, nil),
+		newOperator("run service", runDappVPN, nil),
 	}
 }
