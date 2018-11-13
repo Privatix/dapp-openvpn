@@ -27,7 +27,7 @@ func createLogger() (log.Logger, io.Closer, error) {
 	}
 
 	path, _ := filepath.Abs(*p)
-	path = filepath.ToSlash(strings.ToLower(path))
+	path = filepath.ToSlash(path)
 
 	fileName := filepath.Join(path, "log/installer-%Y-%m-%d.log")
 

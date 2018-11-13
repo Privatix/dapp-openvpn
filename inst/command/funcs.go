@@ -107,7 +107,7 @@ func validatePath(o *openvpn.OpenVPN) error {
 	if err != nil {
 		return err
 	}
-	o.Path = filepath.ToSlash(strings.ToLower(path))
+	o.Path = filepath.ToSlash(path)
 	return nil
 }
 
