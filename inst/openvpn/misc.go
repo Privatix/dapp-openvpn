@@ -24,7 +24,7 @@ func diff(a, b []string) string {
 
 func hash(s string) string {
 	h := sha1.New()
-	h.Write([]byte(s))
+	h.Write([]byte(strings.ToLower(s)))
 	return hex.EncodeToString(h.Sum(nil))
 }
 

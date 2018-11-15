@@ -169,7 +169,12 @@ func (o *OpenVPN) createCertificate() error {
 	// Generate Diffie Hellman param.
 	ossl := filepath.Join(o.Path, path.OpenSSL)
 	dh := filepath.Join(p, "dh2048.pem")
-	return exec.Command(ossl, "dhparam", "-out", dh, "2048").Run()
+	err := exec.Command(ossl, "dhparam", "-out", dh, "2048").Run()
+	if err != nil {
+		cmd := exec.Command("openssl", "dhparam", "-out", dh, "2048")
+		return cmd.Run()
+	}
+	return nil
 }
 
 func (o *OpenVPN) isClient() bool {
