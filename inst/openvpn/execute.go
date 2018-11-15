@@ -18,7 +18,11 @@ type execute struct {
 
 // Start is a start method of executable service.
 func (e *execute) Start() {
-	go runOpenVPN(e)
+	go func() {
+		if err := runOpenVPN(e); err != nil {
+			os.Exit(2)
+		}
+	}()
 }
 
 func runOpenVPN(e *execute) error {

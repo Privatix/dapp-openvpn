@@ -20,21 +20,25 @@ type ovpnConfig struct {
 
 // Config is dapp-openvpn adapter configuration.
 type Config struct {
-	ChannelDir string // Directory for common-name -> channel mappings.
-	FileLog    *log.FileConfig
-	Monitor    *mon.Config
-	OpenVPN    *ovpnConfig // OpenVPN settings for client mode.
-	Pusher     *msg.Config
-	Connector  *connector.Config
-	TC         *tc.Config
+	ChannelDir      string // Directory for common-name -> channel mappings.
+	ClientMode      bool
+	HeartbeatPeriod time.Duration // In milliseconds.
+	FileLog         *log.FileConfig
+	Monitor         *mon.Config
+	OpenVPN         *ovpnConfig // OpenVPN settings for client mode.
+	Pusher          *msg.Config
+	Connector       *connector.Config
+	TC              *tc.Config
 }
 
 // NewConfig creates default dapp-openvpn configuration.
 func NewConfig() *Config {
 	return &Config{
-		ChannelDir: ".",
-		FileLog:    log.NewFileConfig(),
-		Monitor:    mon.NewConfig(),
+		ChannelDir:      ".",
+		ClientMode:      false,
+		HeartbeatPeriod: 2000,
+		FileLog:         log.NewFileConfig(),
+		Monitor:         mon.NewConfig(),
 		OpenVPN: &ovpnConfig{
 			Name:       "openvpn",
 			ConfigRoot: "/etc/openvpn/config",

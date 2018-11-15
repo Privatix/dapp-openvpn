@@ -37,7 +37,7 @@ func createService(o *openvpn.OpenVPN) error {
 
 func startService(o *openvpn.OpenVPN) error {
 	if s, err := o.StartService(); err != nil {
-		return fmt.Errorf("failed to stop service: %v %v", s, err)
+		return fmt.Errorf("failed to start service: %v %v", s, err)
 	}
 	return nil
 }

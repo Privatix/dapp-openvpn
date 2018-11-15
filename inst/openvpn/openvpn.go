@@ -40,10 +40,9 @@ type validity struct {
 }
 
 type host struct {
-	IP       string
-	Port     int
-	Mask     string
-	Protocol string
+	IP   string
+	Port int
+	Mask string
 }
 
 // NewOpenVPN creates a default OpenVPN configuration.
@@ -54,14 +53,12 @@ func NewOpenVPN() *OpenVPN {
 		Role:  "server",
 		Proto: "udp",
 		Host: &host{
-			IP:       "0.0.0.0",
-			Port:     443,
-			Protocol: "tcp",
+			IP:   "0.0.0.0",
+			Port: 443,
 		},
 		Managment: &host{
-			IP:       "127.0.0.1",
-			Port:     7505,
-			Protocol: "tcp",
+			IP:   "127.0.0.1",
+			Port: 7505,
 		},
 		Server: &host{
 			IP:   "10.217.3.0",
@@ -121,8 +118,12 @@ func (o *OpenVPN) createConfig() error {
 	}
 
 	// Set dynamic port.
-	o.Managment.Port = nextFreePort(*o.Managment)
-	o.Host.Port = nextFreePort(*o.Host)
+	o.Managment.Port = nextFreePort(*o.Managment, "tcp")
+	o.Host.Port = nextFreePort(*o.Host, o.Proto)
+
+	if strings.EqualFold(o.Proto, "tcp") {
+		o.Proto = fmt.Sprintf("%s-%s", o.Proto, o.Role)
+	}
 
 	if !o.IsWindows {
 		o.User, o.Group, err = getUserGroup()

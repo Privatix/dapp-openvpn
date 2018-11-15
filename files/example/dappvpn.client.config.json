@@ -1,5 +1,7 @@
 {
     "ChannelDir": ".",
+    "ClientMode": true,
+    "HeartbeatPeriod": 2000,
     "FileLog": {
         "Level": "info",
         "StackLevel": "error",
