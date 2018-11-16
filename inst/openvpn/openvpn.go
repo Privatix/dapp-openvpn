@@ -92,6 +92,7 @@ func (o *OpenVPN) RemoveTap() (err error) {
 // Configurate configurates openvpn config files.
 func (o *OpenVPN) Configurate() error {
 	if o.isClient() {
+		o.Managment.Port = nextFreePort(*o.Managment, "tcp")
 		return nil
 	}
 

@@ -41,6 +41,9 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 	maps["FileLog.Filename"] = filepath.Join(p, "log/dappvpn-%Y-%m-%d.log")
 	maps["OpenVPN.Name"] = filepath.Join(p, path.OpenVPN)
 	maps["OpenVPN.ConfigRoot"] = filepath.Join(p, "config")
+	if o.IsWindows {
+		maps["OpenVPN.TapInterface"] = o.Tap.Interface
+	}
 	maps["Pusher.CaCertPath"] = filepath.Join(p, path.CACertificate)
 	maps["Pusher.ConfigPath"] = filepath.Join(p, path.RoleConfig(o.Role))
 

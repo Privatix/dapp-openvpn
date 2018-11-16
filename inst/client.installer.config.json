@@ -1,5 +1,8 @@
 {
     "Path":"..",
     "Role":"client",
-    "Proto":"tcp"
+    "Proto":"tcp",
+    "Managment": {
+        "Port": 7605
+    }
 }
