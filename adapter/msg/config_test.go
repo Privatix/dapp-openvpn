@@ -22,6 +22,9 @@ const (
 	caDataKey = "caData"
 	remoteKey = "remote"
 	portKey   = "port"
+
+	managementPortKey = "management"
+	tapInterfaceKey   = "dev-node"
 )
 
 var (
@@ -81,15 +84,47 @@ func checkCA(t *testing.T, config string, ca []byte) {
 	}
 }
 
-func checkConf(t *testing.T, config string, keys []string) {
-	keys = append(keys, remoteKey)
+func checkConf(t *testing.T, config string,
+	keys []string, options map[string]interface{}) {
+	specialKeys := []string{remoteKey, tapInterfaceKey, managementPortKey}
+	keys = append(keys, specialKeys...)
 
 	result, err := vpnParams(logger, config, keys)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// checks special argument "port"
+	// Checks special argument `dev-node`.
+	gotTapIf, ok := result[tapInterfaceKey]
+	if !ok {
+		t.Fatal(`special argument "dev-node" not exists`)
+	}
+
+	tapInterfaceVal := fmt.Sprintf(`"%s"`, options[TapInterface])
+
+	if tapInterfaceVal != gotTapIf {
+		t.Fatalf("special argument dev-node not exists,"+
+			" wanted: %s, got: %s", tapInterfaceVal, gotTapIf)
+	}
+
+	// Checks special argument `management`.
+	manPortSrt, ok := result[managementPortKey]
+	if !ok {
+		t.Fatal(`special argument "management" not exists`)
+	}
+
+	manPortSrtWords := strings.Split(manPortSrt, " ")
+	if len(manPortSrtWords) != 2 {
+		t.Fatal(`special argument "management" not exists`)
+	}
+
+	expManPort := fmt.Sprintf("%d", options[VpnManagementPort])
+	if expManPort != manPortSrtWords[1] {
+		t.Fatalf("special argument management not exists,"+
+			" wanted: %s, got: %s", expManPort, manPortSrtWords)
+	}
+
+	// Checks special argument "remote".
 	val, ok := result[remoteKey]
 	if !ok {
 		t.Fatal(`special argument "remote" not exists`)
@@ -99,13 +134,15 @@ func checkConf(t *testing.T, config string, keys []string) {
 		t.Fatal(`special argument "port" not exists`)
 	}
 
-	// clears the map of special parameters
-	delete(result, remoteKey)
+	// Clears the map of special parameters.
+	for _, v := range specialKeys {
+		delete(result, v)
+	}
 
-	// adds the just-tested parameter to the resulting map
+	// Adds the just-tested parameter to the resulting map.
 	result[portKey] = conf.TestVPNConfig[portKey]
 
-	// checks special parameter "proto"
+	// Checks special parameter "proto".
 	if result[paramProto] != defaultProto {
 		t.Fatal(`special argument "proto" must be "tcp-client"`)
 	}
@@ -114,7 +151,6 @@ func checkConf(t *testing.T, config string, keys []string) {
 	// On the client "tcp" parameter is replaced by "tcp-client"
 	result[paramProto] = conf.TestVPNConfig[paramProto]
 
-	// others parameters not change
 	if !reflect.DeepEqual(conf.TestVPNConfig, result) {
 		t.Fatal("result parameters not equals initial parameters")
 	}
@@ -138,13 +174,17 @@ func TestMakeFiles(t *testing.T) {
 	accessFile := filepath.Join(rootDir, defaultAccessFile)
 	confFile := filepath.Join(rootDir, clientConfigFile)
 
+	options := map[string]interface{}{
+		VpnManagementPort: uint16(7777),
+		TapInterface:      "12345",
+	}
+
 	if err := MakeFiles(logger, rootDir, serviceEndpointAddress, username,
-		password, data, SpecificOptions(
-			conf.VPNMonitor)); err != nil {
+		password, data, options); err != nil {
 		t.Fatal(err)
 	}
 
 	checkAccess(t, accessFile, username, password)
 	checkCA(t, confFile, []byte(params[caDataKey]))
-	checkConf(t, confFile, parameterKeys(conf.TestVPNConfig))
+	checkConf(t, confFile, parameterKeys(conf.TestVPNConfig), options)
 }

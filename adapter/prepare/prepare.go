@@ -2,6 +2,8 @@ package prepare
 
 import (
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"github.com/privatix/dappctrl/sesssrv"
 	"github.com/privatix/dappctrl/svc/connector"
@@ -39,9 +41,35 @@ func ClientConfig(logger log.Logger, channel string, conn connector.Connector,
 	err = msg.MakeFiles(logger, target,
 		save(endpoint.ServiceEndpointAddress), save(endpoint.Username),
 		save(endpoint.Password), endpoint.AdditionalParams,
-		msg.SpecificOptions(adapterConfig.Monitor))
+		specificOptions(adapterConfig))
 	if err != nil {
 		return ErrMakeConfig
 	}
 	return nil
+}
+
+// SpecificOptions returns specific options for dappvpn.
+// These options will be used to create a product configuration.
+func specificOptions(cfg *config.Config) (options map[string]interface{}) {
+	options = make(map[string]interface{})
+
+	// Reads Windows TAP device name.
+	if cfg.OpenVPN.TapInterface != "" {
+		options[msg.TapInterface] = cfg.OpenVPN.TapInterface
+	}
+
+	// Reads OpenVpn management interface address from configuration.
+	params := strings.Split(cfg.Monitor.Addr, ":")
+	if len(params) != 2 {
+		return options
+	}
+
+	// Reads OpenVpn management interface server port from configuration.
+	port, err := strconv.ParseUint(params[1], 10, 16)
+	if err != nil {
+		return options
+	}
+
+	options[msg.VpnManagementPort] = uint16(port)
+	return options
 }

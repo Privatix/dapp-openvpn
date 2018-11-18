@@ -17,7 +17,7 @@ var (
 	conf struct {
 		StderrLog     *log.WriterConfig
 		Pusher        *Config
-		VPNMonitor    *mon.Config
+		Monitor       *mon.Config
 		TestVPNConfig map[string]string
 	}
 
@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 
 	conf.StderrLog = log.NewWriterConfig()
 	conf.Pusher = NewConfig()
-	conf.VPNMonitor = mon.NewConfig()
+	conf.Monitor = mon.NewConfig()
 	conf.TestVPNConfig = newTestVPNConfig()
 
 	util.ReadTestConfig(&conf)
