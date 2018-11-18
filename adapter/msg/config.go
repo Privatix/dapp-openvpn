@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"text/template"
@@ -142,8 +143,14 @@ func (s *service) makeClientConfig(dir, serviceEndpointAddress string,
 		return err
 	}
 
-	// add full path to a access file to the configuration
-	cfg.AccessFile = accessDestination(dir)
+	accessDst := accessDestination(dir)
+
+	// Adds full path to an access file to a configuration.
+	if runtime.GOOS == "windows" {
+		cfg.AccessFile = strings.Replace(accessDst, `\`, `\\`, -1)
+	} else {
+		cfg.AccessFile = accessDst
+	}
 
 	// add vpn management port to the configuration
 	mPort, ok := options[VpnManagementPort]
