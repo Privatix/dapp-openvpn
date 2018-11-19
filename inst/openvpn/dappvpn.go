@@ -49,7 +49,8 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 
 	addr := fmt.Sprintf("%s:%v", o.Managment.IP, o.Managment.Port)
 	maps["Monitor.Addr"] = addr
-	if addr, err = connectorAddr(path.DappCtrlConfig); err != nil {
+	addr, err = connectorAddr(filepath.Join(p, path.DappCtrlConfig))
+	if err != nil {
 		return err
 	}
 	maps["Connector.Addr"] = addr

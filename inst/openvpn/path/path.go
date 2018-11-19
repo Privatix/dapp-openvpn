@@ -30,7 +30,7 @@ const (
 	// DappVPNConfig file location
 	DappVPNConfig = `config/dappvpn.config.json`
 	// DappCtrlConfig file location
-	DappCtrlConfig = `../../../dappctrl/dappctrl.config.json`
+	DappCtrlConfig = `../../dappctrl/dappctrl.config.json`
 )
 
 // RoleCertificate returns roles certificate path.

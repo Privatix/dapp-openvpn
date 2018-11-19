@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -103,6 +104,9 @@ func processedInstallFlags(ovpn *openvpn.OpenVPN) error {
 }
 
 func validatePath(o *openvpn.OpenVPN) error {
+	if strings.EqualFold(o.Path, "..") {
+		o.Path = filepath.Join(filepath.Dir(os.Args[0]), "..")
+	}
 	path, err := filepath.Abs(o.Path)
 	if err != nil {
 		return err
@@ -201,4 +205,13 @@ func createEnv(o *openvpn.OpenVPN) error {
 
 func removeEnv(o *openvpn.OpenVPN) error {
 	return os.Remove(filepath.Join(o.Path, envFile))
+}
+
+func startServices(o *openvpn.OpenVPN) error {
+	cmd := exec.Command(os.Args[0], "start")
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to start services: %v", err)
+	}
+	return nil
 }
