@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -239,6 +240,11 @@ func TestClientSessionEvents(t *testing.T) {
 	receive(t, reader)
 	receive(t, reader)
 	receive(t, reader)
+
+	// Expect additional `hold release` for Windows.
+	if runtime.GOOS == "windows" {
+		receive(t, reader)
+	}
 
 	// Should be ignored since it's not consireded
 	// to be connected being in client mode.
