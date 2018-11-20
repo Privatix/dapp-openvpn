@@ -32,6 +32,8 @@ type OpenVPN struct {
 	IsWindows bool
 	User      string
 	Group     string
+	Import    bool
+	Install   bool
 }
 
 type validity struct {

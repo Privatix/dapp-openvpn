@@ -31,12 +31,4 @@ Flags:
 	--workdir	Product install directory
 `
 
-const (
-	envFile      = "config/.env"
-	envWorkDir   = "WORKDIR"
-	envDevice    = "DEVICE"
-	envInterface = "INTERFACE"
-	envService   = "SERVICE"
-	envRole      = "ROLE"
-	envDappVPN   = "DAPPVPN"
-)
+const envFile = "config/.env.config.json"

@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/joho/godotenv"
 	"github.com/privatix/dappctrl/util"
 
+	"github.com/privatix/dapp-openvpn/inst/env"
 	"github.com/privatix/dapp-openvpn/inst/openvpn"
 )
 
@@ -121,11 +121,12 @@ func validateToInstall(o *openvpn.OpenVPN) error {
 		return err
 	}
 
+	v := env.NewConfig()
 	// When installing the environment file may not be.
 	// It is created on the installation finalize.
-	_ = godotenv.Load(filepath.Join(o.Path, envFile))
+	_ = v.Read(filepath.Join(o.Path, envFile))
 
-	if strings.EqualFold(o.Path, os.Getenv(envWorkDir)) {
+	if strings.EqualFold(o.Path, v.Workdir) {
 		err = errors.New("openvpn was installed at this workdir")
 	}
 	return err
@@ -167,36 +168,39 @@ func checkInstallation(o *openvpn.OpenVPN) error {
 		return err
 	}
 
-	err = godotenv.Load(filepath.Join(o.Path, envFile))
-	if err != nil {
+	v := env.NewConfig()
+	if err := v.Read(filepath.Join(o.Path, envFile)); err != nil {
 		return err
 	}
 
-	w := os.Getenv(envWorkDir)
-	if !strings.EqualFold(o.Path, w) {
-		return fmt.Errorf("env workdir %s is not equal to the path", w)
+	if !strings.EqualFold(o.Path, v.Workdir) {
+		return fmt.Errorf("env workdir %s is not equal to the path",
+			v.Workdir)
 	}
-	o.Tap.DeviceID = os.Getenv(envDevice)
-	o.Tap.Interface = os.Getenv(envInterface)
-	o.Service = os.Getenv(envService)
-	o.Role = os.Getenv(envRole)
-	o.DappVPN.Service = os.Getenv(envDappVPN)
+	o.Tap.DeviceID = v.Device
+	o.Tap.Interface = v.Interface
+	o.Service = v.Service
+	o.Role = v.Role
+	o.DappVPN.Service = v.DappVPN
+	o.Import = v.ProductImport
+	o.Install = v.ProductInstall
 
 	return nil
 }
 
 func createEnv(o *openvpn.OpenVPN) error {
-	env := make(map[string]string)
+	v := env.NewConfig()
 
-	env[envWorkDir] = o.Path
-	env[envDevice] = o.Tap.DeviceID
-	env[envInterface] = o.Tap.Interface
-	env[envService] = o.Service
-	env[envRole] = o.Role
-	env[envDappVPN] = o.DappVPN.Service
+	v.Workdir = o.Path
+	v.Device = o.Tap.DeviceID
+	v.Interface = o.Tap.Interface
+	v.Service = o.Service
+	v.Role = o.Role
+	v.DappVPN = o.DappVPN.Service
+	v.ProductImport = o.Import
+	v.ProductInstall = o.Install
 
-	err := godotenv.Write(env, filepath.Join(o.Path, envFile))
-	if err != nil {
+	if err := v.Write(filepath.Join(o.Path, envFile)); err != nil {
 		return fmt.Errorf("failed to create env file: %v", err)
 	}
 
@@ -204,7 +208,19 @@ func createEnv(o *openvpn.OpenVPN) error {
 }
 
 func removeEnv(o *openvpn.OpenVPN) error {
-	return os.Remove(filepath.Join(o.Path, envFile))
+	if !o.Import {
+		return os.Remove(filepath.Join(o.Path, envFile))
+	}
+
+	v := env.NewConfig()
+
+	v.ProductImport = o.Import
+
+	if err := v.Write(filepath.Join(o.Path, envFile)); err != nil {
+		return fmt.Errorf("failed to write env file: %v", err)
+	}
+
+	return nil
 }
 
 func startServices(o *openvpn.OpenVPN) error {
