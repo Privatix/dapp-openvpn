@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/privatix/dappctrl/util"
@@ -228,6 +230,35 @@ func startServices(o *openvpn.OpenVPN) error {
 
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to start services: %v", err)
+	}
+	return nil
+}
+
+func changeOwner(o *openvpn.OpenVPN) error {
+	if o.IsWindows {
+		return nil
+	}
+
+	logname, err := exec.Command("logname").Output()
+	if err != nil {
+		return err
+	}
+
+	group, err := user.Lookup(strings.TrimSpace(string(logname)))
+	if err != nil {
+		return fmt.Errorf("failed to lookup user: %v", err)
+	}
+	uid, _ := strconv.Atoi(group.Uid)
+	gid, _ := strconv.Atoi(group.Gid)
+
+	if err := filepath.Walk(o.Path,
+		func(name string, info os.FileInfo, err error) error {
+			if err == nil {
+				err = os.Chown(name, uid, gid)
+			}
+			return err
+		}); err != nil {
+		return fmt.Errorf("failed to change owner: %v", err)
 	}
 	return nil
 }
