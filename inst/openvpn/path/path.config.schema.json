@@ -1,0 +1,154 @@
+{
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://example.com/root.json",
+    "type": "object",
+    "title": "The Root Schema",
+    "required": [
+        "OVPN",
+        "DVPN",
+        "OpenVPN",
+        "OpenSSL",
+        "OemVista",
+        "TapInstall",
+        "DHParam",
+        "CACertificate",
+        "CAKey",
+        "ServerConfigTemplate",
+        "DappVPN",
+        "DappVPNConfig",
+        "DappCtrlConfig"
+    ],
+    "properties": {
+        "OVPN": {
+            "$id": "#/properties/OVPN",
+            "type": "string",
+            "title": "The Ovpn Schema",
+            "default": "",
+            "examples": [
+                "openvpn"
+            ],
+            "pattern": "^(.*)$"
+        },
+        "DVPN": {
+            "$id": "#/properties/DVPN",
+            "type": "string",
+            "title": "The Dvpn Schema",
+            "default": "",
+            "examples": [
+                "dappvpn"
+            ],
+            "pattern": "^(.*)$"
+        },
+        "OpenVPN": {
+            "$id": "#/properties/OpenVPN",
+            "type": "string",
+            "title": "The Openvpn Schema",
+            "default": "",
+            "examples": [
+                "bin/openvpn/openvpn"
+            ],
+            "pattern": "^(.*)$"
+        },
+        "OpenSSL": {
+            "$id": "#/properties/OpenSSL",
+            "type": "string",
+            "title": "The Openssl Schema",
+            "default": "",
+            "examples": [
+                "bin/openvpn/openssl"
+            ],
+            "pattern": "^(.*)$"
+        },
+        "OemVista": {
+            "$id": "#/properties/OemVista",
+            "type": "string",
+            "title": "The Oemvista Schema",
+            "default": "",
+            "examples": [
+                "bin/openvpn/driver/OemVista.inf"
+            ],
+            "pattern": "^(.*)$"
+        },
+        "TapInstall": {
+            "$id": "#/properties/TapInstall",
+            "type": "string",
+            "title": "The Tapinstall Schema",
+            "default": "",
+            "examples": [
+                "bin/openvpn/tapinstall"
+            ],
+            "pattern": "^(.*)$"
+        },
+        "DHParam": {
+            "$id": "#/properties/DHParam",
+            "type": "string",
+            "title": "The Dhparam Schema",
+            "default": "",
+            "examples": [
+                "config/dh2048.pem"
+            ],
+            "pattern": "^(.*)$"
+        },
+        "CACertificate": {
+            "$id": "#/properties/CACertificate",
+            "type": "string",
+            "title": "The Cacertificate Schema",
+            "default": "",
+            "examples": [
+                "config/ca.crt"
+            ],
+            "pattern": "^(.*)$"
+        },
+        "CAKey": {
+            "$id": "#/properties/CAKey",
+            "type": "string",
+            "title": "The Cakey Schema",
+            "default": "",
+            "examples": [
+                "config/ca.key"
+            ],
+            "pattern": "^(.*)$"
+        },
+        "ServerConfigTemplate": {
+            "$id": "#/properties/ServerConfigTemplate",
+            "type": "string",
+            "title": "The Serverconfigtemplate Schema",
+            "default": "",
+            "examples": [
+                "/ovpn/templates/server-config.tpl"
+            ],
+            "pattern": "^(.*)$"
+        },
+        "DappVPN": {
+            "$id": "#/properties/DappVPN",
+            "type": "string",
+            "title": "The Dappvpn Schema",
+            "default": "",
+            "examples": [
+                "bin/dappvpn"
+            ],
+            "pattern": "^(.*)$"
+        },
+        "DappVPNConfig": {
+            "$id": "#/properties/DappVPNConfig",
+            "type": "string",
+            "title": "The Dappvpnconfig Schema",
+            "default": "",
+            "examples": [
+                "config/dappvpn.config.json"
+            ],
+            "pattern": "^(.*)$"
+        },
+        "DappCtrlConfig": {
+            "$id": "#/properties/DappCtrlConfig",
+            "type": "string",
+            "title": "The Dappctrlconfig Schema",
+            "default": "",
+            "examples": [
+                "../../dappctrl/dappctrl.config.json"
+            ],
+            "pattern": "^(.*)$"
+        }
+    }
+}

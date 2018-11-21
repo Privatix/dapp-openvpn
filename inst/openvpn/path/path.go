@@ -1,37 +1,73 @@
 package path
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
+
+	"github.com/privatix/dappctrl/util"
 )
 
-const (
+// Config is a global variable to path configuration.
+var Config *config
+
+func init() {
+	Config = newConfig()
+	dir := filepath.Dir(os.Args[0])
+	path := filepath.Join(dir, "../config/path.config.json")
+	if _, err := os.Stat(path); err == nil {
+		_ = util.ReadJSONFile(path, &Config)
+	}
+}
+
+// config has a path configuration.
+type config struct {
 	// OVPN is a openvpn
-	OVPN = "openvpn"
+	OVPN string
 	// DVPN is a dappvpn
-	DVPN = "dappvpn"
+	DVPN string
 	// OpenVPN file location
-	OpenVPN = `bin/openvpn/openvpn`
+	OpenVPN string
 	// OpenSSL file location
-	OpenSSL = `bin/openvpn/openssl`
+	OpenSSL string
 	// OemVista driver file location
-	OemVista = `bin/openvpn/driver/OemVista.inf`
+	OemVista string
 	// TapInstall file location
-	TapInstall = `bin/openvpn/tapinstall`
+	TapInstall string
 	// DHParam file location
-	DHParam = `config/dh2048.pem`
+	DHParam string
 	// CACertificate file location
-	CACertificate = `config/ca.crt`
+	CACertificate string
 	// CAKey file location
-	CAKey = `config/ca.key`
+	CAKey string
 	// ServerConfigTemplate file location
-	ServerConfigTemplate = `/ovpn/templates/server-config.tpl`
+	ServerConfigTemplate string
 	// DappVPN file location
-	DappVPN = `bin/dappvpn`
+	DappVPN string
 	// DappVPNConfig file location
-	DappVPNConfig = `config/dappvpn.config.json`
+	DappVPNConfig string
 	// DappCtrlConfig file location
-	DappCtrlConfig = `../../dappctrl/dappctrl.config.json`
-)
+	DappCtrlConfig string
+}
+
+// newConfig creates a default path configuration.
+func newConfig() *config {
+	return &config{
+		OVPN:                 "openvpn",
+		DVPN:                 "dappvpn",
+		OpenVPN:              `bin/openvpn/openvpn`,
+		OpenSSL:              `bin/openvpn/openssl`,
+		OemVista:             `bin/openvpn/driver/OemVista.inf`,
+		TapInstall:           `bin/openvpn/tapinstall`,
+		DHParam:              `config/dh2048.pem`,
+		CACertificate:        `config/ca.crt`,
+		CAKey:                `config/ca.key`,
+		ServerConfigTemplate: `/ovpn/templates/server-config.tpl`,
+		DappVPN:              `bin/dappvpn`,
+		DappVPNConfig:        `config/dappvpn.config.json`,
+		DappCtrlConfig:       `../../dappctrl/dappctrl.config.json`,
+	}
+}
 
 // RoleCertificate returns roles certificate path.
 func RoleCertificate(role string) string {
@@ -50,16 +86,16 @@ func RoleConfig(role string) string {
 
 // VPN returns vpn path.
 func VPN(t string) string {
-	if strings.EqualFold(t, DVPN) {
-		return DappVPN
+	if strings.EqualFold(t, Config.DVPN) {
+		return Config.DappVPN
 	}
-	return OpenVPN
+	return Config.OpenVPN
 }
 
 // VPNConfig returns vpn config path.
 func VPNConfig(t, role string) string {
-	if strings.EqualFold(t, DVPN) {
-		return DappVPNConfig
+	if strings.EqualFold(t, Config.DVPN) {
+		return Config.DappVPNConfig
 	}
 	return RoleConfig(role)
 }

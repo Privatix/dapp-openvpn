@@ -8,8 +8,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/privatix/dapp-openvpn/inst/openvpn/path"
 	"github.com/takama/daemon"
+
+	"github.com/privatix/dapp-openvpn/inst/openvpn/path"
 )
 
 // DappVPN has a dappvpn configuration.
@@ -25,7 +26,7 @@ func NewDappVPN() *DappVPN {
 // Configurate configurates dappvpn config files.
 func (d *DappVPN) Configurate(o *OpenVPN) error {
 	p := o.Path
-	configFile := filepath.Join(p, path.DappVPNConfig)
+	configFile := filepath.Join(p, path.Config.DappVPNConfig)
 
 	read, err := os.Open(configFile)
 	if err != nil {
@@ -39,17 +40,17 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 	maps := make(map[string]interface{})
 
 	maps["FileLog.Filename"] = filepath.Join(p, "log/dappvpn-%Y-%m-%d.log")
-	maps["OpenVPN.Name"] = filepath.Join(p, path.OpenVPN)
+	maps["OpenVPN.Name"] = filepath.Join(p, path.Config.OpenVPN)
 	maps["OpenVPN.ConfigRoot"] = filepath.Join(p, "config")
 	if o.IsWindows {
 		maps["OpenVPN.TapInterface"] = o.Tap.Interface
 	}
-	maps["Pusher.CaCertPath"] = filepath.Join(p, path.CACertificate)
+	maps["Pusher.CaCertPath"] = filepath.Join(p, path.Config.CACertificate)
 	maps["Pusher.ConfigPath"] = filepath.Join(p, path.RoleConfig(o.Role))
 
 	addr := fmt.Sprintf("%s:%v", o.Managment.IP, o.Managment.Port)
 	maps["Monitor.Addr"] = addr
-	addr, err = connectorAddr(filepath.Join(p, path.DappCtrlConfig))
+	addr, err = connectorAddr(filepath.Join(p, path.Config.DappCtrlConfig))
 	if err != nil {
 		return err
 	}
@@ -70,7 +71,7 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 
 // InstallService installs a dappvpn service.
 func (d *DappVPN) InstallService(role, dir string) (string, error) {
-	d.Service = serviceName(path.DVPN, dir)
+	d.Service = serviceName(path.Config.DVPN, dir)
 	descr := fmt.Sprintf("Privatix %s dappvpn %s", role, hash(dir))
 
 	if strings.EqualFold(runtime.GOOS, "windows") {
@@ -101,7 +102,8 @@ func (d *DappVPN) RunService(role, dir string) (string, error) {
 		return "", err
 	}
 
-	return service.Run(&execute{Path: dir, Role: role, Type: path.DVPN})
+	return service.Run(&execute{Path: dir, Role: role,
+		Type: path.Config.DVPN})
 }
 
 // StopService stops dappvpn service.

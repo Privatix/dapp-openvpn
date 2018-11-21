@@ -127,8 +127,9 @@ func validateToInstall(o *openvpn.OpenVPN) error {
 	// When installing the environment file may not be.
 	// It is created on the installation finalize.
 	_ = v.Read(filepath.Join(o.Path, envFile))
+	o.Import = v.ProductImport
 
-	if strings.EqualFold(o.Path, v.Workdir) {
+	if v.ProductInstall || strings.EqualFold(o.Path, v.Workdir) {
 		err = errors.New("openvpn was installed at this workdir")
 	}
 	return err
