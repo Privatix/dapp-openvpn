@@ -15,8 +15,8 @@
         "CACertificate",
         "CAKey",
         "ServerConfigTemplate",
-        "DappVPN",
-        "DappVPNConfig",
+        "Adapter",
+        "AdapterConfig",
         "DappCtrlConfig"
     ],
     "properties": {
@@ -120,23 +120,23 @@
             ],
             "pattern": "^(.*)$"
         },
-        "DappVPN": {
-            "$id": "#/properties/DappVPN",
+        "Adapter": {
+            "$id": "#/properties/Adapter",
             "type": "string",
-            "title": "The Dappvpn Schema",
+            "title": "The Adapter Schema",
             "default": "",
             "examples": [
                 "bin/dappvpn"
             ],
             "pattern": "^(.*)$"
         },
-        "DappVPNConfig": {
-            "$id": "#/properties/DappVPNConfig",
+        "AdapterConfig": {
+            "$id": "#/properties/AdapterConfig",
             "type": "string",
-            "title": "The Dappvpnconfig Schema",
+            "title": "The Adapterconfig Schema",
             "default": "",
             "examples": [
-                "config/dappvpn.config.json"
+                "config/adapter.config.json"
             ],
             "pattern": "^(.*)$"
         },

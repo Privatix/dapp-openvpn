@@ -9,7 +9,7 @@
     "CACertificate": "config/ca.crt",
     "CAKey": "config/ca.key",
     "ServerConfigTemplate": "/ovpn/templates/server-config.tpl",
-    "DappVPN": "bin/dappvpn",
-    "DappVPNConfig": "config/dappvpn.config.json",
+    "Adapter": "bin/dappvpn",
+    "AdapterConfig": "config/adapter.config.json",
     "DappCtrlConfig": "../../dappctrl/dappctrl.config.json"
 }

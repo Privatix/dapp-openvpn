@@ -15,7 +15,7 @@ type Config struct {
 	Interface      string
 	Service        string
 	Role           string
-	DappVPN        string
+	Adapter        string
 	ProductImport  bool
 	ProductInstall bool
 }

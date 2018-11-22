@@ -27,7 +27,7 @@ type OpenVPN struct {
 	Managment *host
 	Server    *host
 	Service   string
-	DappVPN   *DappVPN
+	Adapter   *DappVPN
 	Validity  *validity
 	IsWindows bool
 	User      string
@@ -71,7 +71,7 @@ func NewOpenVPN() *OpenVPN {
 			Year: 10,
 		},
 		IsWindows: strings.EqualFold(runtime.GOOS, "windows"),
-		DappVPN:   NewDappVPN(),
+		Adapter:   NewDappVPN(),
 	}
 }
 

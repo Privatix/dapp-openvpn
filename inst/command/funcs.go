@@ -36,7 +36,7 @@ func createService(o *openvpn.OpenVPN) error {
 		return fmt.Errorf("failed to install service: %v %v", s, err)
 	}
 
-	if s, err := o.DappVPN.InstallService(o.Role, o.Path); err != nil {
+	if s, err := o.Adapter.InstallService(o.Role, o.Path); err != nil {
 		return fmt.Errorf("failed to install service: %v %v", s, err)
 	}
 	return nil
@@ -47,7 +47,7 @@ func startService(o *openvpn.OpenVPN) error {
 		return fmt.Errorf("failed to start service: %v %v", s, err)
 	}
 
-	if s, err := o.DappVPN.StartService(); err != nil {
+	if s, err := o.Adapter.StartService(); err != nil {
 		return fmt.Errorf("failed to start service: %v %v", s, err)
 	}
 	return nil
@@ -60,16 +60,16 @@ func runService(o *openvpn.OpenVPN) error {
 	return nil
 }
 
-func runDappVPN(o *openvpn.OpenVPN) error {
-	if s, err := o.DappVPN.RunService(o.Role, o.Path); err != nil {
+func runAdapter(o *openvpn.OpenVPN) error {
+	if s, err := o.Adapter.RunService(o.Role, o.Path); err != nil {
 		return fmt.Errorf("failed to run service: %v %v", s, err)
 	}
 	return nil
 }
 
 func stopService(o *openvpn.OpenVPN) error {
-	if s, err := o.DappVPN.StopService(); err != nil {
-		return fmt.Errorf("failed to stop dappvpn service: %v %v",
+	if s, err := o.Adapter.StopService(); err != nil {
+		return fmt.Errorf("failed to stop adapter service: %v %v",
 			s, err)
 	}
 
@@ -80,8 +80,8 @@ func stopService(o *openvpn.OpenVPN) error {
 }
 
 func removeService(o *openvpn.OpenVPN) error {
-	if s, err := o.DappVPN.RemoveService(); err != nil {
-		return fmt.Errorf("failed to remove dappvpn service: %v %v",
+	if s, err := o.Adapter.RemoveService(); err != nil {
+		return fmt.Errorf("failed to remove adapter service: %v %v",
 			s, err)
 	}
 
@@ -94,15 +94,29 @@ func removeService(o *openvpn.OpenVPN) error {
 func processedInstallFlags(ovpn *openvpn.OpenVPN) error {
 	h := flag.Bool("help", false, "Display installer help")
 	config := flag.String("config", "", "Configuration file")
+	role := flag.String("role", "", "Product role")
+	p := flag.String("workdir", "", "Product install directory")
 
 	flag.CommandLine.Parse(os.Args[2:])
 
-	if *h || len(*config) == 0 {
+	if *h {
 		fmt.Println(installHelp)
 		os.Exit(0)
 	}
 
-	return util.ReadJSONFile(*config, &ovpn)
+	if len(*config) > 0 {
+		if err := util.ReadJSONFile(*config, &ovpn); err != nil {
+			return err
+		}
+	}
+
+	if len(*p) > 0 {
+		ovpn.Path = *p
+	}
+	if len(*role) > 0 {
+		ovpn.Role = *role
+	}
+	return nil
 }
 
 func validatePath(o *openvpn.OpenVPN) error {
@@ -140,8 +154,8 @@ func createConfig(o *openvpn.OpenVPN) error {
 		return fmt.Errorf("failed to configure openvpn: %v", err)
 	}
 
-	if err := o.DappVPN.Configurate(o); err != nil {
-		return fmt.Errorf("failed to configure dappvpn: %v", err)
+	if err := o.Adapter.Configurate(o); err != nil {
+		return fmt.Errorf("failed to configure adapter: %v", err)
 	}
 	return nil
 }
@@ -184,7 +198,7 @@ func checkInstallation(o *openvpn.OpenVPN) error {
 	o.Tap.Interface = v.Interface
 	o.Service = v.Service
 	o.Role = v.Role
-	o.DappVPN.Service = v.DappVPN
+	o.Adapter.Service = v.Adapter
 	o.Import = v.ProductImport
 	o.Install = v.ProductInstall
 
@@ -199,7 +213,7 @@ func createEnv(o *openvpn.OpenVPN) error {
 	v.Interface = o.Tap.Interface
 	v.Service = o.Service
 	v.Role = o.Role
-	v.DappVPN = o.DappVPN.Service
+	v.Adapter = o.Adapter.Service
 	v.ProductImport = o.Import
 	v.ProductInstall = o.Install
 

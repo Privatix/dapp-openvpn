@@ -26,7 +26,7 @@ func NewDappVPN() *DappVPN {
 // Configurate configurates dappvpn config files.
 func (d *DappVPN) Configurate(o *OpenVPN) error {
 	p := o.Path
-	configFile := filepath.Join(p, path.Config.DappVPNConfig)
+	configFile := filepath.Join(p, path.Config.AdapterConfig)
 
 	read, err := os.Open(configFile)
 	if err != nil {
@@ -83,7 +83,7 @@ func (d *DappVPN) InstallService(role, dir string) (string, error) {
 		return "", err
 	}
 
-	return service.Install("run-dappvpn", "-workdir", dir)
+	return service.Install("run-adapter", "-workdir", dir)
 }
 
 // StartService starts dappvpn service.

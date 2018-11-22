@@ -42,10 +42,10 @@ type config struct {
 	CAKey string
 	// ServerConfigTemplate file location
 	ServerConfigTemplate string
-	// DappVPN file location
-	DappVPN string
-	// DappVPNConfig file location
-	DappVPNConfig string
+	// Adapter file location
+	Adapter string
+	// AdapterConfig file location
+	AdapterConfig string
 	// DappCtrlConfig file location
 	DappCtrlConfig string
 }
@@ -63,8 +63,8 @@ func newConfig() *config {
 		CACertificate:        `config/ca.crt`,
 		CAKey:                `config/ca.key`,
 		ServerConfigTemplate: `/ovpn/templates/server-config.tpl`,
-		DappVPN:              `bin/dappvpn`,
-		DappVPNConfig:        `config/dappvpn.config.json`,
+		Adapter:              `bin/dappvpn`,
+		AdapterConfig:        `config/adapter.config.json`,
 		DappCtrlConfig:       `../../dappctrl/dappctrl.config.json`,
 	}
 }
@@ -87,7 +87,7 @@ func RoleConfig(role string) string {
 // VPN returns vpn path.
 func VPN(t string) string {
 	if strings.EqualFold(t, Config.DVPN) {
-		return Config.DappVPN
+		return Config.Adapter
 	}
 	return Config.OpenVPN
 }
@@ -95,7 +95,7 @@ func VPN(t string) string {
 // VPNConfig returns vpn config path.
 func VPNConfig(t, role string) string {
 	if strings.EqualFold(t, Config.DVPN) {
-		return Config.DappVPNConfig
+		return Config.AdapterConfig
 	}
 	return RoleConfig(role)
 }
