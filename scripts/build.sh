@@ -25,7 +25,9 @@ go get -d ${PROJECT}/...
 go get -u gopkg.in/reform.v1/reform
 go get -u github.com/rakyll/statik
 
-curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+if [ ! -f "${GOPATH}"/bin/dep ]; then
+    curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+fi
 rm -f Gopkg.lock
 dep ensure
 
