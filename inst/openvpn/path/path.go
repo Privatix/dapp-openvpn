@@ -48,6 +48,8 @@ type config struct {
 	AdapterConfig string
 	// DappCtrlConfig file location
 	DappCtrlConfig string
+	// ChannelDir is common-name -> channel mappings location.
+	ChannelDir string
 }
 
 // newConfig creates a default path configuration.
@@ -66,6 +68,7 @@ func newConfig() *config {
 		Adapter:              `bin/dappvpn`,
 		AdapterConfig:        `config/adapter.config.json`,
 		DappCtrlConfig:       `../../dappctrl/dappctrl.config.json`,
+		ChannelDir:           `data`,
 	}
 }
 

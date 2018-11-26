@@ -55,6 +55,7 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 		return err
 	}
 	maps["Connector.Addr"] = addr
+	maps["ChannelDir"] = filepath.Join(p, path.Config.ChannelDir)
 
 	if err := setConfigurationValues(jsonMap, maps); err != nil {
 		return err
