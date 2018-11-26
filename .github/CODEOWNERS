@@ -11,7 +11,7 @@
 
 # notify @urmat about changes in inst and installer
 /inst/          @ubozov
-/installer/          @ubozov
+/installer/     @ubozov
 
 # notify devops team about changes in *.config.json
 *.config.json   @kelewind @velopokatun @ubozov
