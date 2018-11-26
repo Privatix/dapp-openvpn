@@ -27,11 +27,13 @@ type OpenVPN struct {
 	Managment *host
 	Server    *host
 	Service   string
-	DappVPN   *DappVPN
+	Adapter   *DappVPN
 	Validity  *validity
 	IsWindows bool
 	User      string
 	Group     string
+	Import    bool
+	Install   bool
 }
 
 type validity struct {
@@ -69,7 +71,7 @@ func NewOpenVPN() *OpenVPN {
 			Year: 10,
 		},
 		IsWindows: strings.EqualFold(runtime.GOOS, "windows"),
-		DappVPN:   NewDappVPN(),
+		Adapter:   NewDappVPN(),
 	}
 }
 
@@ -110,7 +112,7 @@ func (o *OpenVPN) createConfig() error {
 	}
 	defer file.Close()
 
-	data, err := statik.ReadFile(path.ServerConfigTemplate)
+	data, err := statik.ReadFile(path.Config.ServerConfigTemplate)
 	if err != nil {
 		return err
 	}
@@ -145,9 +147,9 @@ func (o *OpenVPN) RemoveConfig() error {
 	}
 
 	pathsToRemove := []string{
-		path.DHParam,
-		path.CACertificate,
-		path.CAKey,
+		path.Config.DHParam,
+		path.Config.CACertificate,
+		path.Config.CAKey,
 		path.RoleCertificate(o.Role),
 		path.RoleKey(o.Role),
 		path.RoleConfig(o.Role),
@@ -168,7 +170,7 @@ func (o *OpenVPN) createCertificate() error {
 	}
 
 	// Generate Diffie Hellman param.
-	ossl := filepath.Join(o.Path, path.OpenSSL)
+	ossl := filepath.Join(o.Path, path.Config.OpenSSL)
 	dh := filepath.Join(p, "dh2048.pem")
 	err := exec.Command(ossl, "dhparam", "-out", dh, "2048").Run()
 	if err != nil {
@@ -189,7 +191,7 @@ func (o *OpenVPN) InstallService() (string, error) {
 	}
 
 	var dependencies []string
-	o.Service = serviceName(path.OVPN, o.Path)
+	o.Service = serviceName(path.Config.OVPN, o.Path)
 	descr := fmt.Sprintf("Privatix %s OpenVPN %s", o.Role, hash(o.Path))
 
 	if o.IsWindows {

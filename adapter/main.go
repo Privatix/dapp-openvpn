@@ -65,7 +65,7 @@ func main() {
 	v := flag.Bool("version", false, "Prints current dappctrl version")
 
 	fconfig := flag.String(
-		"config", "dappvpn.config.json", "Configuration file")
+		"config", "adapter.config.json", "Configuration file")
 	flag.Parse()
 
 	version.Print(*v, Commit, Version)

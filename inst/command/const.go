@@ -20,7 +20,9 @@ Usage:
 	installer install [flags]
 Flags:
 	--config	Configuration file
-	--help		Display help information
+  --help		Display help information
+  --role    Product role
+  --workdir	Product install directory
 `
 
 const templateHelp = `
@@ -31,12 +33,4 @@ Flags:
 	--workdir	Product install directory
 `
 
-const (
-	envFile      = "config/.env"
-	envWorkDir   = "WORKDIR"
-	envDevice    = "DEVICE"
-	envInterface = "INTERFACE"
-	envService   = "SERVICE"
-	envRole      = "ROLE"
-	envDappVPN   = "DAPPVPN"
-)
+const envFile = "config/.env.config.json"

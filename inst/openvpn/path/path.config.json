@@ -1,0 +1,15 @@
+{
+    "OVPN": "openvpn",
+    "DVPN": "dappvpn",
+    "OpenVPN": "bin/openvpn/openvpn",
+    "OpenSSL": "bin/openvpn/openssl",
+    "OemVista": "bin/openvpn/driver/OemVista.inf",
+    "TapInstall": "bin/openvpn/tapinstall",
+    "DHParam": "config/dh2048.pem",
+    "CACertificate": "config/ca.crt",
+    "CAKey": "config/ca.key",
+    "ServerConfigTemplate": "/ovpn/templates/server-config.tpl",
+    "Adapter": "bin/dappvpn",
+    "AdapterConfig": "config/adapter.config.json",
+    "DappCtrlConfig": "../../dappctrl/dappctrl.config.json"
+}
