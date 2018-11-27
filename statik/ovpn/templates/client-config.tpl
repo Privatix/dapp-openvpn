@@ -1,7 +1,7 @@
 # tunX | tapX | null TUN/TAP virtual network device
 # ( X can be omitted for a dynamic device.)
 dev tun
-
+{{if .TapInterface}}dev-node "{{.TapInterface}}"{{end}}
 # Use protocol tcp for communicating
 # with remote host
 proto {{if .Proto}}{{.Proto}}{{else}}tcp-client{{end}}

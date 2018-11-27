@@ -5,21 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"strconv"
+	"runtime"
 	"strings"
 	"text/template"
 
 	"github.com/privatix/dappctrl/util"
 	"github.com/privatix/dappctrl/util/log"
-
-	"github.com/privatix/dapp-openvpn/adapter/mon"
 )
 
 const (
 	defaultAccessFile     = "access.ovpn"
 	defaultCipher         = "AES-256-CBC"
 	defaultConnectRetry   = "5"
-	defaultManagementPort = 7506
+	defaultManagementPort = 7605
 	defaultPing           = "10"
 	defaultPingRestart    = "25"
 	defaultProto          = "tcp-client"
@@ -37,9 +35,10 @@ const (
 	tcpServer = "tcp-server"
 )
 
-// specific adapter options
+// Specific adapter options.
 const (
 	VpnManagementPort = "vpnManagementPort"
+	TapInterface      = "tapInterface"
 )
 
 var (
@@ -58,6 +57,7 @@ type vpnClient struct {
 	Port           string `json:"port"`
 	Proto          string `json:"proto"`
 	ServerAddress  string `json:"-"`
+	TapInterface   string `json:"-"`
 }
 
 type service struct{ logger log.Logger }
@@ -135,22 +135,34 @@ func (s *service) makeClientConfig(dir, serviceEndpointAddress string,
 	params []byte, options map[string]interface{}) error {
 	logger := s.logger.Add("method", "makeClientConfig", "directory", dir)
 
-	// fill client configuration from service endpoint address and
-	// and parameters received from a agent
-	cfg, err := s.fillClientConfig(serviceEndpointAddress, params)
+	// Fills client configuration from service endpoint address and
+	// and parameters received from a agent.
+	openVpnConfig, err := s.fillClientConfig(serviceEndpointAddress, params)
 	if err != nil {
 		return err
 	}
 
-	// add full path to a access file to the configuration
-	cfg.AccessFile = accessDestination(dir)
+	accessDst := accessDestination(dir)
 
-	// add vpn management port to the configuration
+	// Adds full path to an access file to a configuration.
+	if runtime.GOOS == "windows" {
+		openVpnConfig.AccessFile = strings.Replace(accessDst, `\`, `\\`, -1)
+	} else {
+		openVpnConfig.AccessFile = accessDst
+	}
+
+	// Adds vpn management port to the configuration.
 	mPort, ok := options[VpnManagementPort]
 	if ok {
 		if port, ok := mPort.(uint16); ok {
-			cfg.ManagementPort = port
+			openVpnConfig.ManagementPort = port
 		}
+	}
+
+	// Adds Windows TAP device name to the configuration.
+	tapInterface, ok := options[TapInterface]
+	if ok {
+		openVpnConfig.TapInterface = tapInterface.(string)
 	}
 
 	data, err := readFileFromVirtualFS(clientConfigTemplate)
@@ -159,13 +171,13 @@ func (s *service) makeClientConfig(dir, serviceEndpointAddress string,
 		return err
 	}
 
-	// fill configuration template
-	config, err := s.genClientConfig(string(data), cfg)
+	// Fills configuration template.
+	configuration, err := s.genClientConfig(string(data), openVpnConfig)
 	if err != nil {
 		return err
 	}
 
-	err = writeFile(configDestination(dir), config)
+	err = writeFile(configDestination(dir), configuration)
 	if err != nil {
 		logger.Error(err.Error())
 		return ErrCreateConfig
@@ -173,13 +185,13 @@ func (s *service) makeClientConfig(dir, serviceEndpointAddress string,
 	return nil
 }
 
-// makes access file with username and password
+// makes access file with username and password.
 func makeAccess(dir, username, password string) error {
 	data := fmt.Sprintf("%s\n%s\n", username, password)
 	return writeFile(accessDestination(dir), []byte(data))
 }
 
-// MakeFiles creates configuration files for the product.
+// MakeFiles creates configuration files for a product.
 func MakeFiles(logger log.Logger, dir, serviceEndpointAddress, username,
 	password string, params []byte, options map[string]interface{}) error {
 	s := &service{logger: logger}
@@ -189,23 +201,23 @@ func MakeFiles(logger log.Logger, dir, serviceEndpointAddress, username,
 	configDst := configDestination(dir)
 	accessDst := accessDestination(dir)
 
-	// if the target directory does not exists,
-	// then creates target directory
+	// If the target directory does not exists,
+	// then creates target directory.
 	if notExist(dir) {
 		if err := makeDir(dir); err != nil {
 			logger.Error(err.Error())
 			return ErrCreateDir
 		}
 	} else {
-		// if the configuration file and the access file exist,
-		// then complete the function execution
+		// If the configuration file and the access file exist,
+		// then complete the function execution.
 		if checkFile(configDst) && checkFile(accessDst) {
 			return nil
 		}
 	}
 
-	// if the configuration file does not exists,
-	// then makes and fill client configuration file
+	// If the configuration file does not exists,
+	// then makes and fill client configuration file.
 	if !checkFile(configDst) {
 		if err := s.makeClientConfig(dir, serviceEndpointAddress,
 			params, options); err != nil {
@@ -213,8 +225,7 @@ func MakeFiles(logger log.Logger, dir, serviceEndpointAddress, username,
 		}
 	}
 
-	// if the access file does not exists,
-	// then makes and fill access file
+	// If the access file does not exists, then makes and fill access file.
 	if !checkFile(accessDst) {
 		if err := makeAccess(dir, username, password); err != nil {
 			logger.Error(err.Error())
@@ -247,32 +258,10 @@ func proto(data []byte) string {
 		return defaultProto
 	}
 
-	// if proto = tcp-server or tcp then replaces to tcp-client
+	// If value of `proto` is `tcp-server` or `tcp` then replaces to
+	// `tcp-client`.
 	if val == tcpServer || val == tcp {
 		return defaultProto
 	}
 	return val
-}
-
-// SpecificOptions returns specific options for dappvpn.
-// These options will be used to create a product configuration.
-func SpecificOptions(monConfig *mon.Config) (
-	options map[string]interface{}) {
-	options = make(map[string]interface{})
-
-	// TODO(maxim) now we only have VpnManagementPort parameter for `VPN client` product
-	// reads OpenVpn management interface address from configuration.
-	params := strings.Split(monConfig.Addr, ":")
-	if len(params) != 2 {
-		return options
-	}
-
-	// reads OpenVpn management interface server port from configuration.
-	port, err := strconv.ParseUint(params[1], 10, 16)
-	if err != nil {
-		return options
-	}
-
-	options[VpnManagementPort] = uint16(port)
-	return options
 }

@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/privatix/dappctrl/util/log"
 )
@@ -136,6 +138,15 @@ func (m *Monitor) initConn() error {
 
 		if err := m.write("hold release"); err != nil {
 			return err
+		}
+
+		// On Windows OpenVPN doesn't react on first `hold release`
+		// for some reason. This needs to be further investigated.
+		if runtime.GOOS == "windows" {
+			time.Sleep(time.Millisecond * 100)
+			if err := m.write("hold release"); err != nil {
+				return err
+			}
 		}
 	}
 

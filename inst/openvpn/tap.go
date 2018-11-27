@@ -31,8 +31,8 @@ func installedTapInterfaces(tap string) ([]string, error) {
 }
 
 func installTAP(p, role string) (*tapInterface, error) {
-	driver := filepath.Join(p, path.OemVista)
-	tapExec := filepath.Join(p, path.TapInstall)
+	driver := filepath.Join(p, path.Config.OemVista)
+	tapExec := filepath.Join(p, path.Config.TapInstall)
 
 	before, err := installedTapInterfaces(tapExec)
 	if err != nil {
@@ -125,7 +125,7 @@ func deviceID(name string) (string, error) {
 }
 
 func (tap *tapInterface) remove(p string) error {
-	tapExec := filepath.Join(p, path.TapInstall)
+	tapExec := filepath.Join(p, path.Config.TapInstall)
 	if len(tap.DeviceID) == 0 {
 		tap.DeviceID, _ = deviceID(tap.Interface)
 		if len(tap.DeviceID) == 0 {

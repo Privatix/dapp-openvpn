@@ -12,10 +12,11 @@ import (
 )
 
 type ovpnConfig struct {
-	Name       string        // Name of OvenVPN executable.
-	Args       []string      // Extra arguments for OpenVPN executable.
-	ConfigRoot string        // Root path for OpenVPN channel configs.
-	StartDelay time.Duration // Delay to ensure OpenVPN is ready, in milliseconds.
+	Name         string        // Name of OvenVPN executable.
+	Args         []string      // Extra arguments for OpenVPN executable.
+	ConfigRoot   string        // Root path for OpenVPN channel configs.
+	StartDelay   time.Duration // Delay to ensure OpenVPN is ready, in milliseconds.
+	TapInterface string        // Windows TAP device name.
 }
 
 // Config is dapp-openvpn adapter configuration.

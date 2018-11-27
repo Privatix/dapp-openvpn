@@ -35,6 +35,9 @@ func Execute(logger log.Logger, args []string) {
 	case "run":
 		logger.Info("run process")
 		flow = runFlow()
+	case "run-adapter":
+		logger.Info("run adapter process")
+		flow = runAdapterFlow()
 	default:
 		fmt.Println(rootHelp)
 		return
@@ -57,6 +60,8 @@ func installFlow() pipeline.Flow {
 		newOperator("create config", createConfig, removeConfig),
 		newOperator("create service", createService, removeService),
 		newOperator("create env", createEnv, removeEnv),
+		newOperator("change owner", changeOwner, nil),
+		newOperator("start services", startServices, nil),
 	}
 }
 
@@ -92,5 +97,13 @@ func runFlow() pipeline.Flow {
 		newOperator("processed flags", processedCommonFlags, nil),
 		newOperator("validate", checkInstallation, nil),
 		newOperator("run service", runService, nil),
+	}
+}
+
+func runAdapterFlow() pipeline.Flow {
+	return pipeline.Flow{
+		newOperator("processed flags", processedCommonFlags, nil),
+		newOperator("validate", checkInstallation, nil),
+		newOperator("run adapter", runAdapter, nil),
 	}
 }

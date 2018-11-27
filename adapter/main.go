@@ -28,6 +28,8 @@ import (
 	"github.com/privatix/dapp-openvpn/adapter/tc"
 )
 
+//go:generate go generate ../vendor/github.com/privatix/dappctrl/data/schema.go
+
 // Values for versioning.
 var (
 	Commit  string
@@ -63,7 +65,7 @@ func main() {
 	v := flag.Bool("version", false, "Prints current dappctrl version")
 
 	fconfig := flag.String(
-		"config", "dappvpn.config.json", "Configuration file")
+		"config", "adapter.config.json", "Configuration file")
 	flag.Parse()
 
 	version.Print(*v, Commit, Version)
@@ -316,16 +318,16 @@ func handleClientMonitor() {
 			err := prepare.ClientConfig(
 				logger, res.Channel, conn, conf)
 			if err != nil {
-				msg := "failed to prepare client config: "
-				logger.Fatal(msg + err.Error())
+				message := "failed to prepare client config: "
+				logger.Fatal(message + err.Error())
 			}
 
 			ovpnCmd = launchOpenVPN(res.Channel)
 		} else if res.Command == sesssrv.HeartbeatStop &&
 			ovpnCmd != nil {
 			if err := ovpnCmd.Process.Kill(); err != nil {
-				msg := "failed to kill OpenVPN: "
-				logger.Error(msg + err.Error())
+				message := "failed to kill OpenVPN: "
+				logger.Error(message + err.Error())
 			}
 		}
 
@@ -365,8 +367,8 @@ func launchOpenVPN(channel string) *exec.Cmd {
 			io.WriteString(os.Stderr, line)
 		}
 		if err := scanner.Err(); err != nil {
-			msg := "failed to read from openVPN stdout/stderr: "
-			logger.Warn(msg + err.Error())
+			message := "failed to read from openVPN stdout/stderr: "
+			logger.Warn(message + err.Error())
 		}
 		stdout.Close()
 		stderr.Close()
