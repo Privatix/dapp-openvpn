@@ -1,0 +1,9 @@
+{
+    "CoreDapp": true,
+    "Install": [
+        {"Admin" : true,"Command": "bin/inst install --config ../config/installer.client.config.json"}
+    ],
+    "Remove": [
+        {"Admin" : true,"Command": "bin/inst remove"}
+    ]
+}
