@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"os/user"
 	"reflect"
 	"strconv"
@@ -99,4 +100,13 @@ func connectorAddr(config string) (string, error) {
 		return "", fmt.Errorf("Addr params not found")
 	}
 	return addr.(string), nil
+}
+
+func runPowerShellCommand(args ...string) error {
+	return exec.Command("powershell", args...).Run()
+}
+
+func buildPowerShellArgs(file string, args ...string) []string {
+	a := []string{"-ExecutionPolicy", "Bypass", "-File", file}
+	return append(a, args...)
 }

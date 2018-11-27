@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -21,7 +22,6 @@ type OpenVPN struct {
 	Path      string
 	Role      string
 	Tap       *tapInterface
-	Port      int
 	Proto     string
 	Host      *host
 	Managment *host
@@ -79,6 +79,15 @@ func NewOpenVPN() *OpenVPN {
 func (o *OpenVPN) InstallTap() (err error) {
 	if o.IsWindows {
 		o.Tap, err = installTAP(o.Path, o.Role)
+		if err != nil {
+			return err
+		}
+
+		script := filepath.Join(o.Path, path.Config.PowerShellVpnNat)
+		args := buildPowerShellArgs(script,
+			"-TAPdeviceAddress", fmt.Sprintf(`'%s'`, o.Tap.DeviceID),
+			"-Enabled")
+		err = runPowerShellCommand(args...)
 	}
 	return err
 }
@@ -86,6 +95,13 @@ func (o *OpenVPN) InstallTap() (err error) {
 // RemoveTap removes the tap interface.
 func (o *OpenVPN) RemoveTap() (err error) {
 	if o.IsWindows {
+		script := filepath.Join(o.Path, path.Config.PowerShellVpnNat)
+		args := buildPowerShellArgs(script,
+			"-TAPdeviceAddress", fmt.Sprintf(`'%s'`, o.Tap.DeviceID))
+		if err = runPowerShellCommand(args...); err != nil {
+			return err
+		}
+
 		err = o.Tap.remove(o.Path)
 	}
 	return err
@@ -204,7 +220,22 @@ func (o *OpenVPN) InstallService() (string, error) {
 		return "", err
 	}
 
-	return service.Install("run", "-workdir", o.Path)
+	if str, err := service.Install("run", "-workdir", o.Path); err != nil {
+		return str, err
+	}
+
+	if !o.IsWindows {
+		return "", nil
+	}
+
+	script := filepath.Join(o.Path, path.Config.PowerShellVpnFirewall)
+	ovpn := filepath.Join(o.Path, path.Config.OpenVPN+".exe")
+	args := buildPowerShellArgs(script, "-Create",
+		"-ServiceName", strings.Join(strings.Fields(o.Service), "_"),
+		"-ProgramPath", ovpn,
+		"-Port", strconv.Itoa(o.Host.Port), "-Protocol", o.Proto[:3])
+
+	return "", runPowerShellCommand(args...)
 }
 
 // StartService starts openvpn service.
@@ -261,6 +292,15 @@ func (o *OpenVPN) StopService() (string, error) {
 func (o *OpenVPN) RemoveService() (string, error) {
 	if o.isClient() {
 		return "", nil
+	}
+
+	if o.IsWindows {
+		script := filepath.Join(o.Path, path.Config.PowerShellVpnFirewall)
+		args := buildPowerShellArgs(script, "-Remove",
+			"-ServiceName", strings.Join(strings.Fields(o.Service), "_"))
+		if err := runPowerShellCommand(args...); err != nil {
+			return "", err
+		}
 	}
 
 	service, err := daemon.New(o.Service, "")
