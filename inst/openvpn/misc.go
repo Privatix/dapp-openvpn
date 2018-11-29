@@ -30,9 +30,13 @@ func hash(s string) string {
 }
 
 func nextFreePort(h host, proto string) int {
+	hostname := h.IP
+	if strings.EqualFold(hostname, "0.0.0.0") {
+		hostname = "localhost"
+	}
 	port := h.Port
 	for i := port; i < 65535; i++ {
-		ln, err := net.Listen(proto, h.IP+":"+strconv.Itoa(i))
+		ln, err := net.Listen(proto, hostname+":"+strconv.Itoa(i))
 		if err != nil {
 			continue
 		}
