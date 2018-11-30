@@ -8,11 +8,11 @@ cert "{{.Path}}/config/server.crt"
 key "{{.Path}}/config/server.key"
 dh "{{.Path}}/config/dh2048.pem"
 management {{.Managment.IP}} {{.Managment.Port}}
-auth-user-pass-verify "{{.Path}}/bin/dappvpn{{if .IsWindows}}.exe{{end}} -config={{.Path}}/config/adapter.config.json" via-file
+auth-user-pass-verify "'{{.Path}}/bin/dappvpn{{if .IsWindows}}.exe{{end}}' -config='{{.Path}}/config/adapter.config.json'" via-file
 verify-client-cert none
 username-as-common-name
-client-connect "{{.Path}}/bin/dappvpn{{if .IsWindows}}.exe{{end}} -config={{.Path}}/config/adapter.config.json"
-client-disconnect "{{.Path}}/bin/dappvpn{{if .IsWindows}}.exe{{end}} -config={{.Path}}/config/adapter.config.json"
+client-connect "'{{.Path}}/bin/dappvpn{{if .IsWindows}}.exe{{end}}' -config='{{.Path}}/config/adapter.config.json'"
+client-disconnect "'{{.Path}}/bin/dappvpn{{if .IsWindows}}.exe{{end}}' -config='{{.Path}}/config/adapter.config.json'"
 script-security 3
 tls-server
 server {{.Server.IP}} {{.Server.Mask}}
