@@ -85,7 +85,7 @@ func (o *OpenVPN) InstallTap() (err error) {
 
 		script := filepath.Join(o.Path, path.Config.PowerShellVpnNat)
 		args := buildPowerShellArgs(script,
-			"-TAPdeviceAddress", fmt.Sprintf(`'%s'`, o.Tap.DeviceID),
+			"-TAPdeviceAddress", o.Tap.DeviceID,
 			"-Enabled")
 		err = runPowerShellCommand(args...)
 	}
@@ -97,7 +97,7 @@ func (o *OpenVPN) RemoveTap() (err error) {
 	if o.IsWindows {
 		script := filepath.Join(o.Path, path.Config.PowerShellVpnNat)
 		args := buildPowerShellArgs(script,
-			"-TAPdeviceAddress", fmt.Sprintf(`'%s'`, o.Tap.DeviceID))
+			"-TAPdeviceAddress", o.Tap.DeviceID)
 		if err = runPowerShellCommand(args...); err != nil {
 			return err
 		}

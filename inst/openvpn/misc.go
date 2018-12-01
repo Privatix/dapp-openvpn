@@ -1,6 +1,7 @@
 package openvpn
 
 import (
+	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -107,7 +108,16 @@ func connectorAddr(config string) (string, error) {
 }
 
 func runPowerShellCommand(args ...string) error {
-	return exec.Command("powershell", args...).Run()
+	cmd := exec.Command("powershell", args...)
+
+	var outbuf, errbuf bytes.Buffer
+	cmd.Stdout = &outbuf
+	cmd.Stderr = &errbuf
+	if err := cmd.Run(); err != nil {
+		outStr, errStr := outbuf.String(), errbuf.String()
+		return fmt.Errorf("%v\nout:\n%s\nerr:\n%s", err, outStr, errStr)
+	}
+	return nil
 }
 
 func buildPowerShellArgs(file string, args ...string) []string {
