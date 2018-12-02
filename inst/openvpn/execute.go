@@ -29,7 +29,12 @@ func (e *execute) Start() {
 func run(e *execute) error {
 	vpn := filepath.Join(e.Path, path.VPN(e.Type))
 	config := filepath.Join(e.Path, path.VPNConfig(e.Type, e.Role))
-	cmd := exec.Command(vpn, "--config", config)
+	args := []string{}
+	if e.Type == path.Config.OVPN {
+		args = append(args, "--cd", e.Path)
+	}
+	args = append(args, "--config", config)
+	cmd := exec.Command(vpn, args...)
 
 	if err := cmd.Start(); err != nil {
 		return err

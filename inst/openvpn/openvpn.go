@@ -262,7 +262,8 @@ func (o *OpenVPN) RunService() (string, error) {
 		return "", err
 	}
 
-	return service.Run(&execute{Path: o.Path, Role: o.Role})
+	return service.Run(&execute{Path: o.Path, Role: o.Role,
+		Type: path.Config.OVPN})
 }
 
 // StopService stops openvpn service.
