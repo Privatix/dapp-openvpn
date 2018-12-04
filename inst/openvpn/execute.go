@@ -23,6 +23,7 @@ func (e *execute) Start() {
 		if err := run(e); err != nil {
 			os.Exit(2)
 		}
+		os.Exit(0)
 	}()
 }
 
