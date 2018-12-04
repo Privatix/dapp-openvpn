@@ -19,45 +19,50 @@ INSTALLER_NAME=dapp-openvpn-inst
 OPENVPN_INSTALLER_MAIN=/inst
 OPENVPN_INSTALLER_NAME=openvpn-inst
 
-cd "${DAPP_OPENVPN_DIR}" || exit 1
+cd "${DAPP_OPENVPN_DIR}"
 
 echo
 echo go get
 echo
 
-go get -d -x ${PROJECT}/... || exit 1
-go get -u -x gopkg.in/reform.v1/reform || exit 1
-go get -u -x github.com/rakyll/statik || exit 1
+go get -d -v ${PROJECT}/...
+go get -u -v gopkg.in/reform.v1/reform
+go get -u -v github.com/rakyll/statik
 
 echo
-echo go dep
+echo dep ensure
 echo
 
 if [ ! -f "${GOPATH}"/bin/dep ]; then
     curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 fi
 rm -f Gopkg.lock
-dep ensure || exit 1
+dep ensure -v
 
 echo
 echo go generate
 echo
 
-go generate -x ./... || exit 1
+go generate -x ./...
 
 echo
 echo go build
 echo
 
-
+echo $GOPATH/bin/${ADAPTER_NAME}
 go build -o $GOPATH/bin/${ADAPTER_NAME} -ldflags "-X main.Commit=$GIT_COMMIT \
     -X main.Version=$GIT_RELEASE" -tags=notest \
     ${PROJECT}${ADAPTER_MAIN} || exit 1
 
+echo $GOPATH/bin/${INSTALLER_NAME}
 go build -o $GOPATH/bin/${INSTALLER_NAME} -ldflags "-X main.Commit=$GIT_COMMIT \
     -X main.Version=$GIT_RELEASE" -tags=notest \
     ${PROJECT}${INSTALLER_MAIN} || exit 1
 
+echo $GOPATH/bin/${OPENVPN_INSTALLER_NAME}
 go build -o $GOPATH/bin/${OPENVPN_INSTALLER_NAME} -ldflags \
     "-X main.Commit=$GIT_COMMIT -X main.Version=$GIT_RELEASE" \
     ${PROJECT}${OPENVPN_INSTALLER_MAIN} || exit 1
+
+echo
+echo done
