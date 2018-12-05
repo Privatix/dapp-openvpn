@@ -77,34 +77,41 @@ func NewOpenVPN() *OpenVPN {
 
 // InstallTap installs a new tap interface.
 func (o *OpenVPN) InstallTap() (err error) {
-	if o.IsWindows {
-		o.Tap, err = installTAP(o.Path, o.Role)
-		if err != nil {
-			return err
-		}
-
-		script := filepath.Join(o.Path, path.Config.PowerShellVpnNat)
-		args := buildPowerShellArgs(script,
-			"-TAPdeviceAddress", o.Tap.DeviceID,
-			"-Enabled")
-		err = runPowerShellCommand(args...)
+	if !o.IsWindows {
+		return nil
 	}
-	return err
+
+	o.Tap, err = installTAP(o.Path, o.Role)
+	if err != nil {
+		return err
+	}
+
+	if o.isClient() {
+		return nil
+	}
+
+	script := filepath.Join(o.Path, path.Config.PowerShellVpnNat)
+	args := buildPowerShellArgs(script,
+		"-TAPdeviceAddress", o.Tap.DeviceID,
+		"-Enabled")
+	return runPowerShellCommand(args...)
 }
 
 // RemoveTap removes the tap interface.
-func (o *OpenVPN) RemoveTap() (err error) {
-	if o.IsWindows {
+func (o *OpenVPN) RemoveTap() error {
+	if !o.IsWindows {
+		return nil
+	}
+
+	if !o.isClient() {
 		script := filepath.Join(o.Path, path.Config.PowerShellVpnNat)
 		args := buildPowerShellArgs(script,
 			"-TAPdeviceAddress", o.Tap.DeviceID)
-		if err = runPowerShellCommand(args...); err != nil {
+		if err := runPowerShellCommand(args...); err != nil {
 			return err
 		}
-
-		err = o.Tap.remove(o.Path)
 	}
-	return err
+	return o.Tap.remove(o.Path)
 }
 
 // Configurate configurates openvpn config files.
