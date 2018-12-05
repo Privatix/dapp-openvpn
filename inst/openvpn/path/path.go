@@ -48,8 +48,8 @@ type config struct {
 	AdapterConfig string
 	// DappCtrlConfig file location
 	DappCtrlConfig string
-	// ChannelDir is common-name -> channel mappings location.
-	ChannelDir string
+	// DataDir all product related data storing location.
+	DataDir string
 	// VPN NAT powershell script location
 	PowerShellVpnNat string
 	// VPN Firewall powershell script location
@@ -72,7 +72,7 @@ func newConfig() *config {
 		Adapter:               "bin/dappvpn",
 		AdapterConfig:         "config/adapter.config.json",
 		DappCtrlConfig:        "../../dappctrl/dappctrl.config.json",
-		ChannelDir:            "data",
+		DataDir:               "data",
 		PowerShellVpnNat:      "bin/set-nat.ps1",
 		PowerShellVpnFirewall: "bin/set-vpnfirewall.ps1",
 	}

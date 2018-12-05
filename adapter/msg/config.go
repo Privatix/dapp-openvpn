@@ -201,7 +201,7 @@ func MakeFiles(logger log.Logger, dir, serviceEndpointAddress, username,
 	configDst := configDestination(dir)
 	accessDst := accessDestination(dir)
 
-	// If the target directory does not exists,
+	// If the target directory does not exist,
 	// then creates target directory.
 	if notExist(dir) {
 		if err := makeDir(dir); err != nil {
@@ -216,8 +216,8 @@ func MakeFiles(logger log.Logger, dir, serviceEndpointAddress, username,
 		}
 	}
 
-	// If the configuration file does not exists,
-	// then makes and fill client configuration file.
+	// If the configuration file does not exist,
+	// then make and fill client configuration file.
 	if !checkFile(configDst) {
 		if err := s.makeClientConfig(dir, serviceEndpointAddress,
 			params, options); err != nil {
@@ -225,7 +225,7 @@ func MakeFiles(logger log.Logger, dir, serviceEndpointAddress, username,
 		}
 	}
 
-	// If the access file does not exists, then makes and fill access file.
+	// If the access file does not exist, then make and fill access file.
 	if !checkFile(accessDst) {
 		if err := makeAccess(dir, username, password); err != nil {
 			logger.Error(err.Error())

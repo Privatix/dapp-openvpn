@@ -41,7 +41,7 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 
 	maps["FileLog.Filename"] = filepath.Join(p, "log/dappvpn-%Y-%m-%d.log")
 	maps["OpenVPN.Name"] = filepath.Join(p, path.Config.OpenVPN)
-	maps["OpenVPN.ConfigRoot"] = filepath.Join(p, "config")
+	maps["OpenVPN.ConfigRoot"] = filepath.Join(p, path.Config.DataDir)
 	if o.IsWindows {
 		maps["OpenVPN.TapInterface"] = o.Tap.Interface
 	}
@@ -55,7 +55,7 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 		return err
 	}
 	maps["Connector.Addr"] = addr
-	maps["ChannelDir"] = filepath.Join(p, path.Config.ChannelDir)
+	maps["ChannelDir"] = filepath.Join(p, path.Config.DataDir)
 
 	if err := setConfigurationValues(jsonMap, maps); err != nil {
 		return err
