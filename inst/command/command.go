@@ -22,21 +22,27 @@ func Execute(logger log.Logger, printVersion func(), args []string) {
 	switch strings.ToLower(args[0]) {
 	case "install":
 		logger.Info("install process")
+		logger = logger.Add("action", "install")
 		flow = installFlow()
 	case "remove":
 		logger.Info("remove process")
+		logger = logger.Add("action", "remove")
 		flow = removeFlow()
 	case "start":
 		logger.Info("start process")
+		logger = logger.Add("action", "start")
 		flow = startFlow()
 	case "stop":
 		logger.Info("stop process")
+		logger = logger.Add("action", "stop")
 		flow = stopFlow()
 	case "run":
 		logger.Info("run process")
+		logger = logger.Add("action", "run")
 		flow = runFlow()
 	case "run-adapter":
 		logger.Info("run adapter process")
+		logger = logger.Add("action", "run adapter")
 		flow = runAdapterFlow()
 	case "help":
 		fmt.Println(rootHelp)

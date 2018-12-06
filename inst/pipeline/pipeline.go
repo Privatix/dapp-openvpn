@@ -30,7 +30,8 @@ func (flow Flow) Run(in interface{}, logger log.Logger) error {
 		err = m.Run(in)
 
 		if err != nil {
-			logger.Warn(fmt.Sprintf("failed to execute '%v' operation",
+			errLog := logger.Add("object", fmt.Sprintf("%v", in))
+			errLog.Warn(fmt.Sprintf("failed to execute '%v' operation",
 				m.Name()))
 			rollback(flow[:i+1])
 			break
