@@ -1,5 +1,3 @@
-#Requires -Version 3.0 -Modules NetAdapter
-#Requires -RunAsAdministrator
 <#
 .SYNOPSIS
     Set IP forwarding for OpenVPN TAP device.
@@ -11,19 +9,21 @@
     Unique identifier of TAP device. It is identified by "PnPDeviceID" (Get-NetAdapter) and same as "Device instance path" in device manager.
 
 .EXAMPLE
-    .\start_server_nat.ps1 -TAPdeviceAddress 'ROOT\NET\0002' -Enabled
+    .\set-nat.ps1 -TAPdeviceAddress 'ROOT\NET\0002' -Enabled
 
     Description
     -----------
     Enables IP routing. Configures IP forwarding on internet adapter and TAP adapter. Starts "SharedAccess" and "RemoteAccess" services.
 
 .EXAMPLE
-    .\start_server_nat.ps1 -TAPdeviceAddress 'ROOT\NET\0002'
+    .\set-nat.ps1 -TAPdeviceAddress 'ROOT\NET\0002'
 
     Description
     -----------
     Disables internet sharing for VPN adapter with specified TAPdeviceAddress
 #>
+#Requires -Version 3.0 -Modules NetAdapter
+#Requires -RunAsAdministrator
 param (
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
@@ -31,7 +31,33 @@ param (
     [switch]$Enabled
 )
 
-<#
+function Set-InternetConnectionSharing {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [ValidateScript(
+            {if ((Get-NetAdapter -Name $_ -ErrorAction SilentlyContinue -OutVariable inetAdapter) -and (($inetAdapter).Status -notin @('Disabled', 'Not Present') ))
+                {$true} 
+                else {
+                    throw "$_ adpater not exists or disabled"
+                }
+            }
+        )]
+        $InetAdapterName,
+        [Parameter(Mandatory)]
+        [ValidateScript(
+            {if ((Get-NetAdapter -Name $_ -ErrorAction SilentlyContinue -OutVariable inetAdapter) -and (($inetAdapter).Status -notin @('Disabled', 'Not Present') ))
+                {$true} 
+                else {
+                    throw "$_ adpater not exists or disabled"
+                }
+            }
+        )]
+        $VPNAdapterName,
+        [Parameter(Mandatory)]
+        [bool]$Enabled
+    )
+    <#
 .SYNOPSIS
     Set internet connection sharing between two adapters
 .DESCRIPTION
@@ -61,33 +87,6 @@ param (
     -----------
     Disables internet sharing on "Ethernet" adpater, disallowing "Privatix VPN Server" adpater to use its internet connection.
 #>
-function Set-InternetConnectionSharing {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)]
-        [ValidateScript(
-            {if ((Get-NetAdapter -Name $_ -ErrorAction SilentlyContinue -OutVariable inetAdapter) -and (($inetAdapter).Status -notin @('Disabled', 'Not Present') ))
-                {$true} 
-                else {
-                    throw "$_ adpater not exists or disabled"
-                }
-            }
-        )]
-        $InetAdapterName,
-        [Parameter(Mandatory)]
-        [ValidateScript(
-            {if ((Get-NetAdapter -Name $_ -ErrorAction SilentlyContinue -OutVariable inetAdapter) -and (($inetAdapter).Status -notin @('Disabled', 'Not Present') ))
-                {$true} 
-                else {
-                    throw "$_ adpater not exists or disabled"
-                }
-            }
-        )]
-        $VPNAdapterName,
-        [Parameter(Mandatory)]
-        [bool]$Enabled
-    )
-
     begin {
         $ns = $null
 
