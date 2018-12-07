@@ -208,6 +208,7 @@ func checkInstallation(o *openvpn.OpenVPN) error {
 			v.Workdir)
 	}
 	o.Tap.DeviceID = v.Device
+	o.Tap.GUID = v.GUID
 	o.Tap.Interface = v.Interface
 	o.Service = v.Service
 	o.Role = v.Role
@@ -223,6 +224,7 @@ func createEnv(o *openvpn.OpenVPN) error {
 
 	v.Workdir = o.Path
 	v.Device = o.Tap.DeviceID
+	v.GUID = o.Tap.GUID
 	v.Interface = o.Tap.Interface
 	v.Service = o.Service
 	v.Role = o.Role

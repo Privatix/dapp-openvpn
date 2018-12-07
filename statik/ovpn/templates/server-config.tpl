@@ -2,7 +2,7 @@ local {{.Host.IP}}
 port {{.Host.Port}}
 proto {{.Proto}}
 dev tun
-{{if not .IsWindows}}#{{end}}dev-node "{{.Tap.Interface}}"
+{{if not .IsWindows}}#{{end}}dev-node {{.Tap.GUID}}
 ca "config/ca.crt"
 cert "config/server.crt"
 key "config/server.key"

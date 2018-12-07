@@ -17,6 +17,7 @@ const clientTapNamePrefix = "Privatix VPN Client"
 
 type tapInterface struct {
 	DeviceID  string
+	GUID      string
 	Interface string
 }
 
@@ -79,12 +80,33 @@ func newTAP(deviceID, role string) (*tapInterface, error) {
 		return nil, err
 	}
 
+	guid, err := tapInterfaceGUID(deviceID)
+	if err != nil {
+		return nil, err
+	}
+
 	tap := &tapInterface{
 		DeviceID:  deviceID,
+		GUID:      guid,
 		Interface: tapInterfaceName,
 	}
 
 	return tap, nil
+}
+
+func tapInterfaceGUID(device string) (string, error) {
+	output, err := exec.Command("wmic", "nic",
+		"where", "PNPDeviceID='"+strings.Replace(device, `\`, `\\`, -1)+"'",
+		"get", "GUID", "/value").CombinedOutput()
+
+	if err != nil {
+		return "", err
+	}
+
+	guid := strings.Replace(strings.TrimSpace(string(output)),
+		"GUID=", "", -1)
+
+	return guid, nil
 }
 
 func renameTapInterface(device, name string) error {
