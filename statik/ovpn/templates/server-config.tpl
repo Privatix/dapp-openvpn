@@ -14,6 +14,7 @@ username-as-common-name
 client-connect "bin/dappvpn{{if .IsWindows}}.exe{{end}} -config config/adapter.config.json"
 client-disconnect "bin/dappvpn{{if .IsWindows}}.exe{{end}} -config config/adapter.config.json"
 script-security 3
+{{if .IsWindows}}#{{end}}up "bin/nat_pf.sh {{.Server.IP}}"
 tls-server
 server {{.Server.IP}} {{.Server.Mask}}
 push "route {{.Server.IP}} {{.Server.Mask}}"
