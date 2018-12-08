@@ -196,6 +196,15 @@ func (o *OpenVPN) RemoveConfig() error {
 		os.Remove(filepath.Join(o.Path, path))
 	}
 
+	if o.IsWindows {
+		return nil
+	}
+
+	upScript := filepath.Join(o.Path, path.Config.UpScript)
+	if _, err := os.Stat(upScript); err == nil {
+		return exec.Command("/bin/sh", upScript, "off").Run()
+	}
+
 	return nil
 }
 

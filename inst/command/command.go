@@ -1,6 +1,7 @@
 package command
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -54,6 +55,8 @@ func Execute(logger log.Logger, printVersion func(), args []string) {
 
 	ovpn := openvpn.NewOpenVPN()
 	if err := flow.Run(ovpn, logger); err != nil {
+		object, _ := json.Marshal(ovpn)
+		logger = logger.Add("object", string(object))
 		logger.Error(fmt.Sprintf("%v", err))
 		os.Exit(2)
 	}
@@ -82,6 +85,7 @@ func removeFlow() pipeline.Flow {
 		newOperator("stop service", stopService, nil),
 		newOperator("remove tap", removeTap, nil),
 		newOperator("remove service", removeService, nil),
+		newOperator("remove config", removeConfig, nil),
 		newOperator("remove env", removeEnv, nil),
 	}
 }
