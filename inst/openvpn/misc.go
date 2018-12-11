@@ -10,9 +10,12 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/privatix/dapp-openvpn/inst/openvpn/path"
 )
 
 func diff(a, b []string) string {
@@ -123,4 +126,36 @@ func runPowerShellCommand(args ...string) error {
 func buildPowerShellArgs(file string, args ...string) []string {
 	a := []string{"-ExecutionPolicy", "Bypass", "-File", file}
 	return append(a, args...)
+}
+
+func disableNAT(p, device string) error {
+	script := filepath.Join(p, path.Config.PowerShellVpnNat)
+	args := buildPowerShellArgs(script, "-TAPdeviceAddress", device)
+	return runPowerShellCommand(args...)
+}
+
+func enableNAT(p, device string) error {
+	script := filepath.Join(p, path.Config.PowerShellVpnNat)
+	args := buildPowerShellArgs(script,
+		"-TAPdeviceAddress", device,
+		"-Enabled")
+	return runPowerShellCommand(args...)
+}
+
+func createScheduleTask(p, device string) error {
+	script := filepath.Join(p, path.Config.PowerShellScheduleTask)
+	reEnableScript := filepath.Join(p, path.Config.PowerShellReEnableNat)
+	args := []string{"-ExecutionPolicy", "Bypass", "-NoProfile",
+		"-File", script, "-scriptPath", reEnableScript,
+		"-TAPdeviceAddress", device,
+	}
+
+	return runPowerShellCommand(args...)
+}
+
+func removeScheduleTask() error {
+	args := []string{"-ExecutionPolicy", "Bypass", "-NoProfile", "-Command",
+		"& {Unregister-ScheduledTask -TaskName 'Privatix re-enable ICS' -confirm:0}",
+	}
+	return runPowerShellCommand(args...)
 }

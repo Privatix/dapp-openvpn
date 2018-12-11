@@ -65,6 +65,7 @@ func installFlow() pipeline.Flow {
 		newOperator("create env", createEnv, removeEnv),
 		newOperator("change owner", changeOwner, nil),
 		newOperator("start services", startServices, nil),
+		newOperator("finalize", finalize, nil),
 	}
 }
 

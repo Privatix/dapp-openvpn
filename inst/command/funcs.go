@@ -264,6 +264,29 @@ func startServices(o *openvpn.OpenVPN) error {
 	return nil
 }
 
+func finalize(o *openvpn.OpenVPN) error {
+	if !o.IsWindows || !strings.EqualFold(o.Role, "server") {
+		return nil
+	}
+
+	if err := o.CheckServiceStatus("running"); err != nil {
+		return err
+	}
+
+	if err := stopService(o); err != nil {
+		return fmt.Errorf("failed to stop services: %v", err)
+	}
+
+	if err := o.CheckServiceStatus("stopped"); err != nil {
+		return err
+	}
+
+	if err := startServices(o); err != nil {
+		return fmt.Errorf("failed to start services: %v", err)
+	}
+	return nil
+}
+
 func changeOwner(o *openvpn.OpenVPN) error {
 	if o.IsWindows {
 		return nil

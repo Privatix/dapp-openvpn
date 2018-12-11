@@ -1,6 +1,7 @@
 package openvpn
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -90,11 +91,7 @@ func (o *OpenVPN) InstallTap() (err error) {
 		return nil
 	}
 
-	script := filepath.Join(o.Path, path.Config.PowerShellVpnNat)
-	args := buildPowerShellArgs(script,
-		"-TAPdeviceAddress", o.Tap.DeviceID,
-		"-Enabled")
-	return runPowerShellCommand(args...)
+	return enableNAT(o.Path, o.Tap.DeviceID)
 }
 
 // RemoveTap removes the tap interface.
@@ -104,12 +101,7 @@ func (o *OpenVPN) RemoveTap() error {
 	}
 
 	if !o.isClient() {
-		script := filepath.Join(o.Path, path.Config.PowerShellVpnNat)
-		args := buildPowerShellArgs(script,
-			"-TAPdeviceAddress", o.Tap.DeviceID)
-		if err := runPowerShellCommand(args...); err != nil {
-			return err
-		}
+		disableNAT(o.Path, o.Tap.DeviceID)
 	}
 	return o.Tap.remove(o.Path)
 }
@@ -235,6 +227,10 @@ func (o *OpenVPN) InstallService() (string, error) {
 		return "", nil
 	}
 
+	if err := createScheduleTask(o.Path, o.Tap.DeviceID); err != nil {
+		return "", err
+	}
+
 	script := filepath.Join(o.Path, path.Config.PowerShellVpnFirewall)
 	ovpn := filepath.Join(o.Path, path.Config.OpenVPN+".exe")
 	args := buildPowerShellArgs(script, "-Create",
@@ -273,6 +269,40 @@ func (o *OpenVPN) RunService() (string, error) {
 		Type: path.Config.OVPN})
 }
 
+// CheckServiceStatus checks service status.
+func (o *OpenVPN) CheckServiceStatus(status string) error {
+	if o.isClient() {
+		return nil
+	}
+
+	service, err := daemon.New(o.Service, "")
+	if err != nil {
+		return err
+	}
+
+	done := make(chan bool)
+	go func() {
+		for {
+			time.Sleep(200 * time.Millisecond)
+			s, err := service.Status()
+			if err != nil {
+				continue
+			}
+			if strings.Contains(strings.ToLower(s), status) {
+				break
+			}
+		}
+		done <- true
+	}()
+
+	select {
+	case <-done:
+		return nil
+	case <-time.After(1 * time.Minute):
+		return errors.New("failed to check services status. timeout expired")
+	}
+}
+
 // StopService stops openvpn service.
 func (o *OpenVPN) StopService() (string, error) {
 	if o.isClient() {
@@ -307,6 +337,10 @@ func (o *OpenVPN) RemoveService() (string, error) {
 		args := buildPowerShellArgs(script, "-Remove",
 			"-ServiceName", strings.Join(strings.Fields(o.Service), "_"))
 		if err := runPowerShellCommand(args...); err != nil {
+			return "", err
+		}
+
+		if err := removeScheduleTask(); err != nil {
 			return "", err
 		}
 	}
