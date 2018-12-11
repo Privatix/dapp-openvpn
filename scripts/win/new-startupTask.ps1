@@ -30,9 +30,11 @@ Param(
 )
 #Requires -RunAsAdministrator
 
-$RandomDelay = New-TimeSpan -Minute 1
-$TaskTrigger = New-ScheduledTaskTrigger -AtStartup -RandomDelay $RandomDelay
-$Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-executionpolicy bypass -noprofile -file `"$scriptPath`" -TAPdeviceAddress `"$TAPdeviceAddress`""
-$Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -RunOnlyIfNetworkAvailable 
+$TaskTrigger = New-ScheduledTaskTrigger -AtStartup
+$TaskTrigger.Delay = 'PT2M'
+$TaskTrigger.ExecutionTimeLimit = 'PT2M'
+$PowershellPath = (Get-Command "powershell.exe").Source
+$Action = New-ScheduledTaskAction -Execute "$PowershellPath" -Argument "-executionpolicy bypass -noprofile -file `"$scriptPath`" -TAPdeviceAddress `"$TAPdeviceAddress`""
+$Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -RunOnlyIfNetworkAvailable
 $User = "NT AUTHORITY\System"
 Register-ScheduledTask -TaskName "Privatix re-enable ICS" -Trigger $TaskTrigger -User $User -Action $Action -Settings $Settings -RunLevel Highest -Force -Description "Internet connection sharing must be re-enabled after computer restart, due to Microsoft bug." | Out-Null
