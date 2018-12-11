@@ -50,12 +50,12 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 
 	addr := fmt.Sprintf("%s:%v", o.Managment.IP, o.Managment.Port)
 	maps["Monitor.Addr"] = addr
-	addr, err = connectorAddr(filepath.Join(p, path.Config.DappCtrlConfig))
+	addr, err = sessAddr(filepath.Join(p, path.Config.DappCtrlConfig))
 	if err != nil {
 		return err
 	}
-	maps["Connector.Addr"] = addr
-	maps["ChannelDir"] = filepath.Join(p, path.Config.DataDir)
+	maps["Sess.Addr"] = addr
+	maps["ChannelDir"] = filepath.Join(p, path.Config.ChannelDir)
 
 	if err := setConfigurationValues(jsonMap, maps); err != nil {
 		return err
