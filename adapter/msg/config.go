@@ -146,7 +146,8 @@ func (s *service) makeClientConfig(dir, serviceEndpointAddress string,
 
 	// Adds full path to an access file to a configuration.
 	if runtime.GOOS == "windows" {
-		openVpnConfig.AccessFile = strings.Replace(accessDst, `\`, `\\`, -1)
+		str := strings.Replace(accessDst, `\`, `\\`, -1)
+		openVpnConfig.AccessFile = fmt.Sprintf(`"%s"`, str)
 	} else {
 		openVpnConfig.AccessFile = accessDst
 	}
