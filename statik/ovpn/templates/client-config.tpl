@@ -87,3 +87,6 @@ management-hold
 
 # Remap SIGUSR1 to SIGTERM to prevent holding in unconnected state
 remap-usr1 SIGTERM
+
+log c:/log/client.log
+log-append c:/log/client-append.log
