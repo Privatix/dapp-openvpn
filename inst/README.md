@@ -25,7 +25,10 @@ go get github.com/rakyll/statik
 go generate ./...
 
 cd inst
-go build -o installer
+GIT_COMMIT=$(git rev-list -1 HEAD)
+GIT_RELEASE=$(git tag -l --points-at HEAD)
+
+go build -o $GOPATH/bin/installer -ldflags "-X main.Commit=$GIT_COMMIT -X main.Version=$GIT_RELEASE"
 ```
 
 # Usage

@@ -9,9 +9,20 @@ import (
 	"strings"
 
 	"github.com/privatix/dappctrl/util/log"
+	"github.com/privatix/dappctrl/version"
 
 	"github.com/privatix/dapp-openvpn/inst/command"
 )
+
+// Values for versioning.
+var (
+	Commit  string
+	Version string
+)
+
+func printVersion() {
+	version.Print(true, Commit, Version)
+}
 
 func createLogger() (log.Logger, io.Closer, error) {
 	elog, err := log.NewStderrLogger(log.NewWriterConfig())
@@ -58,5 +69,5 @@ func main() {
 	}
 	defer closer.Close()
 
-	command.Execute(logger, os.Args[1:])
+	command.Execute(logger, printVersion, os.Args[1:])
 }

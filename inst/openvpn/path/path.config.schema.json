@@ -17,7 +17,9 @@
         "ServerConfigTemplate",
         "Adapter",
         "AdapterConfig",
-        "DappCtrlConfig"
+        "DappCtrlConfig",
+        "PowerShellVpnNat",
+        "PowerShellVpnFirewall"
     ],
     "properties": {
         "OVPN": {
@@ -147,6 +149,26 @@
             "default": "",
             "examples": [
                 "../../dappctrl/dappctrl.config.json"
+            ],
+            "pattern": "^(.*)$"
+        },
+        "PowerShellVpnNat": {
+            "$id": "#/properties/PowerShellVpnNat",
+            "type": "string",
+            "title": "The Powershellvpnnat Schema",
+            "default": "",
+            "examples": [
+                "bin/set-nat.ps1"
+            ],
+            "pattern": "^(.*)$"
+        },
+        "PowerShellVpnFirewall": {
+            "$id": "#/properties/PowerShellVpnFirewall",
+            "type": "string",
+            "title": "The Powershellvpnfirewall Schema",
+            "default": "",
+            "examples": [
+                "bin/set-vpnfirewall.ps1"
             ],
             "pattern": "^(.*)$"
         }

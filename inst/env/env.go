@@ -12,6 +12,7 @@ type Config struct {
 	Schema         string
 	Workdir        string
 	Device         string
+	GUID           string
 	Interface      string
 	Service        string
 	Role           string

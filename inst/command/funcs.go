@@ -17,6 +17,19 @@ import (
 	"github.com/privatix/dapp-openvpn/inst/openvpn"
 )
 
+func processedRootFlags(printVersion func()) {
+	v := flag.Bool("version", false, "Prints current inst version")
+
+	flag.Parse()
+
+	if *v {
+		printVersion()
+		os.Exit(0)
+	}
+
+	fmt.Printf(rootHelp)
+}
+
 func installTap(o *openvpn.OpenVPN) error {
 	if err := o.InstallTap(); err != nil {
 		return fmt.Errorf("failed to install tap interface: %v", err)
@@ -195,6 +208,7 @@ func checkInstallation(o *openvpn.OpenVPN) error {
 			v.Workdir)
 	}
 	o.Tap.DeviceID = v.Device
+	o.Tap.GUID = v.GUID
 	o.Tap.Interface = v.Interface
 	o.Service = v.Service
 	o.Role = v.Role
@@ -210,6 +224,7 @@ func createEnv(o *openvpn.OpenVPN) error {
 
 	v.Workdir = o.Path
 	v.Device = o.Tap.DeviceID
+	v.GUID = o.Tap.GUID
 	v.Interface = o.Tap.Interface
 	v.Service = o.Service
 	v.Role = o.Role

@@ -41,9 +41,9 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 
 	maps["FileLog.Filename"] = filepath.Join(p, "log/dappvpn-%Y-%m-%d.log")
 	maps["OpenVPN.Name"] = filepath.Join(p, path.Config.OpenVPN)
-	maps["OpenVPN.ConfigRoot"] = filepath.Join(p, "config")
+	maps["OpenVPN.ConfigRoot"] = filepath.Join(p, path.Config.DataDir)
 	if o.IsWindows {
-		maps["OpenVPN.TapInterface"] = o.Tap.Interface
+		maps["OpenVPN.TapInterface"] = o.Tap.GUID
 	}
 	maps["Pusher.CaCertPath"] = filepath.Join(p, path.Config.CACertificate)
 	maps["Pusher.ConfigPath"] = filepath.Join(p, path.RoleConfig(o.Role))
@@ -55,6 +55,7 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 		return err
 	}
 	maps["Connector.Addr"] = addr
+	maps["ChannelDir"] = filepath.Join(p, path.Config.DataDir)
 
 	if err := setConfigurationValues(jsonMap, maps); err != nil {
 		return err
@@ -73,12 +74,17 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 func (d *DappVPN) InstallService(role, dir string) (string, error) {
 	d.Service = serviceName(path.Config.DVPN, dir)
 	descr := fmt.Sprintf("Privatix %s dappvpn %s", role, hash(dir))
+	var dependencies []string
 
 	if strings.EqualFold(runtime.GOOS, "windows") {
 		d.Service = fmt.Sprintf("Privatix DappVPN %s", hash(dir))
+		if strings.EqualFold(role, "server") {
+			dependencies = []string{
+				fmt.Sprintf("Privatix_OpenVPN_%s", hash(dir))}
+		}
 	}
 
-	service, err := daemon.New(d.Service, descr)
+	service, err := daemon.New(d.Service, descr, dependencies...)
 	if err != nil {
 		return "", err
 	}

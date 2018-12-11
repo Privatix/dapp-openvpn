@@ -1,12 +1,14 @@
 package openvpn
 
 import (
+	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"os/user"
 	"reflect"
 	"strconv"
@@ -29,9 +31,13 @@ func hash(s string) string {
 }
 
 func nextFreePort(h host, proto string) int {
+	hostname := h.IP
+	if strings.EqualFold(hostname, "0.0.0.0") {
+		hostname = "localhost"
+	}
 	port := h.Port
 	for i := port; i < 65535; i++ {
-		ln, err := net.Listen(proto, h.IP+":"+strconv.Itoa(i))
+		ln, err := net.Listen(proto, hostname+":"+strconv.Itoa(i))
 		if err != nil {
 			continue
 		}
@@ -99,4 +105,22 @@ func connectorAddr(config string) (string, error) {
 		return "", fmt.Errorf("Addr params not found")
 	}
 	return addr.(string), nil
+}
+
+func runPowerShellCommand(args ...string) error {
+	cmd := exec.Command("powershell", args...)
+
+	var outbuf, errbuf bytes.Buffer
+	cmd.Stdout = &outbuf
+	cmd.Stderr = &errbuf
+	if err := cmd.Run(); err != nil {
+		outStr, errStr := outbuf.String(), errbuf.String()
+		return fmt.Errorf("%v\nout:\n%s\nerr:\n%s", err, outStr, errStr)
+	}
+	return nil
+}
+
+func buildPowerShellArgs(file string, args ...string) []string {
+	a := []string{"-ExecutionPolicy", "Bypass", "-File", file}
+	return append(a, args...)
 }

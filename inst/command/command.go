@@ -12,7 +12,7 @@ import (
 )
 
 // Execute executes a CLI command.
-func Execute(logger log.Logger, args []string) {
+func Execute(logger log.Logger, printVersion func(), args []string) {
 	if len(args) == 0 {
 		args = append(args, "help")
 	}
@@ -38,8 +38,11 @@ func Execute(logger log.Logger, args []string) {
 	case "run-adapter":
 		logger.Info("run adapter process")
 		flow = runAdapterFlow()
-	default:
+	case "help":
 		fmt.Println(rootHelp)
+		return
+	default:
+		processedRootFlags(printVersion)
 		return
 	}
 

@@ -11,5 +11,7 @@
     "ServerConfigTemplate": "/ovpn/templates/server-config.tpl",
     "Adapter": "bin/dappvpn",
     "AdapterConfig": "config/adapter.config.json",
-    "DappCtrlConfig": "../../dappctrl/dappctrl.config.json"
+    "DappCtrlConfig": "../../dappctrl/dappctrl.config.json",
+    "PowerShellVpnNat": "bin/set-nat.ps1",
+    "PowerShellVpnFirewall": "bin/set-vpnfirewall.ps1"
 }

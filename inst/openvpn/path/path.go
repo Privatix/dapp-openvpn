@@ -48,24 +48,33 @@ type config struct {
 	AdapterConfig string
 	// DappCtrlConfig file location
 	DappCtrlConfig string
+	// DataDir all product related data storing location.
+	DataDir string
+	// VPN NAT powershell script location
+	PowerShellVpnNat string
+	// VPN Firewall powershell script location
+	PowerShellVpnFirewall string
 }
 
 // newConfig creates a default path configuration.
 func newConfig() *config {
 	return &config{
-		OVPN:                 "openvpn",
-		DVPN:                 "dappvpn",
-		OpenVPN:              `bin/openvpn/openvpn`,
-		OpenSSL:              `bin/openvpn/openssl`,
-		OemVista:             `bin/openvpn/driver/OemVista.inf`,
-		TapInstall:           `bin/openvpn/tapinstall`,
-		DHParam:              `config/dh2048.pem`,
-		CACertificate:        `config/ca.crt`,
-		CAKey:                `config/ca.key`,
-		ServerConfigTemplate: `/ovpn/templates/server-config.tpl`,
-		Adapter:              `bin/dappvpn`,
-		AdapterConfig:        `config/adapter.config.json`,
-		DappCtrlConfig:       `../../dappctrl/dappctrl.config.json`,
+		OVPN:                  "openvpn",
+		DVPN:                  "dappvpn",
+		OpenVPN:               "bin/openvpn/openvpn",
+		OpenSSL:               "bin/openvpn/openssl",
+		OemVista:              "bin/openvpn/driver/OemVista.inf",
+		TapInstall:            "bin/openvpn/tapinstall",
+		DHParam:               "config/dh2048.pem",
+		CACertificate:         "config/ca.crt",
+		CAKey:                 "config/ca.key",
+		ServerConfigTemplate:  "/ovpn/templates/server-config.tpl",
+		Adapter:               "bin/dappvpn",
+		AdapterConfig:         "config/adapter.config.json",
+		DappCtrlConfig:        "../../dappctrl/dappctrl.config.json",
+		DataDir:               "data",
+		PowerShellVpnNat:      "bin/set-nat.ps1",
+		PowerShellVpnFirewall: "bin/set-vpnfirewall.ps1",
 	}
 }
 
