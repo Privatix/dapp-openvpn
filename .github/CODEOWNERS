@@ -14,4 +14,5 @@
 /installer/     @dzeckelev
 
 # notify devops team about changes in *.config.json
-*.config.json   @kelewind @velopokatun @ubozov @drew2a
+*.config.json               @kelewind @velopokatun @ubozov @drew2a
+/inst/openvpn/path/path.go  @kelewind @velopokatun
