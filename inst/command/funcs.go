@@ -304,14 +304,10 @@ func changeOwner(o *openvpn.OpenVPN) error {
 	uid, _ := strconv.Atoi(group.Uid)
 	gid, _ := strconv.Atoi(group.Gid)
 
-	if err := filepath.Walk(o.Path,
-		func(name string, info os.FileInfo, err error) error {
-			if err == nil {
-				err = os.Chown(name, uid, gid)
-			}
-			return err
-		}); err != nil {
+	file := filepath.Join(o.Path, envFile)
+	if err := os.Chown(file, uid, gid); err != nil {
 		return fmt.Errorf("failed to change owner: %v", err)
 	}
+
 	return nil
 }

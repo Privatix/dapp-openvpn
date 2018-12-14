@@ -1,6 +1,7 @@
 package command
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -22,21 +23,27 @@ func Execute(logger log.Logger, printVersion func(), args []string) {
 	switch strings.ToLower(args[0]) {
 	case "install":
 		logger.Info("install process")
+		logger = logger.Add("action", "install")
 		flow = installFlow()
 	case "remove":
 		logger.Info("remove process")
+		logger = logger.Add("action", "remove")
 		flow = removeFlow()
 	case "start":
 		logger.Info("start process")
+		logger = logger.Add("action", "start")
 		flow = startFlow()
 	case "stop":
 		logger.Info("stop process")
+		logger = logger.Add("action", "stop")
 		flow = stopFlow()
 	case "run":
 		logger.Info("run process")
+		logger = logger.Add("action", "run")
 		flow = runFlow()
 	case "run-adapter":
 		logger.Info("run adapter process")
+		logger = logger.Add("action", "run adapter")
 		flow = runAdapterFlow()
 	case "help":
 		fmt.Println(rootHelp)
@@ -48,6 +55,8 @@ func Execute(logger log.Logger, printVersion func(), args []string) {
 
 	ovpn := openvpn.NewOpenVPN()
 	if err := flow.Run(ovpn, logger); err != nil {
+		object, _ := json.Marshal(ovpn)
+		logger = logger.Add("object", string(object))
 		logger.Error(fmt.Sprintf("%v", err))
 		os.Exit(2)
 	}
@@ -76,6 +85,7 @@ func removeFlow() pipeline.Flow {
 		newOperator("stop service", stopService, nil),
 		newOperator("remove tap", removeTap, nil),
 		newOperator("remove service", removeService, nil),
+		newOperator("remove config", removeConfig, nil),
 		newOperator("remove env", removeEnv, nil),
 	}
 }

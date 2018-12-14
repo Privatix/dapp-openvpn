@@ -3,6 +3,7 @@ package openvpn
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -117,7 +118,29 @@ func (o *OpenVPN) Configurate() error {
 		return err
 	}
 
+	if err := o.createUpScript(); err != nil {
+		return err
+	}
+
 	return o.createConfig()
+}
+
+func (o *OpenVPN) createUpScript() error {
+	if o.IsWindows {
+		return nil
+	}
+
+	upScript := filepath.Join(o.Path, path.Config.UpScript)
+	if _, err := os.Stat(upScript); err == nil {
+		return nil
+	}
+
+	bytes, err := statik.ReadFile(path.Config.UpScriptSource)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(upScript, bytes, 0777)
 }
 
 func (o *OpenVPN) createConfig() error {
@@ -171,6 +194,15 @@ func (o *OpenVPN) RemoveConfig() error {
 	}
 	for _, path := range pathsToRemove {
 		os.Remove(filepath.Join(o.Path, path))
+	}
+
+	if o.IsWindows {
+		return nil
+	}
+
+	upScript := filepath.Join(o.Path, path.Config.UpScript)
+	if _, err := os.Stat(upScript); err == nil {
+		return exec.Command("/bin/sh", upScript, "off").Run()
 	}
 
 	return nil
