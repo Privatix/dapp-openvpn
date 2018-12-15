@@ -191,9 +191,10 @@ func (o *OpenVPN) RemoveConfig() error {
 		path.RoleCertificate(o.Role),
 		path.RoleKey(o.Role),
 		path.RoleConfig(o.Role),
+		path.Config.DataDir,
 	}
 	for _, path := range pathsToRemove {
-		os.Remove(filepath.Join(o.Path, path))
+		os.RemoveAll(filepath.Join(o.Path, path))
 	}
 
 	if o.IsWindows {
@@ -202,6 +203,7 @@ func (o *OpenVPN) RemoveConfig() error {
 
 	upScript := filepath.Join(o.Path, path.Config.UpScript)
 	if _, err := os.Stat(upScript); err == nil {
+		defer os.Remove(upScript)
 		return exec.Command("/bin/sh", upScript, "off").Run()
 	}
 
@@ -219,6 +221,12 @@ func (o *OpenVPN) createCertificate() error {
 	// Generate Diffie Hellman param.
 	ossl := filepath.Join(o.Path, path.Config.OpenSSL)
 	dh := filepath.Join(p, "dh2048.pem")
+
+	// temporary, it will be removed after testing
+	if _, err := os.Stat(dh); err == nil {
+		return nil
+	}
+
 	err := exec.Command(ossl, "dhparam", "-out", dh, "2048").Run()
 	if err != nil {
 		cmd := exec.Command("openssl", "dhparam", "-out", dh, "2048")
