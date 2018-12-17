@@ -47,8 +47,9 @@ func loadChannel() string {
 
 	data, err := ioutil.ReadFile(name)
 	if err != nil {
-		logger.Fatal("failed to load channel:" + err.Error())
+		logger.Fatal("failed to load channel: " + err.Error())
 	}
+
 	return string(data)
 }
 
@@ -85,4 +86,42 @@ func getCreds() (string, string) {
 	}
 
 	return user, pass
+}
+
+func storeActiveChannel(ch string) {
+	name := filepath.Join(conf.ChannelDir, "active")
+
+	logger := logger.Add("method", "storeActiveChannel",
+		"file", name, "channel", ch)
+
+	err := ioutil.WriteFile(name, []byte(ch), chanPerm)
+	if err != nil {
+		logger.Fatal("failed to store active channel: " + err.Error())
+	}
+}
+
+func loadActiveChannel() string {
+	name := filepath.Join(conf.ChannelDir, "active")
+
+	logger := logger.Add("method", "loadActiveChannel", "file", name)
+
+	data, err := ioutil.ReadFile(name)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return ""
+		}
+		logger.Fatal("failed to load active channel: " + err.Error())
+	}
+
+	return string(data)
+}
+
+func removeActiveChannel() {
+	name := filepath.Join(conf.ChannelDir, "active")
+
+	logger := logger.Add("method", "removeActiveChannel", "file", name)
+
+	if err := os.Remove(name); err != nil && !os.IsNotExist(err) {
+		logger.Fatal("failed to remove active channel: " + err.Error())
+	}
 }

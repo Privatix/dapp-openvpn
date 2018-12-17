@@ -303,6 +303,12 @@ var (
 )
 
 func handleClientMonitor() {
+	if channel := loadActiveChannel(); len(channel) != 0 {
+		logger.Warn("interrupted connection detected: " + channel)
+		handleMonStopped(channel, 0, 0)
+		removeActiveChannel()
+	}
+
 	for {
 		time.Sleep(conf.HeartbeatPeriod * time.Millisecond)
 
@@ -314,7 +320,14 @@ func handleClientMonitor() {
 
 		mtx.Lock()
 
-		if res.Command == sesssrv.HeartbeatStart && ovpnCmd == nil {
+		switch res.Command {
+		case sesssrv.HeartbeatStart:
+			if ovpnCmd != nil {
+				logger.Warn("requested to start while " +
+					"OpenVPN is still running")
+				break
+			}
+
 			err := prepare.ClientConfig(
 				logger, res.Channel, conn, conf)
 			if err != nil {
@@ -323,8 +336,15 @@ func handleClientMonitor() {
 			}
 
 			ovpnCmd = launchOpenVPN(res.Channel)
-		} else if res.Command == sesssrv.HeartbeatStop &&
-			ovpnCmd != nil {
+
+		case sesssrv.HeartbeatStop:
+			if ovpnCmd == nil {
+				logger.Warn("requested to stop while " +
+					"OpenVPN is not running")
+				handleMonStopped(res.Channel, 0, 0)
+				break
+			}
+
 			if err := ovpnCmd.Process.Kill(); err != nil {
 				message := "failed to kill OpenVPN: "
 				logger.Error(message + err.Error())
@@ -360,6 +380,8 @@ func launchOpenVPN(channel string) *exec.Cmd {
 		logger.Fatal("failed to launch OpenVPN: " + err.Error())
 	}
 
+	storeActiveChannel(channel)
+
 	go func() {
 		scanner := bufio.NewScanner(io.MultiReader(stdout, stderr))
 		for scanner.Scan() {
@@ -377,6 +399,7 @@ func launchOpenVPN(channel string) *exec.Cmd {
 	go func() {
 		logger.Warn(fmt.Sprintf("OpenVPN exited: %v", cmd.Wait()))
 		handleMonStopped(channel, 0, 0)
+		removeActiveChannel()
 		mtx.Lock()
 		ovpnCmd = nil
 		mtx.Unlock()
