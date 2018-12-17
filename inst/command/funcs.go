@@ -52,6 +52,18 @@ func createService(o *openvpn.OpenVPN) error {
 	if s, err := o.Adapter.InstallService(o.Role, o.Path); err != nil {
 		return fmt.Errorf("failed to install service: %v %v", s, err)
 	}
+
+	if !o.IsWindows {
+		return nil
+	}
+
+	name := strings.Replace(o.Adapter.Service, " ", "_", -1)
+	cmd := exec.Command("sc", "failure", name, "reset=", "0",
+		"actions=", "restart/1000/restart/2000/restart/5000")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to set service restart rule: %v", err)
+	}
+
 	return nil
 }
 
