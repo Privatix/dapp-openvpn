@@ -277,8 +277,12 @@ func startServices(o *openvpn.OpenVPN) error {
 }
 
 func finalize(o *openvpn.OpenVPN) error {
-	if !o.IsWindows || !strings.EqualFold(o.Role, "server") {
+	if !strings.EqualFold(o.Role, "server") {
 		return nil
+	}
+
+	if !o.IsWindows {
+		return o.CreateForwardingDaemon()
 	}
 
 	if err := o.CheckServiceStatus("running"); err != nil {

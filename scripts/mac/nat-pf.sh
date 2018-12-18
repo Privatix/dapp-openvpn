@@ -29,16 +29,33 @@ then
     # defines default internet interface
     default=$(/sbin/route get default| grep interface| awk '{print $2}')
 
-    # creates rules
-    rm -f ./config/nat-rules
+    # defines openvpn interface
+    ip=${server%0}
+    for interface in $(/sbin/ifconfig | grep 'utun\|inet.*-->' | sed -E 's/[[:space:]:].*//;/^$/d')
+    do
+        var=$(/sbin/ifconfig "$interface" | sed 1d | grep inet | grep "$ip")
+        if [ ! -z "$var" ]
+        then
+            tun="$interface"
+            break 2
+        fi
+    done
 
-    nats="nat on $default from $server/24 to any -> ($default)\nnat on $dev from $server/24 to any -> ($dev)"
-    echo "$nats" >> ./config/nat-rules
+    if [ -z "$tun" ]
+    then
+        echo "openvpn interface not found."
+	    exit 1
+    fi
+
+
+    # creates rules
+    rm -f /usr/local/nat-rules
+
+    nats="nat on $default from $server/24 to any -> ($default)\nnat on $tun from $server/24 to any -> ($tun)"
+    echo "$nats" >> /usr/local/nat-rules
 
     ports="\npass in proto { tcp, udp } from any to any port $port"
-    echo "$ports" >> ./config/nat-rules
-
-    echo $default $dev $server $port
+    echo "$ports" >> /usr/local/nat-rules
 
     # enables ip forwarding
     /usr/sbin/sysctl -w net.inet.ip.forwarding=1
@@ -52,7 +69,7 @@ then
     sleep 1
 
     #starts pfctl and loads the rules from the nat-rules file
-    /sbin/pfctl -f ./config/nat-rules -e
+    /sbin/pfctl -f /usr/local/nat-rules -e
 elif [ "$status" = "off" ]
 then
     # disables ip forwarding

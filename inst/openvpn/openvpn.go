@@ -179,7 +179,17 @@ func (o *OpenVPN) RemoveConfig() error {
 	}
 
 	upScript := filepath.Join(o.Path, path.Config.UpScript)
-	return exec.Command("/bin/sh", upScript, "off").Run()
+	if err := exec.Command("/bin/sh", upScript, "off").Run(); err != nil {
+		return err
+	}
+
+	name := serviceName("nat", o.Path)
+	cmd := exec.Command("launchctl", "unload", daemonPath(name))
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return os.Remove(daemonPath(name))
 }
 
 func (o *OpenVPN) createCertificate() error {
@@ -362,4 +372,9 @@ func (o *OpenVPN) RemoveService() (string, error) {
 		return "", err
 	}
 	return service.Remove()
+}
+
+// CreateForwardingDaemon creates daemon on macOS.
+func (o *OpenVPN) CreateForwardingDaemon() error {
+	return createNatRules(o.Path, o.Server.IP, o.Host.Port)
 }

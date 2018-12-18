@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/privatix/dapp-openvpn/inst/openvpn/path"
 )
@@ -159,3 +160,66 @@ func removeScheduleTask() error {
 	}
 	return runPowerShellCommand(args...)
 }
+
+func daemonPath(name string) string {
+	return filepath.Join("/Library/LaunchDaemons", name+".plist")
+}
+
+func createNatRules(p, server string, port int) error {
+	name := serviceName("nat", p)
+	file, err := os.Create(daemonPath(name))
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	templ, err := template.New("daemonTemplate").Parse(daemonTemplate)
+	if err != nil {
+		return err
+	}
+
+	type natRule struct {
+		Name   string
+		Script string
+		Server string
+		Port   int
+	}
+
+	d := &natRule{
+		Name:   name,
+		Script: filepath.Join(p, path.Config.UpScript),
+		Server: server,
+		Port:   port,
+	}
+	if err := templ.Execute(file, &d); err != nil {
+		return err
+	}
+
+	return exec.Command("launchctl", "load", daemonPath(name)).Run()
+}
+
+var daemonTemplate = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Disabled</key>
+    <false/>
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    <key>Label</key>
+    <string>{{.Name}}</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>{{.Script}}</string>
+	<string>on</string>
+	<string>{{.Server}}</string>
+	<string>{{.Port}}</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>
+`
