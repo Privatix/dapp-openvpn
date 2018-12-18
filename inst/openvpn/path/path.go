@@ -60,8 +60,6 @@ type config struct {
 	PowerShellReEnableNat string
 	// OpenVPN up script location
 	UpScript string
-	// UpScriptSource file location
-	UpScriptSource string
 }
 
 // newConfig creates a default path configuration.
@@ -86,7 +84,6 @@ func newConfig() *config {
 		PowerShellScheduleTask: "bin/new-startuptask.ps1",
 		PowerShellReEnableNat:  "bin/reenable-nat.ps1",
 		UpScript:               "bin/nat-pf.sh",
-		UpScriptSource:         "/ovpn/scripts/nat-pf.sh",
 	}
 }
 
