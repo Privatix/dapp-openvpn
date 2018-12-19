@@ -3,7 +3,6 @@ package openvpn
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,21 +20,22 @@ import (
 
 // OpenVPN has a openvpn configuration.
 type OpenVPN struct {
-	Path      string
-	Role      string
-	Tap       *tapInterface
-	Proto     string
-	Host      *host
-	Managment *host
-	Server    *host
-	Service   string
-	Adapter   *DappVPN
-	Validity  *validity
-	IsWindows bool
-	User      string
-	Group     string
-	Import    bool
-	Install   bool
+	Path            string
+	Role            string
+	Tap             *tapInterface
+	Proto           string
+	Host            *host
+	Managment       *host
+	Server          *host
+	Service         string
+	Adapter         *DappVPN
+	Validity        *validity
+	IsWindows       bool
+	User            string
+	Group           string
+	Import          bool
+	Install         bool
+	ForwardingState string
 }
 
 type validity struct {
@@ -118,29 +118,7 @@ func (o *OpenVPN) Configurate() error {
 		return err
 	}
 
-	if err := o.createUpScript(); err != nil {
-		return err
-	}
-
 	return o.createConfig()
-}
-
-func (o *OpenVPN) createUpScript() error {
-	if o.IsWindows {
-		return nil
-	}
-
-	upScript := filepath.Join(o.Path, path.Config.UpScript)
-	if _, err := os.Stat(upScript); err == nil {
-		return nil
-	}
-
-	bytes, err := statik.ReadFile(path.Config.UpScriptSource)
-	if err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile(upScript, bytes, 0777)
 }
 
 func (o *OpenVPN) createConfig() error {
@@ -202,12 +180,18 @@ func (o *OpenVPN) RemoveConfig() error {
 	}
 
 	upScript := filepath.Join(o.Path, path.Config.UpScript)
-	if _, err := os.Stat(upScript); err == nil {
-		defer os.Remove(upScript)
-		return exec.Command("/bin/sh", upScript, "off").Run()
+	cmd := exec.Command("/bin/sh", upScript, "off", o.ForwardingState)
+	if err := cmd.Run(); err != nil {
+		return err
 	}
 
-	return nil
+	name := serviceName("nat", o.Path)
+	cmd = exec.Command("launchctl", "unload", daemonPath(name))
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return os.Remove(daemonPath(name))
 }
 
 func (o *OpenVPN) createCertificate() error {
@@ -390,4 +374,9 @@ func (o *OpenVPN) RemoveService() (string, error) {
 		return "", err
 	}
 	return service.Remove()
+}
+
+// CreateForwardingDaemon creates daemon on macOS.
+func (o *OpenVPN) CreateForwardingDaemon() error {
+	return createNatRules(o.Path, o.Server.IP, o.Host.Port)
 }

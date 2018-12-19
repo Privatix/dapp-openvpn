@@ -9,16 +9,17 @@ import (
 
 // Config has a store environment variables.
 type Config struct {
-	Schema         string
-	Workdir        string
-	Device         string
-	GUID           string
-	Interface      string
-	Service        string
-	Role           string
-	Adapter        string
-	ProductImport  bool
-	ProductInstall bool
+	Schema          string
+	Workdir         string
+	Device          string
+	GUID            string
+	Interface       string
+	Service         string
+	Role            string
+	Adapter         string
+	ForwardingState string
+	ProductImport   bool
+	ProductInstall  bool
 }
 
 // NewConfig creates a default Configs configuration.
