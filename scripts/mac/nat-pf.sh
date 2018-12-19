@@ -57,8 +57,12 @@ then
     ports="\npass in proto { tcp, udp } from any to any port $port"
     echo "$ports" >> /usr/local/nat-rules
 
-    # enables ip forwarding
-    /usr/sbin/sysctl -w net.inet.ip.forwarding=1
+    frwd=$(/usr/sbin/sysctl -n net.inet.ip.forwarding)
+    if [ "$frwd" != "1" ]
+    then
+        # enables ip forwarding
+        /usr/sbin/sysctl -w net.inet.ip.forwarding=1
+    fi
 
     #disables pfctl
     /sbin/pfctl -d
@@ -72,8 +76,19 @@ then
     /sbin/pfctl -f /usr/local/nat-rules -e
 elif [ "$status" = "off" ]
 then
-    # disables ip forwarding
-    /usr/sbin/sysctl -w net.inet.ip.forwarding=0
+    if [ -n "$2" ]
+    then
+	    forwarding=$2
+    else
+	    echo "No arguments supplied (forwarding)."
+	    exit 1
+    fi
+
+    if [ "$forwarding" = "0" ]
+    then
+        # disables ip forwarding
+        /usr/sbin/sysctl -w net.inet.ip.forwarding=0
+    fi
 
     #disables pfctl
     /sbin/pfctl -d

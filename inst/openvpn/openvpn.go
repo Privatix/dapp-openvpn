@@ -20,21 +20,22 @@ import (
 
 // OpenVPN has a openvpn configuration.
 type OpenVPN struct {
-	Path      string
-	Role      string
-	Tap       *tapInterface
-	Proto     string
-	Host      *host
-	Managment *host
-	Server    *host
-	Service   string
-	Adapter   *DappVPN
-	Validity  *validity
-	IsWindows bool
-	User      string
-	Group     string
-	Import    bool
-	Install   bool
+	Path            string
+	Role            string
+	Tap             *tapInterface
+	Proto           string
+	Host            *host
+	Managment       *host
+	Server          *host
+	Service         string
+	Adapter         *DappVPN
+	Validity        *validity
+	IsWindows       bool
+	User            string
+	Group           string
+	Import          bool
+	Install         bool
+	ForwardingState string
 }
 
 type validity struct {
@@ -179,12 +180,13 @@ func (o *OpenVPN) RemoveConfig() error {
 	}
 
 	upScript := filepath.Join(o.Path, path.Config.UpScript)
-	if err := exec.Command("/bin/sh", upScript, "off").Run(); err != nil {
+	cmd := exec.Command("/bin/sh", upScript, "off", o.ForwardingState)
+	if err := cmd.Run(); err != nil {
 		return err
 	}
 
 	name := serviceName("nat", o.Path)
-	cmd := exec.Command("launchctl", "unload", daemonPath(name))
+	cmd = exec.Command("launchctl", "unload", daemonPath(name))
 	if err := cmd.Run(); err != nil {
 		return err
 	}

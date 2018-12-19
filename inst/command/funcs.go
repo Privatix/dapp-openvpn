@@ -227,11 +227,21 @@ func checkInstallation(o *openvpn.OpenVPN) error {
 	o.Adapter.Service = v.Adapter
 	o.Import = v.ProductImport
 	o.Install = v.ProductInstall
+	o.ForwardingState = v.ForwardingState
 
 	return nil
 }
 
 func createEnv(o *openvpn.OpenVPN) error {
+	if !o.IsWindows {
+		out, err := exec.Command("/usr/sbin/sysctl", "-n",
+			"net.inet.ip.forwarding").Output()
+		if err != nil {
+			return err
+		}
+		o.ForwardingState = strings.Replace(string(out), "\n", "", -1)
+	}
+
 	v := env.NewConfig()
 
 	v.Workdir = o.Path
@@ -243,6 +253,7 @@ func createEnv(o *openvpn.OpenVPN) error {
 	v.Adapter = o.Adapter.Service
 	v.ProductImport = o.Import
 	v.ProductInstall = o.Install
+	v.ForwardingState = o.ForwardingState
 
 	if err := v.Write(filepath.Join(o.Path, envFile)); err != nil {
 		return fmt.Errorf("failed to create env file: %v", err)

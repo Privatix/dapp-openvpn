@@ -185,9 +185,13 @@ func createNatRules(p, server string, port int) error {
 		Port   int
 	}
 
+	script := filepath.Join(p, path.Config.UpScript)
+	if err := os.Chmod(script, 0777); err != nil {
+		return err
+	}
 	d := &natRule{
 		Name:   name,
-		Script: filepath.Join(p, path.Config.UpScript),
+		Script: script,
 		Server: server,
 		Port:   port,
 	}
