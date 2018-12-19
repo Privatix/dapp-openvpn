@@ -3,6 +3,15 @@
     "Install": [
         {"Admin" : true,"Command": "bin/inst install --config ../config/installer.agent.config.json"}
     ],
+    "Update": [
+        {"Admin" : true,"Command": "bin/inst update"}
+    ],
+    "Start": [
+        {"Admin" : true,"Command": "bin/inst start"}
+    ],
+    "Stop": [
+        {"Admin" : true,"Command": "bin/inst stop"}
+    ],
     "Remove": [
         {"Admin" : true,"Command": "bin/inst remove"}
     ]

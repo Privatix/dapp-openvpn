@@ -380,3 +380,28 @@ func (o *OpenVPN) RemoveService() (string, error) {
 func (o *OpenVPN) CreateForwardingDaemon() error {
 	return createNatRules(o.Path, o.Server.IP, o.Host.Port)
 }
+
+// Update updates the product.
+func (o *OpenVPN) Update() error {
+	role := "agent"
+	if o.isClient() {
+		role = "client"
+	}
+
+	configDir := filepath.Join(o.Path, "config")
+	dataDir := filepath.Join(o.Path, "data")
+
+	oldPath := strings.Replace(o.Path, role+"_new", role, 1)
+	oldConfigDir := filepath.Join(oldPath, "config")
+	oldDataDir := filepath.Join(oldPath, "data")
+
+	if err := copyDir(oldConfigDir, configDir); err != nil {
+		return err
+	}
+
+	if err := copyDir(oldDataDir, dataDir); err != nil {
+		return err
+	}
+
+	return merge(oldConfigDir, configDir)
+}
