@@ -9,8 +9,6 @@ import (
 
 	"github.com/rdegges/go-ipify"
 
-	"github.com/privatix/dappctrl/sesssrv"
-	"github.com/privatix/dappctrl/svc/connector"
 	"github.com/privatix/dappctrl/util/log"
 )
 
@@ -33,14 +31,17 @@ type Config struct {
 	TimeOut          int64
 }
 
+// SetProductConfigFunc sets controller's product configuration.
+type SetProductConfigFunc func(config map[string]string) error
+
 // Pusher updates the product configuration.
 type Pusher struct {
-	config    *Config
-	connector connector.Connector
-	ip        string
-	password  string
-	username  string
-	logger    log.Logger
+	config           *Config
+	setProductConfig SetProductConfigFunc
+	ip               string
+	password         string
+	username         string
+	logger           log.Logger
 }
 
 // NewConfig creates a default configuration.
@@ -56,7 +57,7 @@ func NewConfig() *Config {
 // Argument conf to parsing vpn configuration. Arguments srv, user, pass
 // to send configuration to session service.
 func NewPusher(conf *Config, logger log.Logger,
-	connector connector.Connector) *Pusher {
+	setProductConfig SetProductConfigFunc) *Pusher {
 	var ip string
 	ip, err := externalIP()
 	if err != nil {
@@ -65,10 +66,10 @@ func NewPusher(conf *Config, logger log.Logger,
 	}
 
 	return &Pusher{
-		config:    conf,
-		connector: connector,
-		logger:    logger,
-		ip:        ip,
+		config:           conf,
+		setProductConfig: setProductConfig,
+		logger:           logger,
+		ip:               ip,
 	}
 }
 
@@ -99,10 +100,6 @@ func (p *Pusher) PushConfiguration(ctx context.Context) error {
 		return err
 	}
 
-	args := &sesssrv.ProductArgs{
-		Config: params,
-	}
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -110,7 +107,7 @@ func (p *Pusher) PushConfiguration(ctx context.Context) error {
 		default:
 		}
 
-		err = p.connector.SetupProductConfiguration(args)
+		err = p.setProductConfig(params)
 		if err != nil {
 			m := "failed to push app config to dappctrl"
 			logger.Add("error", err.Error()).Warn(m)

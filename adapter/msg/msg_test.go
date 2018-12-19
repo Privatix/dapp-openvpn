@@ -6,7 +6,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/privatix/dappctrl/svc/connector"
 	"github.com/privatix/dappctrl/util/log"
 
 	"github.com/privatix/dapp-openvpn/adapter/mon"
@@ -15,14 +14,12 @@ import (
 
 var (
 	conf struct {
-		StderrLog     *log.WriterConfig
 		Pusher        *Config
 		Monitor       *mon.Config
 		TestVPNConfig map[string]string
 	}
 
 	logger log.Logger
-	conn   *connector.Mock
 )
 
 func newTestVPNConfig() map[string]string {
@@ -30,21 +27,13 @@ func newTestVPNConfig() map[string]string {
 }
 
 func TestMain(m *testing.M) {
-	var err error
-
-	conf.StderrLog = log.NewWriterConfig()
 	conf.Pusher = NewConfig()
 	conf.Monitor = mon.NewConfig()
 	conf.TestVPNConfig = newTestVPNConfig()
 
 	util.ReadTestConfig(&conf)
 
-	logger, err = log.NewStderrLogger(conf.StderrLog)
-	if err != nil {
-		panic(err)
-	}
-
-	conn = connector.NewMock()
+	logger = log.NewMultiLogger()
 
 	os.Exit(m.Run())
 }

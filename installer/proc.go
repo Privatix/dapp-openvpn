@@ -104,8 +104,8 @@ func adjustment(product *data.Product, configFile string) error {
 		return err
 	}
 
-	cfg.Connector.Username = product.ID
-	cfg.Connector.Password = pass
+	cfg.Sess.Product = product.ID
+	cfg.Sess.Password = pass
 
 	return util.WriteJSONFile(configFile, "", jsonIdent, &cfg)
 }

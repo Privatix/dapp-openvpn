@@ -89,7 +89,7 @@ func setConfigurationValues(jsonMap map[string]interface{},
 	return nil
 }
 
-func connectorAddr(config string) (string, error) {
+func sessAddr(config string) (string, error) {
 	read, err := os.Open(config)
 	if err != nil {
 		return "", err
@@ -100,9 +100,9 @@ func connectorAddr(config string) (string, error) {
 
 	json.NewDecoder(read).Decode(&jsonMap)
 
-	srv, ok := jsonMap["SessionServer"].(map[string]interface{})
+	srv, ok := jsonMap["Sess"].(map[string]interface{})
 	if !ok {
-		return "", fmt.Errorf("SessionServer params not found")
+		return "", fmt.Errorf("Sess params not found")
 	}
 	addr, ok := srv["Addr"]
 	if !ok {
