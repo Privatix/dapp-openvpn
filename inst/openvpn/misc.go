@@ -80,6 +80,10 @@ func setConfigurationValues(jsonMap map[string]interface{},
 		m := jsonMap
 		for i := 0; i < length; i++ {
 			item, ok := m[path[i]]
+			if !ok {
+				m[path[i]] = make(map[string]interface{})
+				item, ok = m[path[i]]
+			}
 			if ok && reflect.TypeOf(m) == reflect.TypeOf(item) {
 				m, _ = item.(map[string]interface{})
 				continue
