@@ -67,7 +67,10 @@ func TestClientConfig(t *testing.T) {
 	adapterConfig.Monitor = conf.VPNMonitor
 	adapterConfig.FileLog.WriterConfig = conf.StderrLog
 
+	endpoint := "127.0.0.1"
+
 	conn.Endpoint = data.NewTestEndpoint(channel, util.NewUUID())
+	conn.Endpoint.ServiceEndpointAddress = &endpoint
 
 	if err := ClientConfig(
 		logger, channel, conn, adapterConfig); err != nil {
@@ -86,7 +89,10 @@ func TestMain(m *testing.M) {
 	conf.StderrLog = log.NewWriterConfig()
 	conf.VPNMonitor = mon.NewConfig()
 
-	util.ReadTestConfig(&conf)
+	args := &util.TestArgs{
+		Conf: &conf,
+	}
+	util.ReadTestArgs(args)
 
 	logger, err = log.NewStderrLogger(conf.StderrLog)
 	if err != nil {
