@@ -79,7 +79,7 @@ connect-retry {{if .ConnectRetry}}{{.ConnectRetry}}{{else}}5{{end}}
 
 # Set log file verbosity.
 verb 3
-#log-append /var/log/openvpn/openvpn-tcp.log
+{{if .LogAppend}}log-append {{.LogAppend}}{{end}}
 
 # Management interface settings
 management 0.0.0.0 {{if .ManagementPort}}{{.ManagementPort}}{{else}}7506{{end}}
