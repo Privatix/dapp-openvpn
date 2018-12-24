@@ -159,6 +159,7 @@ func (o *OpenVPN) createConfig() error {
 // RemoveConfig removes openvpn configuration.
 func (o *OpenVPN) RemoveConfig() error {
 	if o.isClient() {
+		os.RemoveAll(filepath.Join(o.Path, path.Config.DataDir))
 		return nil
 	}
 
