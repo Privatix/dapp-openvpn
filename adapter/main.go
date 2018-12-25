@@ -105,11 +105,6 @@ func main() {
 	}
 }
 
-func callSess(result interface{}, method string, args ...interface{}) error {
-	creds := []interface{}{conf.Sess.Product, conf.Sess.Password}
-	return sesscl.Call(result, "sess_"+method, append(creds, args...)...)
-}
-
 func handleAuth() {
 	logger := logger.Add("method", "handleAuth")
 	user, pass := getCreds()
@@ -303,21 +298,20 @@ func handleClientMonitor() {
 
 	var ctx context.Context
 	var stopOvpnAndMonitor func()
-	for {
-		time.Sleep(conf.HeartbeatPeriod * time.Millisecond)
+	ch := make(chan *sess.ConnChangeResult)
+	_, err := sesscl.Subscribe(context.Background(), "sess", ch,
+		"connChange", conf.Sess.Product, conf.Sess.Password)
+	if err != nil {
+		logger.Fatal("failed to subscribe to connection changes")
+	}
 
-		logger.Debug("heartbeat")
-
-		var res sess.HeartbeatResult
-		if err := callSess(&res, "handleHeartbeat"); err != nil {
-			logger.Error("heartbeat request failed: " + err.Error())
-			break
-		}
+	for res := range ch {
+		logger.Info(fmt.Sprintf("connection change: %v", res))
 
 		mtx.Lock()
 
-		switch res.Command {
-		case sess.HeartbeatStart:
+		switch res.Status {
+		case sess.ConnStart:
 			if ovpnCmd != nil {
 				logger.Warn("requested to start while " +
 					"OpenVPN is still running")
@@ -335,7 +329,7 @@ func handleClientMonitor() {
 			defer stopOvpnAndMonitor()
 			ovpnCmd = launchOpenVPN(ctx, res.Channel)
 
-		case sess.HeartbeatStop:
+		case sess.ConnStop:
 			if ovpnCmd == nil {
 				logger.Warn("requested to stop while " +
 					"OpenVPN is not running")
@@ -347,7 +341,10 @@ func handleClientMonitor() {
 		}
 
 		mtx.Unlock()
+
 	}
+
+	logger.Fatal("unexpected end of subscription to connection changes")
 }
 
 func launchOpenVPN(ctx context.Context, channel string) *exec.Cmd {
