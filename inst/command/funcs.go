@@ -336,7 +336,14 @@ func changeOwner(o *openvpn.OpenVPN) error {
 }
 
 func update(o *openvpn.OpenVPN) error {
+	if err := stopService(o); err != nil {
+		return err
+	}
+
 	if err := o.Update(); err != nil {
+		if err := startService(o); err != nil {
+			return err
+		}
 		return fmt.Errorf("failed to update product: %v", err)
 	}
 
