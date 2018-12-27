@@ -78,10 +78,6 @@ func newTAP(deviceID, role string) (*tapInterface, error) {
 	fmt.Println("device", deviceID)
 	fmt.Println("interface", tapInterfaceName)
 
-	if err := renameTapInterface(deviceID, tapInterfaceName); err != nil {
-		return nil, err
-	}
-
 	guid, err := tapInterfaceGUID(deviceID)
 	if err != nil {
 		return nil, err
@@ -93,7 +89,7 @@ func newTAP(deviceID, role string) (*tapInterface, error) {
 		Interface: tapInterfaceName,
 	}
 
-	return tap, nil
+	return tap, renameTapInterface(deviceID, tapInterfaceName)
 }
 
 func tapInterfaceGUID(device string) (string, error) {
