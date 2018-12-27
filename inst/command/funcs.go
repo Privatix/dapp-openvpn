@@ -52,6 +52,18 @@ func createService(o *openvpn.OpenVPN) error {
 	if s, err := o.Adapter.InstallService(o.Role, o.Path); err != nil {
 		return fmt.Errorf("failed to install service: %v %v", s, err)
 	}
+
+	if !o.IsWindows {
+		return nil
+	}
+
+	name := strings.Replace(o.Adapter.Service, " ", "_", -1)
+	cmd := exec.Command("sc", "failure", name, "reset=", "0",
+		"actions=", "restart/1000/restart/2000/restart/5000")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to set service restart rule: %v", err)
+	}
+
 	return nil
 }
 
@@ -215,11 +227,21 @@ func checkInstallation(o *openvpn.OpenVPN) error {
 	o.Adapter.Service = v.Adapter
 	o.Import = v.ProductImport
 	o.Install = v.ProductInstall
+	o.ForwardingState = v.ForwardingState
 
 	return nil
 }
 
 func createEnv(o *openvpn.OpenVPN) error {
+	if !o.IsWindows {
+		out, err := exec.Command("/usr/sbin/sysctl", "-n",
+			"net.inet.ip.forwarding").Output()
+		if err != nil {
+			return err
+		}
+		o.ForwardingState = strings.Replace(string(out), "\n", "", -1)
+	}
+
 	v := env.NewConfig()
 
 	v.Workdir = o.Path
@@ -231,6 +253,7 @@ func createEnv(o *openvpn.OpenVPN) error {
 	v.Adapter = o.Adapter.Service
 	v.ProductImport = o.Import
 	v.ProductInstall = o.Install
+	v.ForwardingState = o.ForwardingState
 
 	if err := v.Write(filepath.Join(o.Path, envFile)); err != nil {
 		return fmt.Errorf("failed to create env file: %v", err)
@@ -264,6 +287,33 @@ func startServices(o *openvpn.OpenVPN) error {
 	return nil
 }
 
+func finalize(o *openvpn.OpenVPN) error {
+	if !strings.EqualFold(o.Role, "server") {
+		return nil
+	}
+
+	if !o.IsWindows {
+		return o.CreateForwardingDaemon()
+	}
+
+	if err := o.CheckServiceStatus("running"); err != nil {
+		return err
+	}
+
+	if err := stopService(o); err != nil {
+		return fmt.Errorf("failed to stop services: %v", err)
+	}
+
+	if err := o.CheckServiceStatus("stopped"); err != nil {
+		return err
+	}
+
+	if err := startServices(o); err != nil {
+		return fmt.Errorf("failed to start services: %v", err)
+	}
+	return nil
+}
+
 func changeOwner(o *openvpn.OpenVPN) error {
 	if o.IsWindows {
 		return nil
@@ -281,14 +331,10 @@ func changeOwner(o *openvpn.OpenVPN) error {
 	uid, _ := strconv.Atoi(group.Uid)
 	gid, _ := strconv.Atoi(group.Gid)
 
-	if err := filepath.Walk(o.Path,
-		func(name string, info os.FileInfo, err error) error {
-			if err == nil {
-				err = os.Chown(name, uid, gid)
-			}
-			return err
-		}); err != nil {
+	file := filepath.Join(o.Path, envFile)
+	if err := os.Chown(file, uid, gid); err != nil {
 		return fmt.Errorf("failed to change owner: %v", err)
 	}
+
 	return nil
 }

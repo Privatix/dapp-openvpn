@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -25,6 +26,7 @@ const (
 
 	managementPortKey = "management"
 	tapInterfaceKey   = "dev-node"
+	logAppendKey      = "log-append"
 )
 
 var (
@@ -86,7 +88,8 @@ func checkCA(t *testing.T, config string, ca []byte) {
 
 func checkConf(t *testing.T, config string,
 	keys []string, options map[string]interface{}) {
-	specialKeys := []string{remoteKey, tapInterfaceKey, managementPortKey}
+	specialKeys := []string{remoteKey, tapInterfaceKey,
+		managementPortKey, logAppendKey}
 	keys = append(keys, specialKeys...)
 
 	result, err := vpnParams(logger, config, keys)
@@ -100,11 +103,44 @@ func checkConf(t *testing.T, config string,
 		t.Fatal(`special argument "dev-node" not exists`)
 	}
 
-	tapInterfaceVal := fmt.Sprintf(`"%s"`, options[TapInterface])
+	tapInterfaceVal := options[TapInterface]
+	if runtime.GOOS == "windows" {
+		tapInterfaceVal = fmt.Sprintf(`"%s"`, options[TapInterface])
+	}
 
 	if tapInterfaceVal != gotTapIf {
 		t.Fatalf("special argument dev-node not exists,"+
 			" wanted: %s, got: %s", tapInterfaceVal, gotTapIf)
+	}
+
+	// Checks special argument `log-append`.
+	gotLogAppend, ok := result[logAppendKey]
+	if !ok {
+		t.Fatal(`special argument "log-append" not exists`)
+	}
+
+	var expLogAppend string
+
+	logDir, ok := options[LogDir]
+	if ok {
+		if dir, ok := logDir.(string); ok {
+			logName := fmt.Sprintf("openvpn-%s.log", username)
+			openVpnLog := filepath.Join(dir, logName)
+
+			if runtime.GOOS == "windows" {
+				str := strings.Replace(openVpnLog,
+					`\`, `\\`, -1)
+				expLogAppend = fmt.Sprintf(
+					`"%s"`, str)
+			} else {
+				expLogAppend = openVpnLog
+			}
+		}
+	}
+
+	if expLogAppend != gotLogAppend {
+		t.Fatalf("special argument log-append not exists,"+
+			" wanted: %s, got: %s", expLogAppend, gotLogAppend)
 	}
 
 	// Checks special argument `management`.
@@ -177,6 +213,7 @@ func TestMakeFiles(t *testing.T) {
 	options := map[string]interface{}{
 		VpnManagementPort: uint16(7777),
 		TapInterface:      "12345",
+		LogDir:            rootDir,
 	}
 
 	if err := MakeFiles(logger, rootDir, serviceEndpointAddress, username,

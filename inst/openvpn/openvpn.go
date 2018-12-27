@@ -1,6 +1,7 @@
 package openvpn
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -19,21 +20,22 @@ import (
 
 // OpenVPN has a openvpn configuration.
 type OpenVPN struct {
-	Path      string
-	Role      string
-	Tap       *tapInterface
-	Proto     string
-	Host      *host
-	Managment *host
-	Server    *host
-	Service   string
-	Adapter   *DappVPN
-	Validity  *validity
-	IsWindows bool
-	User      string
-	Group     string
-	Import    bool
-	Install   bool
+	Path            string
+	Role            string
+	Tap             *tapInterface
+	Proto           string
+	Host            *host
+	Managment       *host
+	Server          *host
+	Service         string
+	Adapter         *DappVPN
+	Validity        *validity
+	IsWindows       bool
+	User            string
+	Group           string
+	Import          bool
+	Install         bool
+	ForwardingState string
 }
 
 type validity struct {
@@ -90,11 +92,7 @@ func (o *OpenVPN) InstallTap() (err error) {
 		return nil
 	}
 
-	script := filepath.Join(o.Path, path.Config.PowerShellVpnNat)
-	args := buildPowerShellArgs(script,
-		"-TAPdeviceAddress", o.Tap.DeviceID,
-		"-Enabled")
-	return runPowerShellCommand(args...)
+	return enableNAT(o.Path, o.Tap.DeviceID)
 }
 
 // RemoveTap removes the tap interface.
@@ -104,12 +102,7 @@ func (o *OpenVPN) RemoveTap() error {
 	}
 
 	if !o.isClient() {
-		script := filepath.Join(o.Path, path.Config.PowerShellVpnNat)
-		args := buildPowerShellArgs(script,
-			"-TAPdeviceAddress", o.Tap.DeviceID)
-		if err := runPowerShellCommand(args...); err != nil {
-			return err
-		}
+		disableNAT(o.Path, o.Tap.DeviceID)
 	}
 	return o.Tap.remove(o.Path)
 }
@@ -166,6 +159,7 @@ func (o *OpenVPN) createConfig() error {
 // RemoveConfig removes openvpn configuration.
 func (o *OpenVPN) RemoveConfig() error {
 	if o.isClient() {
+		os.RemoveAll(filepath.Join(o.Path, path.Config.DataDir))
 		return nil
 	}
 
@@ -176,12 +170,29 @@ func (o *OpenVPN) RemoveConfig() error {
 		path.RoleCertificate(o.Role),
 		path.RoleKey(o.Role),
 		path.RoleConfig(o.Role),
+		path.Config.DataDir,
 	}
 	for _, path := range pathsToRemove {
-		os.Remove(filepath.Join(o.Path, path))
+		os.RemoveAll(filepath.Join(o.Path, path))
 	}
 
-	return nil
+	if o.IsWindows {
+		return nil
+	}
+
+	upScript := filepath.Join(o.Path, path.Config.UpScript)
+	cmd := exec.Command("/bin/sh", upScript, "off", o.ForwardingState)
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	name := serviceName("nat", o.Path)
+	cmd = exec.Command("launchctl", "unload", daemonPath(name))
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return os.Remove(daemonPath(name))
 }
 
 func (o *OpenVPN) createCertificate() error {
@@ -195,6 +206,12 @@ func (o *OpenVPN) createCertificate() error {
 	// Generate Diffie Hellman param.
 	ossl := filepath.Join(o.Path, path.Config.OpenSSL)
 	dh := filepath.Join(p, "dh2048.pem")
+
+	// temporary, it will be removed after testing
+	if _, err := os.Stat(dh); err == nil {
+		return nil
+	}
+
 	err := exec.Command(ossl, "dhparam", "-out", dh, "2048").Run()
 	if err != nil {
 		cmd := exec.Command("openssl", "dhparam", "-out", dh, "2048")
@@ -235,6 +252,10 @@ func (o *OpenVPN) InstallService() (string, error) {
 		return "", nil
 	}
 
+	if err := createScheduleTask(o.Path, o.Tap.DeviceID); err != nil {
+		return "", err
+	}
+
 	script := filepath.Join(o.Path, path.Config.PowerShellVpnFirewall)
 	ovpn := filepath.Join(o.Path, path.Config.OpenVPN+".exe")
 	args := buildPowerShellArgs(script, "-Create",
@@ -273,6 +294,40 @@ func (o *OpenVPN) RunService() (string, error) {
 		Type: path.Config.OVPN})
 }
 
+// CheckServiceStatus checks service status.
+func (o *OpenVPN) CheckServiceStatus(status string) error {
+	if o.isClient() {
+		return nil
+	}
+
+	service, err := daemon.New(o.Service, "")
+	if err != nil {
+		return err
+	}
+
+	done := make(chan bool)
+	go func() {
+		for {
+			time.Sleep(200 * time.Millisecond)
+			s, err := service.Status()
+			if err != nil {
+				continue
+			}
+			if strings.Contains(strings.ToLower(s), status) {
+				break
+			}
+		}
+		done <- true
+	}()
+
+	select {
+	case <-done:
+		return nil
+	case <-time.After(1 * time.Minute):
+		return errors.New("failed to check services status. timeout expired")
+	}
+}
+
 // StopService stops openvpn service.
 func (o *OpenVPN) StopService() (string, error) {
 	if o.isClient() {
@@ -309,6 +364,10 @@ func (o *OpenVPN) RemoveService() (string, error) {
 		if err := runPowerShellCommand(args...); err != nil {
 			return "", err
 		}
+
+		if err := removeScheduleTask(); err != nil {
+			return "", err
+		}
 	}
 
 	service, err := daemon.New(o.Service, "")
@@ -316,4 +375,9 @@ func (o *OpenVPN) RemoveService() (string, error) {
 		return "", err
 	}
 	return service.Remove()
+}
+
+// CreateForwardingDaemon creates daemon on macOS.
+func (o *OpenVPN) CreateForwardingDaemon() error {
+	return createNatRules(o.Path, o.Server.IP, o.Host.Port)
 }

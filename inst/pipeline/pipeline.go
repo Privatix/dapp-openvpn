@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/privatix/dappctrl/util/log"
@@ -30,7 +31,9 @@ func (flow Flow) Run(in interface{}, logger log.Logger) error {
 		err = m.Run(in)
 
 		if err != nil {
-			logger.Warn(fmt.Sprintf("failed to execute '%v' operation",
+			object, _ := json.Marshal(in)
+			l := logger.Add("object", string(object))
+			l.Warn(fmt.Sprintf("failed to execute '%v' operation",
 				m.Name()))
 			rollback(flow[:i+1])
 			break
