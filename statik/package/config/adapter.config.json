@@ -16,7 +16,7 @@
         "Name": "openvpn",
         "Args": null,
         "ConfigRoot": "/etc/openvpn/config",
-        "StartDelay": 1000
+        "StartDelay": 2000
     },
     "Pusher": {
         "CaCertPath": "/etc/openvpn/config/ca.crt",

@@ -84,7 +84,10 @@ func TestClientConfig(t *testing.T) {
 func TestMain(m *testing.M) {
 	conf.VPNMonitor = mon.NewConfig()
 
-	util.ReadTestConfig(&conf)
+	args := &util.TestArgs{
+		Conf: &conf,
+	}
+	util.ReadTestArgs(args)
 
 	logger = log.NewMultiLogger()
 

@@ -55,7 +55,12 @@ func (e *execute) Run() {
 	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
 	defer close(interrupt)
 
-	go run(e)
+	go func() {
+		if err := run(e); err != nil {
+			os.Exit(2)
+		}
+		os.Exit(0)
+	}()
 
 	for {
 		select {

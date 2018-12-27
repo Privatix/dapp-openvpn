@@ -37,8 +37,9 @@ const (
 
 // Specific adapter options.
 const (
-	VpnManagementPort = "vpnManagementPort"
+	LogDir            = "logDir"
 	TapInterface      = "tapInterface"
+	VpnManagementPort = "vpnManagementPort"
 )
 
 var (
@@ -51,6 +52,7 @@ type vpnClient struct {
 	Cipher         string `json:"cipher"`
 	ConnectRetry   string `json:"connect-retry"`
 	CompLZO        string `json:"comp-lzo"`
+	LogAppend      string `json:"-"`
 	ManagementPort uint16 `json:"-"`
 	Ping           string `json:"ping"`
 	PingRestart    string `json:"ping-restart"`
@@ -131,7 +133,59 @@ func accessDestination(dir string) string {
 	return filepath.Join(dir, defaultAccessFile)
 }
 
-func (s *service) makeClientConfig(dir, serviceEndpointAddress string,
+func pathToConfig(path string) string {
+	if runtime.GOOS == "windows" {
+		str := strings.Replace(path, `\`, `\\`, -1)
+		return fmt.Sprintf(`"%s"`, str)
+	}
+	return path
+}
+
+// addAccessFile adds full path to an access file to a configuration.
+func (s *service) addAccessFile(dir string, openVpnConfig *vpnClient) {
+	accessDst := accessDestination(dir)
+	openVpnConfig.AccessFile = pathToConfig(accessDst)
+
+}
+
+// addLogAppend adds full path to Openvpn log file to a configuration.
+func (s *service) addLogAppend(username string,
+	options map[string]interface{}, openVpnConfig *vpnClient) {
+	ovpnLogDir, ok := options[LogDir]
+	if !ok {
+		return
+	}
+
+	if dir, ok := ovpnLogDir.(string); ok {
+		logName := fmt.Sprintf("openvpn-%s.log", username)
+		openVpnConfig.LogAppend = pathToConfig(
+			filepath.Join(dir, logName))
+	}
+}
+
+// addVpnManagementPort adds vpn management port to the configuration.
+func (s *service) addVpnManagementPort(options map[string]interface{},
+	openVpnConfig *vpnClient) {
+	mPort, ok := options[VpnManagementPort]
+	if !ok {
+		return
+	}
+
+	if port, ok := mPort.(uint16); ok {
+		openVpnConfig.ManagementPort = port
+	}
+}
+
+// addTapInterface adds Windows TAP device name to the configuration.
+func (s *service) addTapInterface(options map[string]interface{},
+	openVpnConfig *vpnClient) {
+	tapInterface, ok := options[TapInterface]
+	if ok {
+		openVpnConfig.TapInterface = tapInterface.(string)
+	}
+}
+
+func (s *service) makeClientConfig(dir, serviceEndpointAddress, username string,
 	params []byte, options map[string]interface{}) error {
 	logger := s.logger.Add("method", "makeClientConfig", "directory", dir)
 
@@ -142,29 +196,10 @@ func (s *service) makeClientConfig(dir, serviceEndpointAddress string,
 		return err
 	}
 
-	accessDst := accessDestination(dir)
-
-	// Adds full path to an access file to a configuration.
-	if runtime.GOOS == "windows" {
-		str := strings.Replace(accessDst, `\`, `\\`, -1)
-		openVpnConfig.AccessFile = fmt.Sprintf(`"%s"`, str)
-	} else {
-		openVpnConfig.AccessFile = accessDst
-	}
-
-	// Adds vpn management port to the configuration.
-	mPort, ok := options[VpnManagementPort]
-	if ok {
-		if port, ok := mPort.(uint16); ok {
-			openVpnConfig.ManagementPort = port
-		}
-	}
-
-	// Adds Windows TAP device name to the configuration.
-	tapInterface, ok := options[TapInterface]
-	if ok {
-		openVpnConfig.TapInterface = tapInterface.(string)
-	}
+	s.addAccessFile(dir, openVpnConfig)
+	s.addLogAppend(username, options, openVpnConfig)
+	s.addVpnManagementPort(options, openVpnConfig)
+	s.addTapInterface(options, openVpnConfig)
 
 	data, err := readFileFromVirtualFS(clientConfigTemplate)
 	if err != nil {
@@ -221,7 +256,7 @@ func MakeFiles(logger log.Logger, dir, serviceEndpointAddress, username,
 	// then make and fill client configuration file.
 	if !checkFile(configDst) {
 		if err := s.makeClientConfig(dir, serviceEndpointAddress,
-			params, options); err != nil {
+			username, params, options); err != nil {
 			return err
 		}
 	}
