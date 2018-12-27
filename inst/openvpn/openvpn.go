@@ -392,17 +392,37 @@ func (o *OpenVPN) Update() error {
 	configDir := filepath.Join(o.Path, "config")
 	dataDir := filepath.Join(o.Path, "data")
 
-	oldPath := strings.Replace(o.Path, role+"_new", role, 1)
-	oldConfigDir := filepath.Join(oldPath, "config")
-	oldDataDir := filepath.Join(oldPath, "data")
+	newPath := strings.Replace(o.Path, role+"_new", role, 1)
 
-	if err := copyDir(oldConfigDir, configDir); err != nil {
+	productTempPath := os.Getenv("PRIVATIX_TEMP_PRODUCT")
+	_, product := filepath.Split(o.Path)
+
+	findProduct := func(name string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			return err
+		}
+		_, dir := filepath.Split(name)
+
+		if err == nil && strings.EqualFold(dir, product) {
+			newPath = name
+		}
 		return err
 	}
 
-	if err := copyDir(oldDataDir, dataDir); err != nil {
+	if len(productTempPath) > 0 {
+		filepath.Walk(productTempPath, findProduct)
+	}
+
+	newConfigDir := filepath.Join(newPath, "config")
+	newDataDir := filepath.Join(newPath, "data")
+
+	if err := copyDir(newConfigDir, configDir); err != nil {
 		return err
 	}
 
-	return merge(oldConfigDir, configDir)
+	if err := copyDir(newDataDir, dataDir); err != nil {
+		return err
+	}
+
+	return merge(newConfigDir, configDir)
 }
