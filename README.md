@@ -2,10 +2,35 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/af4e29689d76d8ccf974/maintainability)](https://codeclimate.com/github/Privatix/dapp-openvpn/maintainability)
 [![GoDoc](https://godoc.org/github.com/Privatix/dapp-openvpn?status.svg)](https://godoc.org/github.com/Privatix/dapp-openvpn)
 
-# OpenVPN Service Adapter
+# OpenVPN Service Plug-in
 
-OpenVPN service adapter is an executable which integrates OpenVPN as a service
-with the Privatix controller.
+OpenVPN [service plug-in](https://github.com/Privatix/privatix/blob/master/doc/service_plug-in.md) allows Agents and Clients to buy and sell their internet traffic in form of VPN service without 3rd party.
+
+    This service plug-in is a PoC service plugin-in for Privatix core.
+
+## Custom integration includes
+
+-   Start and stop of session by Privatix Core
+-   OpenVPN client sessions authentication by Privatix Core
+-   OpenVPN traffic usage reporting to Privatix core (is a must for automatic payments)
+-   Push OpenVPN server configuration
+-   Traffic shaping based on offering parameters (Ubuntu only)
+
+## Benefits from Privatix Core
+
+-   Automatic billing
+-   Automatic payment
+-   Access control based on billing
+-   Automatic credentials delivery
+-   Automatic configuration delivery
+-   Anytime increase of deposit
+-   Privatix GUI for service control
+
+## Service plug-in components:
+
+-   Templates (offering and access)
+-   Service adapter (with access to OpenVPN and Privatix core)
+-   OpenVPN software (with management interface)
 
 ## Getting started
 
@@ -14,7 +39,7 @@ adapter.
 
 ### Prerequisites
 
-- Install OpenVPN 2.4+.
+-   Install OpenVPN 2.4+.
 
 ### Building Executables
 
@@ -27,41 +52,43 @@ You can build all binaries using the go tool, placing the resulting binary in `$
 ```
 
 ### Run installer
+
 Installer is responsible for:
-1. import templates: offering, access (to dappctrl database)
-2. import product and link it to templates (to dappctrl database)
-3. generate adapter config with proper authentication (same as in dappctrl database product table)
-To install `dapp-openvpn` to `dappctrl`, please run the following script:
+
+1. import templates: offering, access (to Privatix core database)
+2. import product and link it to templates (to Privatix core database)
+3. generate adapter config with proper authentication (same as in Privatix core database database product table)
+
+Install and register `OpenVPN service plug-in` in `Privatix core` using the following script:
 
 ```bash
 ./scripts/run_installer.sh
 ```
 
-#### Additional steps for agent
+#### Additional steps for OpenVPN server configuration
 
 On the agent side it necessary to perform the following steps:
 [additional steps](https://github.com/Privatix/dapp-openvpn/wiki/Additional-steps-for-an-agent)
 
 ### Running the agent service
 
-- Start the `OpenVPN`-server.
-- Start the `dapp-openvpn` in the background with the configuration provided by the installer.
+-   Start the `OpenVPN`-server.
+-   Start the `adapter -config adapter.config.json` in the background with the configuration provided by the installer.
 
-## Build package
+### Running the client service
 
-The package can be compiled for a specific operating system.
-A `xgo`() is used to use cross-platform compilation.
-
-To create package archive and descriptor:
+-   Start the `adapter -config adapter.config.json` in the background with the configuration provided by the installer.
 
 #### Install dep dependency management tool
 
 linux:
+
 ```bash
 curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 ```
 
 macos:
+
 ```bash
 brew install dep
 brew upgrade dep
@@ -74,6 +101,7 @@ Latest release can be downloaded from this link: https://github.com/golang/dep/r
 Run dep application:
 
 Go to the root directory of the project and run command:
+
 ```bash
 dep ensure
 ```
@@ -85,22 +113,10 @@ go get github.com/rakyll/statik
 ```
 
 Generate statik filesystem:
+
 ```
 go generate ./...
 ```
-
-#### Run builder
-```
-go run builder.go -agent=false \
-                  -os=macos \
-                  -keystore=/home/user/pk \
-                  -auth="qwerty" \
-                  -version=1_1 \
-                  -min_core_version=0_123 \
-                  -max_core_version=1_123
-```
-
-Archive and descriptor can be found in `build` directory.
 
 ## Command Line Options
 
@@ -123,29 +139,9 @@ Usage of dapp-openvpn:
   -channel string
         Channel ID for client mode
   -config string
-        Configuration file (default "dappvpn.config.json")
+        Configuration file (default "adapter.config.json")
   -version
         Prints current dappctrl version
-```
-
-### builder
-```bash
-Usage of builder for dapp-openvpn:
-  -agent
-        Whether to install agent.
-  -auth string
-        Password to decrypt JSON private key.
-  -keystore string
-        Full path to JSON private key file.
-  -max_core_version string
-        Maximum version of Privatix core application for compatibility.
-  -min_core_version string
-        Minimal version of Privatix core application for compatibility. (default "undefined")
-  -os string
-        Target OS: linux, windows or macos (xgo usage). If is empty, a package will be created for a current operating system.
-  -version string
-        Product package distributive version. (default "undefined")
-
 ```
 
 ## Tests
@@ -166,8 +162,8 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## Authors
 
-* [ababo](https://github.com/ababo)
-* [dzeckelev](https://github.com/dzeckelev)
+-   [ababo](https://github.com/ababo)
+-   [dzeckelev](https://github.com/dzeckelev)
 
 See also the list of [contributors](https://github.com/Privatix/dapp-openvpn/contributors)
 who participated in this project.
