@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/sys/windows/registry"
 	"golang.org/x/text/encoding/charmap"
 	"golang.org/x/text/encoding/simplifiedchinese"
 
@@ -19,7 +18,6 @@ import (
 const (
 	serverTapNamePrefix = "Privatix VPN Server"
 	clientTapNamePrefix = "Privatix VPN Client"
-	networkRegistryPath = `SYSTEM\CurrentControlSet\Control\Network\{4D36E972-E325-11CE-BFC1-08002BE10318}`
 )
 
 type tapInterface struct {
@@ -131,15 +129,7 @@ func renameTapInterface(guid, name string) error {
 		return nil
 	}
 
-	regPath := fmt.Sprintf(`%s\%s\Connection`, networkRegistryPath, guid)
-	key, err := registry.OpenKey(registry.LOCAL_MACHINE, regPath,
-		registry.QUERY_VALUE|registry.SET_VALUE)
-	if err != nil {
-		return err
-	}
-	defer key.Close()
-
-	return key.SetStringValue("Name", name)
+	return setRegValue(guid, name)
 }
 
 func deviceID(name string) (string, error) {
