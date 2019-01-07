@@ -4,6 +4,7 @@ package mon
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -52,7 +53,7 @@ func connect(t *testing.T, handleSession HandleSessionFunc,
 	go func() {
 		mon := NewMonitor(
 			conf.VPNMonitor, logger, handleSession, channel)
-		ch <- mon.MonitorTraffic()
+		ch <- mon.MonitorTraffic(context.Background())
 		mon.Close()
 	}()
 

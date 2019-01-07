@@ -277,7 +277,7 @@ func handleAgentMonitor(confFile string) {
 	monitor := mon.NewMonitor(conf.Monitor, logger, handleSession, channel)
 	go func() {
 		fatal <- fmt.Sprintf("failed to monitor vpn traffic: %s",
-			monitor.MonitorTraffic())
+			monitor.MonitorTraffic(context.Background()))
 	}()
 
 	logger.Fatal(<-fatal)
@@ -301,6 +301,8 @@ func handleClientMonitor() {
 		return &ept, err
 	}
 
+	var ctx context.Context
+	var stopOvpnAndMonitor func()
 	for {
 		time.Sleep(conf.HeartbeatPeriod * time.Millisecond)
 
@@ -329,7 +331,9 @@ func handleClientMonitor() {
 				logger.Fatal(message + err.Error())
 			}
 
-			ovpnCmd = launchOpenVPN(res.Channel)
+			ctx, stopOvpnAndMonitor = context.WithCancel(context.Background())
+			defer stopOvpnAndMonitor()
+			ovpnCmd = launchOpenVPN(ctx, res.Channel)
 
 		case sess.HeartbeatStop:
 			if ovpnCmd == nil {
@@ -339,17 +343,14 @@ func handleClientMonitor() {
 				break
 			}
 
-			if err := ovpnCmd.Process.Kill(); err != nil {
-				message := "failed to kill OpenVPN: "
-				logger.Error(message + err.Error())
-			}
+			stopOvpnAndMonitor()
 		}
 
 		mtx.Unlock()
 	}
 }
 
-func launchOpenVPN(channel string) *exec.Cmd {
+func launchOpenVPN(ctx context.Context, channel string) *exec.Cmd {
 	if len(conf.OpenVPN.Name) == 0 {
 		logger.Fatal("no OpenVPN command provided")
 	}
@@ -403,7 +404,7 @@ func launchOpenVPN(channel string) *exec.Cmd {
 
 	monitor := mon.NewMonitor(conf.Monitor, logger, handleSession, channel)
 	go func() {
-		err := monitor.MonitorTraffic()
+		err := monitor.MonitorTraffic(ctx)
 		logger.Warn("failed to monitor vpn traffic: " + err.Error())
 	}()
 

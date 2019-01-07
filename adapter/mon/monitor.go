@@ -2,6 +2,7 @@ package mon
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"net"
 	"runtime"
@@ -82,8 +83,9 @@ func (m *Monitor) Close() error {
 
 // MonitorTraffic connects to OpenVPN management interfaces and starts
 // monitoring VPN traffic.
-func (m *Monitor) MonitorTraffic() error {
-	m.logger.Add("method", "MonitorTraffic").Info("dapp-openvpn monitor started")
+func (m *Monitor) MonitorTraffic(ctx context.Context) error {
+	logger := m.logger.Add("method", "MonitorTraffic")
+	logger.Info("dapp-openvpn monitor started")
 
 	var err error
 	if m.conn, err = net.Dial("tcp", m.conf.Addr); err != nil {
@@ -98,13 +100,19 @@ func (m *Monitor) MonitorTraffic() error {
 	}
 
 	for {
-		str, err := m.out.ReadString('\n')
-		if err != nil {
-			return err
-		}
+		select {
+		case <-ctx.Done():
+			logger.Debug("context cancelled, exiting")
+			return ErrMonitoringCancelled
+		default:
+			str, err := m.out.ReadString('\n')
+			if err != nil {
+				return err
+			}
 
-		if err = m.processReply(str); err != nil {
-			return err
+			if err = m.processReply(str); err != nil {
+				return err
+			}
 		}
 	}
 }
