@@ -88,3 +88,8 @@ management-signal
 
 # Remap SIGUSR1 to SIGTERM to prevent holding in unconnected state
 remap-usr1 SIGTERM
+
+# Set up/down trigger scripts
+script-security 2
+{{if .UpScript}}up {{.UpScript}}{{end}}
+{{if .DownScript}}down {{.DownScript}}{{end}}

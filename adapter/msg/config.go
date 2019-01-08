@@ -40,6 +40,8 @@ const (
 	LogDir            = "logDir"
 	TapInterface      = "tapInterface"
 	VpnManagementPort = "vpnManagementPort"
+	UpScript          = "upScript"
+	DownScript        = "downScript"
 )
 
 var (
@@ -60,6 +62,8 @@ type vpnClient struct {
 	Proto          string `json:"proto"`
 	ServerAddress  string `json:"-"`
 	TapInterface   string `json:"-"`
+	UpScript       string `json:"-"`
+	DownScript     string `json:"-"`
 }
 
 type service struct{ logger log.Logger }
@@ -185,6 +189,24 @@ func (s *service) addTapInterface(options map[string]interface{},
 	}
 }
 
+// addUpScript adds MacOS up script to the configuration.
+func (s *service) addUpScript(options map[string]interface{},
+	openVpnConfig *vpnClient) {
+	upScript, ok := options[UpScript]
+	if ok {
+		openVpnConfig.UpScript = upScript.(string)
+	}
+}
+
+// addDownScript adds MacOS down script to the configuration.
+func (s *service) addDownScript(options map[string]interface{},
+	openVpnConfig *vpnClient) {
+	downScript, ok := options[DownScript]
+	if ok {
+		openVpnConfig.DownScript = downScript.(string)
+	}
+}
+
 func (s *service) makeClientConfig(dir, serviceEndpointAddress, username string,
 	params []byte, options map[string]interface{}) error {
 	logger := s.logger.Add("method", "makeClientConfig", "directory", dir)
@@ -200,6 +222,8 @@ func (s *service) makeClientConfig(dir, serviceEndpointAddress, username string,
 	s.addLogAppend(username, options, openVpnConfig)
 	s.addVpnManagementPort(options, openVpnConfig)
 	s.addTapInterface(options, openVpnConfig)
+	s.addUpScript(options, openVpnConfig)
+	s.addDownScript(options, openVpnConfig)
 
 	data, err := readFileFromVirtualFS(clientConfigTemplate)
 	if err != nil {
