@@ -73,18 +73,18 @@ EOF
 
 
 # save old dns settings to temporary file
-if [ ! -e /tmp/openvpn_dns_${PSID} ]; then
-	echo "$OLDDNS1 $OLDDNS2" > /tmp/openvpn_dns_${PSID}
+if [ ! -e /tmp/openvpn_dns_"${PSID}" ]; then
+	echo "$OLDDNS1 $OLDDNS2" > /tmp/openvpn_dns_"${PSID}"
 fi
-if [ ! -e /tmp/openvpn_domain_${PSID} ]; then
-	echo "$OLDDOMAIN" > /tmp/openvpn_domain_${PSID}
+if [ ! -e /tmp/openvpn_domain_"${PSID}" ]; then
+	echo "$OLDDOMAIN" > /tmp/openvpn_domain_"${PSID}"
 fi
 
 # set pushed nameserver
 scutil << EOF
 open
 d.init
-d.add ServerAddresses * $vDNS
+d.add ServerAddresses * ${vDNS[@]}
 d.add DomainName $domain
 set State:/Network/Service/${PSID}/DNS
 quit

@@ -19,10 +19,10 @@ quit
 EOF
 )
 
-if [ ! -e /tmp/openvpn_dns_${PSID} ]; then
+if [ ! -e /tmp/openvpn_dns_"${PSID}" ]; then
 	exit 0
 fi
-if [ ! -e /tmp/openvpn_domain_${PSID} ]; then
+if [ ! -e /tmp/openvpn_domain_"${PSID}" ]; then
 	exit 0
 fi
 
@@ -37,4 +37,4 @@ quit
 EOF
 
 
-rm /tmp/openvpn_dns_${PSID} /tmp/openvpn_domain_${PSID}
+rm /tmp/openvpn_dns_"${PSID}" /tmp/openvpn_domain_"${PSID}"
