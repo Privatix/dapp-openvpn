@@ -48,7 +48,8 @@ type Pusher struct {
 func NewConfig() *Config {
 	return &Config{
 		ExportConfigKeys: []string{"proto", "cipher", "ping-restart",
-			"ping", "connect-retry", "ca", "comp-lzo", "keepalive"},
+			"ping", "connect-retry", "ca",
+			"comp-lzo", "keepalive", "port"},
 		TimeOut: 12,
 	}
 }
@@ -73,7 +74,8 @@ func NewPusher(conf *Config, logger log.Logger,
 	}
 }
 
-func (p *Pusher) vpnParams() (map[string]string, error) {
+// VpnParams parses the OpenVpn configuration file.
+func (p *Pusher) VpnParams() (map[string]string, error) {
 	vpnParams, err := vpnParams(p.logger, p.config.ConfigPath,
 		p.config.ExportConfigKeys)
 	if err != nil {
@@ -91,14 +93,10 @@ func (p *Pusher) vpnParams() (map[string]string, error) {
 	return vpnParams, err
 }
 
-// PushConfiguration send the vpn configuration to session server.
-func (p *Pusher) PushConfiguration(ctx context.Context) error {
+// PushConfiguration sends a vpn configuration to session server.
+func (p *Pusher) PushConfiguration(ctx context.Context,
+	params map[string]string) error {
 	logger := p.logger.Add("method", "PushConfiguration")
-
-	params, err := p.vpnParams()
-	if err != nil {
-		return err
-	}
 
 	for {
 		select {
@@ -107,7 +105,7 @@ func (p *Pusher) PushConfiguration(ctx context.Context) error {
 		default:
 		}
 
-		err = p.setProductConfig(params)
+		err := p.setProductConfig(params)
 		if err != nil {
 			m := "failed to push app config to dappctrl"
 			logger.Add("error", err.Error()).Warn(m)

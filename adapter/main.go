@@ -16,6 +16,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/privatix/dappctrl/data"
+	"github.com/privatix/dappctrl/nat"
 	"github.com/privatix/dappctrl/sess"
 	"github.com/privatix/dappctrl/util"
 	"github.com/privatix/dappctrl/util/log"
@@ -235,6 +236,25 @@ func handleSession(ch string, event int, up, down uint64) bool {
 	}
 }
 
+func openExtPort(ctx context.Context, network string, port int) {
+	logger := logger.Add("method", "openExtPort")
+
+	service, err := nat.Parse(conf.NAT.Config)
+	if err != nil {
+		logger.Debug("failed to create nat interface, error: " +
+			err.Error())
+		return
+	}
+
+	service.DeleteMapping(network, port, port)
+
+	if err := nat.Map(ctx, conf.NAT.Config, logger, service, network,
+		port, port, "openvpn"); err != nil {
+		logger.Debug("failed to mapping ports to nat interface," +
+			" error: " + err.Error())
+	}
+}
+
 func handlePusher(ctx context.Context, dir string) {
 	logger := logger.Add("method", "handlePusher", "directory", dir)
 
@@ -243,7 +263,35 @@ func handlePusher(ctx context.Context, dir string) {
 			return callSess(nil, "setProductConfig", config)
 		})
 
-	err := pusher.PushConfiguration(ctx)
+	params, err := pusher.VpnParams()
+	if err != nil {
+		return
+	}
+
+	network := "tcp"
+	netPort := 443
+
+	if proto, ok := params["proto"]; ok {
+		if len(proto) > 3 {
+			proto = proto[:3]
+		}
+		network = proto
+	}
+
+	if portStr, ok := params["port"]; ok {
+		port, err := strconv.Atoi(portStr)
+		if err == nil {
+			netPort = port
+		}
+	}
+
+	go openExtPort(ctx, network, netPort)
+
+	if msg.IsDone(dir) {
+		return
+	}
+
+	err = pusher.PushConfiguration(ctx, params)
 	if err != nil {
 		logger.Error("failed to push app config to" +
 			" dappctrl")
@@ -262,12 +310,10 @@ func handlePusher(ctx context.Context, dir string) {
 func handleAgentMonitor(confFile string) {
 	dir := filepath.Dir(confFile)
 
-	if !msg.IsDone(dir) {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-		go handlePusher(ctx, dir)
-	}
+	go handlePusher(ctx, dir)
 
 	monitor := mon.NewMonitor(conf.Monitor, logger, handleSession, channel)
 	go func() {
