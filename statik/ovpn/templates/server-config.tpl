@@ -17,6 +17,8 @@ script-security 3
 tls-server
 server {{.Server.IP}} {{.Server.Mask}}
 push "route {{.Server.IP}} {{.Server.Mask}}"
+push "dhcp-option DNS 8.8.8.8"
+push "dhcp-option DNS 8.8.4.4"
 push "redirect-gateway def1"
 ifconfig-pool-persist "config/ipp.txt"
 keepalive 10 120
