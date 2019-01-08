@@ -54,7 +54,7 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 	if err != nil {
 		return err
 	}
-	maps["Sess.Endpoint"] = addr
+	maps["Sess.Endpoint"] = fmt.Sprintf("ws://%s/ws", addr)
 	maps["ChannelDir"] = filepath.Join(p, path.Config.DataDir)
 
 	if err := setConfigurationValues(jsonMap, maps); err != nil {
