@@ -61,6 +61,28 @@ func findTapInterface(logger log.Logger,
 	logger.Debug("Tap interface found")
 }
 
+// setUpDownScript sets MacOS up-down scripts.
+func setUpDownScript(logger log.Logger,
+	cfg *config.Config, options map[string]interface{}) {
+	upLogger := logger.Add("upScript", cfg.OpenVPN.UpScript)
+
+	if cfg.OpenVPN.UpScript == "" {
+		upLogger.Debug("up script found")
+		return
+	}
+	options[msg.UpScript] = cfg.OpenVPN.UpScript
+	upLogger.Debug("up script found")
+
+	downLogger := logger.Add("downScript", cfg.OpenVPN.DownScript)
+
+	if cfg.OpenVPN.DownScript == "" {
+		downLogger.Debug("down script found")
+		return
+	}
+	options[msg.DownScript] = cfg.OpenVPN.DownScript
+	downLogger.Debug("down script found")
+}
+
 // findVpnManagementPort finds OpenVpn management interface server port in
 // configuration.
 func findVpnManagementPort(logger log.Logger,
@@ -104,6 +126,7 @@ func specificOptions(logger log.Logger,
 	cfg *config.Config) map[string]interface{} {
 	options := make(map[string]interface{})
 
+	setUpDownScript(logger, cfg, options)
 	findTapInterface(logger, cfg, options)
 	findVpnManagementPort(logger, cfg, options)
 	findLogDir(logger, cfg, options)

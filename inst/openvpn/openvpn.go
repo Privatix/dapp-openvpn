@@ -111,7 +111,16 @@ func (o *OpenVPN) RemoveTap() error {
 func (o *OpenVPN) Configurate() error {
 	if o.isClient() {
 		o.Managment.Port = nextFreePort(*o.Managment, "tcp")
-		return nil
+		if o.IsWindows {
+			return nil
+		}
+
+		if err := os.Chmod(filepath.Join(o.Path, path.Config.UpScript),
+			0777); err != nil {
+			return err
+		}
+		return os.Chmod(filepath.Join(o.Path, path.Config.DownScript),
+			0777)
 	}
 
 	if err := o.createCertificate(); err != nil {
@@ -180,8 +189,8 @@ func (o *OpenVPN) RemoveConfig() error {
 		return nil
 	}
 
-	upScript := filepath.Join(o.Path, path.Config.UpScript)
-	cmd := exec.Command("/bin/sh", upScript, "off", o.ForwardingState)
+	natScript := filepath.Join(o.Path, path.Config.NatScript)
+	cmd := exec.Command("/bin/sh", natScript, "off", o.ForwardingState)
 	if err := cmd.Run(); err != nil {
 		return err
 	}
