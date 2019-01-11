@@ -353,7 +353,7 @@ func (o *OpenVPN) StopService() (string, error) {
 		return "", err
 	}
 
-	if !strings.Contains(strings.ToLower(status), "running") {
+	if strings.Contains(strings.ToLower(status), "stopped") {
 		return "", nil
 	}
 
