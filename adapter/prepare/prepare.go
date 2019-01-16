@@ -5,24 +5,24 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/privatix/dappctrl/sesssrv"
-	"github.com/privatix/dappctrl/svc/connector"
+	"github.com/privatix/dappctrl/data"
 	"github.com/privatix/dappctrl/util/log"
 
 	"github.com/privatix/dapp-openvpn/adapter/config"
 	"github.com/privatix/dapp-openvpn/adapter/msg"
 )
 
+// GetEndpointFunc gets controller's channel endpoint for a give client key.
+type GetEndpointFunc func(clientKey string) (*data.Endpoint, error)
+
 // ClientConfig prepares configuration for Client. By the channel ID, finds a
 // endpoint on a session server. Creates client configuration files for using a
 // product.
-func ClientConfig(logger log.Logger, channel string, conn connector.Connector,
-	adapterConfig *config.Config) error {
+func ClientConfig(logger log.Logger, channel string,
+	adapterConfig *config.Config, getEndpoint GetEndpointFunc) error {
 	logger = logger.Add("method", "ClientConfig", "channel", channel)
 
-	args := &sesssrv.EndpointMsgArgs{ChannelID: channel}
-
-	endpoint, err := conn.GetEndpointMessage(args)
+	endpoint, err := getEndpoint(channel)
 	if err != nil {
 		logger.Error(err.Error())
 		return ErrGetEndpoint
@@ -59,6 +59,28 @@ func findTapInterface(logger log.Logger,
 	}
 	options[msg.TapInterface] = cfg.OpenVPN.TapInterface
 	logger.Debug("Tap interface found")
+}
+
+// setUpDownScript sets MacOS up-down scripts.
+func setUpDownScript(logger log.Logger,
+	cfg *config.Config, options map[string]interface{}) {
+	upLogger := logger.Add("upScript", cfg.OpenVPN.UpScript)
+
+	if cfg.OpenVPN.UpScript == "" {
+		upLogger.Debug("up script found")
+		return
+	}
+	options[msg.UpScript] = cfg.OpenVPN.UpScript
+	upLogger.Debug("up script found")
+
+	downLogger := logger.Add("downScript", cfg.OpenVPN.DownScript)
+
+	if cfg.OpenVPN.DownScript == "" {
+		downLogger.Debug("down script found")
+		return
+	}
+	options[msg.DownScript] = cfg.OpenVPN.DownScript
+	downLogger.Debug("down script found")
 }
 
 // findVpnManagementPort finds OpenVpn management interface server port in
@@ -104,6 +126,7 @@ func specificOptions(logger log.Logger,
 	cfg *config.Config) map[string]interface{} {
 	options := make(map[string]interface{})
 
+	setUpDownScript(logger, cfg, options)
 	findTapInterface(logger, cfg, options)
 	findVpnManagementPort(logger, cfg, options)
 	findLogDir(logger, cfg, options)

@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/AlekSi/pointer"
 	"github.com/privatix/dappctrl/data"
-	"github.com/privatix/dappctrl/svc/connector"
 	"github.com/privatix/dappctrl/util"
 	"github.com/privatix/dappctrl/util/log"
 
@@ -24,12 +24,10 @@ const (
 
 var (
 	conf struct {
-		StderrLog  *log.WriterConfig
 		VPNMonitor *mon.Config
 	}
 
 	logger log.Logger
-	conn   *connector.Mock
 )
 
 func configDestination(dir string) string {
@@ -61,19 +59,19 @@ func TestClientConfig(t *testing.T) {
 	channel := util.NewUUID()
 
 	adapterConfig := config.NewConfig()
-	adapterConfig.Connector.Username = channel
-	adapterConfig.Connector.Password = data.TestPassword
+	adapterConfig.Sess.Product = channel
+	adapterConfig.Sess.Password = data.TestPassword
 	adapterConfig.OpenVPN.ConfigRoot = rootDir
 	adapterConfig.Monitor = conf.VPNMonitor
-	adapterConfig.FileLog.WriterConfig = conf.StderrLog
 
-	endpoint := "127.0.0.1"
+	ept := data.NewTestEndpoint(channel, util.NewUUID())
+	ept.ServiceEndpointAddress = pointer.ToString("1.2.3.4")
+	getEndpoint := func(clientKey string) (*data.Endpoint, error) {
+		return ept, nil
+	}
 
-	conn.Endpoint = data.NewTestEndpoint(channel, util.NewUUID())
-	conn.Endpoint.ServiceEndpointAddress = &endpoint
-
-	if err := ClientConfig(
-		logger, channel, conn, adapterConfig); err != nil {
+	err = ClientConfig(logger, channel, adapterConfig, getEndpoint)
+	if err != nil {
 		t.Fatal(err)
 	}
 
@@ -84,9 +82,6 @@ func TestClientConfig(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	var err error
-
-	conf.StderrLog = log.NewWriterConfig()
 	conf.VPNMonitor = mon.NewConfig()
 
 	args := &util.TestArgs{
@@ -94,12 +89,7 @@ func TestMain(m *testing.M) {
 	}
 	util.ReadTestArgs(args)
 
-	logger, err = log.NewStderrLogger(conf.StderrLog)
-	if err != nil {
-		panic(err)
-	}
-
-	conn = connector.NewMock()
+	logger = log.NewMultiLogger()
 
 	os.Exit(m.Run())
 }

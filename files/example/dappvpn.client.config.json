@@ -36,10 +36,10 @@
         ],
         "TimeOut": 12
     },
-    "Connector": {
-        "Addr": "localhost:8000",
-        "TLS": null,
-        "Username": "37fa14e4-51da-4021-8ea9-9e725229e8aa",
+    "Sess": {
+        "Endpoint": "ws://localhost:8000/ws",
+        "Origin": "",
+        "Product": "4b26dc82-ffb6-4ff1-99d8-f0eaac0b0532",
         "Password": "secret"
     }
 }

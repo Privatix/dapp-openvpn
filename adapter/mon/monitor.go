@@ -18,6 +18,8 @@ import (
 type Config struct {
 	Addr            string
 	ByteCountPeriod uint // In seconds.
+	CmdApplyTimeout uint // In seconds.
+	CmdRetryTimeout uint // In seconds.
 }
 
 // NewConfig creates a default configuration for OpenVPN monitor.
@@ -25,6 +27,8 @@ func NewConfig() *Config {
 	return &Config{
 		Addr:            "localhost:7505",
 		ByteCountPeriod: 5,
+		CmdApplyTimeout: 10,
+		CmdRetryTimeout: 3,
 	}
 }
 
@@ -44,6 +48,7 @@ type Monitor struct {
 	mtx             sync.Mutex // To guard writing.
 	clients         map[uint]client
 	clientConnected bool
+	out             *bufio.Reader // Openvpn output.
 }
 
 // Session events.
@@ -80,6 +85,7 @@ func (m *Monitor) Close() error {
 // monitoring VPN traffic.
 func (m *Monitor) MonitorTraffic(ctx context.Context) error {
 	logger := m.logger.Add("method", "MonitorTraffic")
+	logger.Info("dapp-openvpn monitor started")
 
 	var err error
 	if m.conn, err = net.Dial("tcp", m.conf.Addr); err != nil {
@@ -87,7 +93,7 @@ func (m *Monitor) MonitorTraffic(ctx context.Context) error {
 	}
 	defer m.conn.Close()
 
-	reader := bufio.NewReader(m.conn)
+	m.out = bufio.NewReader(m.conn)
 
 	if err := m.initConn(); err != nil {
 		return err
@@ -99,7 +105,7 @@ func (m *Monitor) MonitorTraffic(ctx context.Context) error {
 			logger.Debug("context cancelled, exiting")
 			return ErrMonitoringCancelled
 		default:
-			str, err := reader.ReadString('\n')
+			str, err := m.out.ReadString('\n')
 			if err != nil {
 				return err
 			}
@@ -113,9 +119,65 @@ func (m *Monitor) MonitorTraffic(ctx context.Context) error {
 
 func (m *Monitor) write(cmd string) error {
 	m.mtx.Lock()
-	_, err := m.conn.Write([]byte(cmd + "\n"))
-	m.mtx.Unlock()
-	return err
+	defer m.mtx.Unlock()
+
+	ret := make(chan error)
+
+	stopch := make(chan struct{})
+
+	go func() {
+		period := time.Duration(m.conf.CmdRetryTimeout) * time.Second
+		err := m.writeCommandEach(cmd, period, stopch)
+		ret <- err
+	}()
+
+	go func() {
+		timeout := time.Duration(m.conf.CmdApplyTimeout) * time.Second
+		// Prefix "SUCCESS: " indicates that openvpn received the command.
+		err := m.lookForPrefixOutput(timeout, "SUCCESS: ")
+		ret <- err
+		stopch <- struct{}{}
+	}()
+
+	return <-ret
+}
+
+func (m *Monitor) writeCommandEach(cmd string, period time.Duration, exit chan struct{}) error {
+	ticker := time.NewTicker(period)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			_, err := m.conn.Write([]byte(cmd + "\n"))
+			if err != nil {
+				return err
+			}
+		case <-exit:
+			return nil
+		}
+	}
+}
+
+func (m *Monitor) lookForPrefixOutput(timeout time.Duration, prefix string) error {
+	logger := m.logger.Add("method", "lookForPrefixOutput",
+		"timeout", timeout, "prefix", prefix)
+	logger.Debug("looking for prefixe: " + prefix)
+
+	failchan := time.After(timeout)
+	for {
+		select {
+		case <-failchan:
+			m.logger.Error("looking for prefix output timeout")
+			return ErrCmdReceiveTimeout
+		default:
+			out, err := m.out.ReadString('\n')
+			logger.Debug("out: " + out)
+			if err != nil || strings.HasPrefix(out, prefix) {
+				return err
+			}
+		}
+	}
 }
 
 func (m *Monitor) requestClients() error {

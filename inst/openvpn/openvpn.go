@@ -111,7 +111,16 @@ func (o *OpenVPN) RemoveTap() error {
 func (o *OpenVPN) Configurate() error {
 	if o.isClient() {
 		o.Managment.Port = nextFreePort(*o.Managment, "tcp")
-		return nil
+		if o.IsWindows {
+			return nil
+		}
+
+		if err := os.Chmod(filepath.Join(o.Path, path.Config.UpScript),
+			0777); err != nil {
+			return err
+		}
+		return os.Chmod(filepath.Join(o.Path, path.Config.DownScript),
+			0777)
 	}
 
 	if err := o.createCertificate(); err != nil {
@@ -180,8 +189,8 @@ func (o *OpenVPN) RemoveConfig() error {
 		return nil
 	}
 
-	upScript := filepath.Join(o.Path, path.Config.UpScript)
-	cmd := exec.Command("/bin/sh", upScript, "off", o.ForwardingState)
+	natScript := filepath.Join(o.Path, path.Config.NatScript)
+	cmd := exec.Command("/bin/sh", natScript, "off", o.ForwardingState)
 	if err := cmd.Run(); err != nil {
 		return err
 	}
@@ -344,7 +353,7 @@ func (o *OpenVPN) StopService() (string, error) {
 		return "", err
 	}
 
-	if !strings.Contains(strings.ToLower(status), "running") {
+	if strings.Contains(strings.ToLower(status), "stopped") {
 		return "", nil
 	}
 
@@ -380,4 +389,49 @@ func (o *OpenVPN) RemoveService() (string, error) {
 // CreateForwardingDaemon creates daemon on macOS.
 func (o *OpenVPN) CreateForwardingDaemon() error {
 	return createNatRules(o.Path, o.Server.IP, o.Host.Port)
+}
+
+// Update updates the product.
+func (o *OpenVPN) Update() error {
+	role := "agent"
+	if o.isClient() {
+		role = "client"
+	}
+
+	configDir := filepath.Join(o.Path, "config")
+	dataDir := filepath.Join(o.Path, "data")
+
+	newPath := strings.Replace(o.Path, role+"_new", role, 1)
+
+	productTempPath := os.Getenv("PRIVATIX_TEMP_PRODUCT")
+	_, product := filepath.Split(o.Path)
+
+	findProduct := func(name string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			return err
+		}
+		_, dir := filepath.Split(name)
+
+		if err == nil && strings.EqualFold(dir, product) {
+			newPath = name
+		}
+		return err
+	}
+
+	if len(productTempPath) > 0 {
+		filepath.Walk(productTempPath, findProduct)
+	}
+
+	newConfigDir := filepath.Join(newPath, "config")
+	newDataDir := filepath.Join(newPath, "data")
+
+	if err := copyDir(newConfigDir, configDir); err != nil {
+		return err
+	}
+
+	if err := copyDir(newDataDir, dataDir); err != nil {
+		return err
+	}
+
+	return merge(newConfigDir, configDir)
 }

@@ -215,10 +215,6 @@ func checkInstallation(o *openvpn.OpenVPN) error {
 		return err
 	}
 
-	if !strings.EqualFold(o.Path, v.Workdir) {
-		return fmt.Errorf("env workdir %s is not equal to the path",
-			v.Workdir)
-	}
 	o.Tap.DeviceID = v.Device
 	o.Tap.GUID = v.GUID
 	o.Tap.Interface = v.Interface
@@ -334,6 +330,21 @@ func changeOwner(o *openvpn.OpenVPN) error {
 	file := filepath.Join(o.Path, envFile)
 	if err := os.Chown(file, uid, gid); err != nil {
 		return fmt.Errorf("failed to change owner: %v", err)
+	}
+
+	return nil
+}
+
+func update(o *openvpn.OpenVPN) error {
+	if err := stopService(o); err != nil {
+		return err
+	}
+
+	if err := o.Update(); err != nil {
+		if err := startService(o); err != nil {
+			return err
+		}
+		return fmt.Errorf("failed to update product: %v", err)
 	}
 
 	return nil

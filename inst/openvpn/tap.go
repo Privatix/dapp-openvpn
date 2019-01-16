@@ -10,12 +10,15 @@ import (
 	"strings"
 
 	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/encoding/simplifiedchinese"
 
 	"github.com/privatix/dapp-openvpn/inst/openvpn/path"
 )
 
-const serverTapNamePrefix = "Privatix VPN Server"
-const clientTapNamePrefix = "Privatix VPN Client"
+const (
+	serverTapNamePrefix = "Privatix VPN Server"
+	clientTapNamePrefix = "Privatix VPN Client"
+)
 
 type tapInterface struct {
 	DeviceID  string
@@ -89,7 +92,7 @@ func newTAP(deviceID, role string) (*tapInterface, error) {
 		Interface: tapInterfaceName,
 	}
 
-	return tap, renameTapInterface(deviceID, tapInterfaceName)
+	return tap, renameTapInterface(guid, tapInterfaceName)
 }
 
 func tapInterfaceGUID(device string) (string, error) {
@@ -107,9 +110,9 @@ func tapInterfaceGUID(device string) (string, error) {
 	return guid, nil
 }
 
-func renameTapInterface(device, name string) error {
+func renameTapInterface(guid, name string) error {
 	output, err := exec.Command("wmic", "nic",
-		"where", "PNPDeviceID='"+strings.Replace(device, `\`, `\\`, -1)+"'",
+		"where", "GUID='"+guid+"'",
 		"get", "NetConnectionID", "/value").CombinedOutput()
 
 	if err != nil {
@@ -122,7 +125,11 @@ func renameTapInterface(device, name string) error {
 	cmd := exec.Command("netsh", "interface", "set", "interface",
 		"name="+oldName, "newname="+name)
 
-	return cmd.Run()
+	if err := cmd.Run(); err == nil {
+		return nil
+	}
+
+	return setRegValue(guid, name)
 }
 
 func deviceID(name string) (string, error) {
@@ -173,31 +180,31 @@ func decode(b []byte) []byte {
 		return b
 	}
 	codepage := strings.TrimSpace(s[1])
-	var chMap *charmap.Charmap
-
+	var out []byte
 	switch codepage {
 	case "850":
-		chMap = charmap.CodePage850
+		out, _ = charmap.CodePage850.NewDecoder().Bytes(b)
 	case "852":
-		chMap = charmap.CodePage852
+		out, _ = charmap.CodePage852.NewDecoder().Bytes(b)
 	case "855":
-		chMap = charmap.CodePage855
+		out, _ = charmap.CodePage855.NewDecoder().Bytes(b)
 	case "858":
-		chMap = charmap.CodePage858
+		out, _ = charmap.CodePage858.NewDecoder().Bytes(b)
 	case "860":
-		chMap = charmap.CodePage860
+		out, _ = charmap.CodePage860.NewDecoder().Bytes(b)
 	case "862":
-		chMap = charmap.CodePage862
+		out, _ = charmap.CodePage862.NewDecoder().Bytes(b)
 	case "863":
-		chMap = charmap.CodePage863
+		out, _ = charmap.CodePage863.NewDecoder().Bytes(b)
 	case "865":
-		chMap = charmap.CodePage865
+		out, _ = charmap.CodePage865.NewDecoder().Bytes(b)
 	case "866":
-		chMap = charmap.CodePage866
+		out, _ = charmap.CodePage866.NewDecoder().Bytes(b)
+	case "936":
+		out, _ = simplifiedchinese.GBK.NewDecoder().Bytes(b)
 	default:
-		chMap = charmap.CodePage437
+		out, _ = charmap.CodePage437.NewDecoder().Bytes(b)
 	}
 
-	out, _ := chMap.NewDecoder().Bytes(b)
 	return out
 }

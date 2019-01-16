@@ -25,6 +25,10 @@ func Execute(logger log.Logger, printVersion func(), args []string) {
 		logger.Info("install process")
 		logger = logger.Add("action", "install")
 		flow = installFlow()
+	case "update":
+		logger.Info("update process")
+		logger = logger.Add("action", "update")
+		flow = updateFlow()
 	case "remove":
 		logger.Info("remove process")
 		logger = logger.Add("action", "remove")
@@ -87,6 +91,14 @@ func removeFlow() pipeline.Flow {
 		newOperator("remove service", removeService, nil),
 		newOperator("remove config", removeConfig, nil),
 		newOperator("remove env", removeEnv, nil),
+	}
+}
+
+func updateFlow() pipeline.Flow {
+	return pipeline.Flow{
+		newOperator("processed flags", processedCommonFlags, nil),
+		newOperator("validate", checkInstallation, nil),
+		newOperator("update", update, nil),
 	}
 }
 

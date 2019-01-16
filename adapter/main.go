@@ -14,8 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/privatix/dappctrl/sesssrv"
-	"github.com/privatix/dappctrl/svc/connector"
+	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/privatix/dappctrl/data"
+	"github.com/privatix/dappctrl/sess"
 	"github.com/privatix/dappctrl/util"
 	"github.com/privatix/dappctrl/util/log"
 	"github.com/privatix/dappctrl/version"
@@ -38,11 +39,11 @@ var (
 
 var (
 	conf    *config.Config
-	conn    connector.Connector
 	channel string
 	logger  log.Logger
 	tctrl   *tc.TrafficControl
 	fatal   = make(chan string)
+	sesscl  *rpc.Client
 )
 
 func createLogger() (log.Logger, io.Closer, error) {
@@ -84,7 +85,11 @@ func main() {
 	}
 	defer closer.Close()
 
-	conn = connector.NewConnector(conf.Connector, logger)
+	sesscl, err = rpc.DialWebsocket(
+		context.Background(), conf.Sess.Endpoint, conf.Sess.Origin)
+	if err != nil {
+		panic("failed to connect to session server: " + err.Error())
+	}
 
 	tctrl = tc.NewTrafficControl(conf.TC, logger)
 
@@ -100,13 +105,16 @@ func main() {
 	}
 }
 
+func callSess(result interface{}, method string, args ...interface{}) error {
+	creds := []interface{}{conf.Sess.Product, conf.Sess.Password}
+	return sesscl.Call(result, "sess_"+method, append(creds, args...)...)
+}
+
 func handleAuth() {
 	logger := logger.Add("method", "handleAuth")
 	user, pass := getCreds()
-	args := &sesssrv.AuthArgs{ClientID: user, Password: pass}
 
-	err := conn.AuthSession(args)
-	if err != nil {
+	if err := callSess(nil, "authClient", user, pass); err != nil {
 		logger.Fatal("failed to auth: " + err.Error())
 	}
 
@@ -124,25 +132,20 @@ func handleConnect() {
 		logger.Fatal("bad trusted_port value")
 	}
 
-	args := &sesssrv.StartArgs{
-		ClientID:   loadChannel(),
-		ClientIP:   os.Getenv("trusted_ip"),
-		ClientPort: uint16(port),
-	}
-
-	res, err := conn.StartSession(args)
-	if err != nil {
+	var offer data.Offering
+	if err = callSess(&offer, "startSession", loadChannel(),
+		os.Getenv("trusted_ip"), uint16(port)); err != nil {
 		logger.Fatal("failed to start session: " + err.Error())
 	}
 
-	if len(channel) != 0 || res.Offering.AdditionalParams == nil {
+	if len(channel) != 0 || offer.AdditionalParams == nil {
 		return
 	}
 
 	var params vpndata.OfferingParams
-	err = json.Unmarshal(res.Offering.AdditionalParams, &params)
+	err = json.Unmarshal(offer.AdditionalParams, &params)
 	if err != nil {
-		logger.Add("offering_params", res.Offering.AdditionalParams).Fatal(
+		logger.Add("offering_params", offer.AdditionalParams).Fatal(
 			"failed to unmarshal offering params: " + err.Error())
 	}
 
@@ -167,12 +170,7 @@ func handleDisconnect() {
 		panic("bad bytes_received value")
 	}
 
-	args := &sesssrv.StopArgs{
-		ClientID: loadChannel(),
-		Units:    down + up,
-	}
-
-	err = conn.StopSession(args)
+	err = callSess(nil, "updateSession", loadChannel(), down+up, true)
 	if err != nil {
 		logger.Fatal("failed to stop session: " + err.Error())
 	}
@@ -187,12 +185,7 @@ func handleDisconnect() {
 func handleMonStarted(ch string) bool {
 	logger := logger.Add("method", "handleMonStarted", "channel", ch)
 
-	args := &sesssrv.StartArgs{
-		ClientID: ch,
-	}
-
-	_, err := conn.StartSession(args)
-	if err != nil {
+	if err := callSess(nil, "startSession", ch, "", 0); err != nil {
 		logger.Fatal("failed to start session: " + err.Error())
 		return false
 	}
@@ -204,12 +197,7 @@ func handleMonStopped(ch string, up, down uint64) bool {
 	logger := logger.Add("method", "handleMonStopped",
 		"channel", ch, "up", up, "down", down)
 
-	args := &sesssrv.StopArgs{
-		ClientID: ch,
-		Units:    down + up,
-	}
-
-	err := conn.StopSession(args)
+	err := callSess(nil, "updateSession", ch, down+up, true)
 	if err != nil {
 		logger.Fatal("failed to stop session: " + err.Error())
 		return false
@@ -222,12 +210,7 @@ func handleMonByteCount(ch string, up, down uint64) bool {
 	logger := logger.Add("method", "handleMonByteCount",
 		"channel", ch, "up", up, "down", down)
 
-	args := &sesssrv.UpdateArgs{
-		ClientID: ch,
-		Units:    down + up,
-	}
-
-	err := conn.UpdateSessionUsage(args)
+	err := callSess(nil, "updateSession", ch, down+up, false)
 	if err != nil {
 		logger.Error("failed to update session: " + err.Error())
 		return false
@@ -260,7 +243,10 @@ func handleSession(ch string, event int, up, down uint64) bool {
 func handlePusher(ctx context.Context, dir string) {
 	logger := logger.Add("method", "handlePusher", "directory", dir)
 
-	pusher := msg.NewPusher(conf.Pusher, logger, conn)
+	pusher := msg.NewPusher(conf.Pusher, logger,
+		func(config map[string]string) error {
+			return callSess(nil, "setProductConfig", config)
+		})
 
 	err := pusher.PushConfiguration(ctx)
 	if err != nil {
@@ -309,13 +295,21 @@ func handleClientMonitor() {
 		removeActiveChannel()
 	}
 
+	getEndpoint := func(clientKey string) (*data.Endpoint, error) {
+		var ept data.Endpoint
+		err := callSess(&ept, "getEndpoint", clientKey)
+		return &ept, err
+	}
+
 	var ctx context.Context
 	var stopOvpnAndMonitor func()
 	for {
 		time.Sleep(conf.HeartbeatPeriod * time.Millisecond)
 
-		res, err := conn.Heartbeat()
-		if err != nil {
+		logger.Debug("heartbeat")
+
+		var res sess.HeartbeatResult
+		if err := callSess(&res, "handleHeartbeat"); err != nil {
 			logger.Error("heartbeat request failed: " + err.Error())
 			break
 		}
@@ -323,7 +317,7 @@ func handleClientMonitor() {
 		mtx.Lock()
 
 		switch res.Command {
-		case sesssrv.HeartbeatStart:
+		case sess.HeartbeatStart:
 			if ovpnCmd != nil {
 				logger.Warn("requested to start while " +
 					"OpenVPN is still running")
@@ -331,7 +325,7 @@ func handleClientMonitor() {
 			}
 
 			err := prepare.ClientConfig(
-				logger, res.Channel, conn, conf)
+				logger, res.Channel, conf, getEndpoint)
 			if err != nil {
 				message := "failed to prepare client config: "
 				logger.Fatal(message + err.Error())
@@ -341,7 +335,7 @@ func handleClientMonitor() {
 			defer stopOvpnAndMonitor()
 			ovpnCmd = launchOpenVPN(ctx, res.Channel)
 
-		case sesssrv.HeartbeatStop:
+		case sess.HeartbeatStop:
 			if ovpnCmd == nil {
 				logger.Warn("requested to stop while " +
 					"OpenVPN is not running")

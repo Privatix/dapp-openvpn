@@ -60,7 +60,12 @@ func TestPushConfig(t *testing.T) {
 
 	defer os.RemoveAll(rootDir)
 
-	pusher := NewPusher(createTestConfig(t, rootDir), logger, conn)
+	setProductConfig := func(config map[string]string) error {
+		return nil
+	}
+
+	pusher := NewPusher(
+		createTestConfig(t, rootDir), logger, setProductConfig)
 	if err := pusher.PushConfiguration(context.Background()); err != nil {
 		t.Fatal(err)
 	}
