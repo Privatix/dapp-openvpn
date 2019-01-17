@@ -299,11 +299,19 @@ func handleClientMonitor() {
 	var ctx context.Context
 	var stopOvpnAndMonitor func()
 	ch := make(chan *sess.ConnChangeResult)
-	_, err := sesscl.Subscribe(context.Background(), "sess", ch,
+	subcl, err := sesscl.Subscribe(context.Background(), "sess", ch,
 		"connChange", conf.Sess.Product, conf.Sess.Password)
 	if err != nil {
 		logger.Fatal("failed to subscribe to connection changes")
 	}
+
+	go func() {
+		select {
+		case err := <-subcl.Err():
+			logger.Add("err", err).Fatal(
+				"unexpected end of subscription to connection changes")
+		}
+	}()
 
 	for res := range ch {
 		logger.Info(fmt.Sprintf("connection change: %v", res))
