@@ -2,4 +2,4 @@ ignored = ["github.com/satori/go.uuid"]
 
 [[constraint]]
   name = "github.com/privatix/dappctrl"
-  branch = "develop"
+  branch = "develop" # TODO(furkhat) change to master
