@@ -2,4 +2,5 @@ ignored = ["github.com/satori/go.uuid"]
 
 [[constraint]]
   name = "github.com/privatix/dappctrl"
-  branch = "%BRANCH_NAME%"
+  # branch = "%BRANCH_NAME%"
+  branch = "md-NAT-traversal" # TODO(furkhat) change to "%BRANCH_NAME%"
