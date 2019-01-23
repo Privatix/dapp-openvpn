@@ -52,5 +52,4 @@ if ($currentBranch -like "hotfix*") {
 
 # replace "%BRANCH_NAME%" by replacement in the given file
 $TomlFilePath = Join-Path -Path $PROJECT_PATH -ChildPath $templateFileName -Resolve
-$NewContent = (Get-Content -Path $TomlFilePath | Out-String) -replace "%BRANCH_NAME%", $replacement
-$NewContent | Out-File $TomlFilePath -Force -Encoding ascii
+(Get-Content -Path $TomlFilePath | Out-String) -replace "%BRANCH_NAME%", $replacement | Out-File "$PROJECT_PATH\Gopkg.toml" -Force -Encoding ascii
