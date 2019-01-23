@@ -17,7 +17,7 @@
     Absolute path to project.
 
 .EXAMPLE
-    tompl.ps1 -templateFileName "Gopkg.toml.template" -PROJECT_PATH "C:\Users\tester\go\src\github.com\privatix\dapp-installer"
+    tompl.ps1 -templateFileName "Gopkg.toml.template" -PROJECT_PATH "C:\Users\tester\go\src\github.com\privatix\dapp-openvpn"
 
     Description
     -----------
