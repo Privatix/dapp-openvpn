@@ -111,7 +111,7 @@ func (o *OpenVPN) RemoveTap() error {
 func (o *OpenVPN) Configurate() error {
 	if o.isClient() {
 		o.Managment.Port = nextFreePort(*o.Managment, "tcp")
-		if o.IsWindows {
+		if runtime.GOOS != "darwin" {
 			return nil
 		}
 
@@ -185,7 +185,7 @@ func (o *OpenVPN) RemoveConfig() error {
 		os.RemoveAll(filepath.Join(o.Path, path))
 	}
 
-	if o.IsWindows {
+	if runtime.GOOS != "darwin" {
 		return nil
 	}
 

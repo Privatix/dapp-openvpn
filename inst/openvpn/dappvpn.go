@@ -89,6 +89,14 @@ func (d *DappVPN) InstallService(role, dir string) (string, error) {
 		}
 	}
 
+	if runtime.GOOS == "linux" {
+		dependencies = []string{"dappctrl.service"}
+		if role == "server" {
+			dependencies = append(dependencies,
+				fmt.Sprintf("openvpn_%s.service", hash(dir)))
+		}
+	}
+
 	service, err := daemon.New(d.Service, descr, dependencies...)
 	if err != nil {
 		return "", err
