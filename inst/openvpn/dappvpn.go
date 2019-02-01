@@ -37,18 +37,25 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 	jsonMap := make(map[string]interface{})
 	json.NewDecoder(read).Decode(&jsonMap)
 
+	ovpnPath := filepath.Join(p, path.Config.OpenVPN)
+	upScriptPath := filepath.Join(p, path.Config.UpScript)
+	downScriptPath := filepath.Join(p, path.Config.DownScript)
+	if runtime.GOOS == "linux" {
+		ovpnPath = "/usr/sbin/openvpn"
+		upScriptPath = "/etc/openvpn/update-resolv-conf"
+		downScriptPath = "/etc/openvpn/update-resolv-conf"
+	}
+
 	maps := make(map[string]interface{})
 
 	maps["FileLog.Filename"] = filepath.Join(p, "log/dappvpn-%Y-%m-%d.log")
-	maps["OpenVPN.Name"] = filepath.Join(p, path.Config.OpenVPN)
+	maps["OpenVPN.Name"] = ovpnPath
 	maps["OpenVPN.ConfigRoot"] = filepath.Join(p, path.Config.DataDir)
 	if o.IsWindows {
 		maps["OpenVPN.TapInterface"] = o.Tap.GUID
 	} else if o.isClient() {
-		maps["OpenVPN.UpScript"] = filepath.Join(p,
-			path.Config.UpScript)
-		maps["OpenVPN.DownScript"] = filepath.Join(p,
-			path.Config.DownScript)
+		maps["OpenVPN.UpScript"] = upScriptPath
+		maps["OpenVPN.DownScript"] = downScriptPath
 	}
 	maps["Pusher.CaCertPath"] = filepath.Join(p, path.Config.CACertificate)
 	maps["Pusher.ConfigPath"] = filepath.Join(p, path.RoleConfig(o.Role))
