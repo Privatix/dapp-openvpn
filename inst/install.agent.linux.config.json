@@ -1,0 +1,18 @@
+{
+    "CoreDapp": true,
+    "Install": [
+	{"Admin" : true,"Command": "/bin/machinectl shell agent /bin/sh /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/install-agent.sh"}
+    ],
+     "Update": [
+        {"Admin" : true,"Command": "/bin/machinectl shell agent /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/inst update"}
+    ],
+    "Start": [
+        {"Admin" : true,"Command": "/bin/machinectl shell agent /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/inst start"}
+    ],
+    "Stop": [
+        {"Admin" : true,"Command": "/bin/machinectl shell agent /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/inst stop"}
+    ],
+    "Remove": [
+        {"Admin" : true,"Command": "/bin/machinectl shell agent /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/inst remove"}
+    ]
+}
