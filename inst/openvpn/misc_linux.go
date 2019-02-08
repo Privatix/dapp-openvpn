@@ -22,7 +22,7 @@ func daemonPath(name string) string {
 	return filepath.Join("/etc/systemd/system/", name+".service")
 }
 
-func createNatRules(p, server string, forwardingState int) error {
+func createNatRules(p, server string, port int) error {
 	name := serviceName("nat", p)
 	file, err := os.Create(daemonPath(name))
 	if err != nil {
@@ -36,10 +36,9 @@ func createNatRules(p, server string, forwardingState int) error {
 	}
 
 	type natRule struct {
-		Name            string
-		Script          string
-		Server          string
-		ForwardingState int
+		Name   string
+		Script string
+		Server string
 	}
 
 	script := filepath.Join(p, path.Config.NatScript)
@@ -47,10 +46,9 @@ func createNatRules(p, server string, forwardingState int) error {
 		return err
 	}
 	d := &natRule{
-		Name:            name,
-		Script:          script,
-		Server:          server,
-		ForwardingState: forwardingState,
+		Name:   name,
+		Script: script,
+		Server: server,
 	}
 	if err := templ.Execute(file, &d); err != nil {
 		return err
@@ -69,7 +67,7 @@ After=postgresql.service
 [Service]
 Type=onshot
 ExecStart={{.Script}} on {{.Server}}
-ExecStop={{.Script}} off {{.ForwardingState}} {{.Server}}
+ExecStop={{.Script}} off {{.Server}}
 Restart=on-failure
 RemainAfterExit=yes
 User=root

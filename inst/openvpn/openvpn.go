@@ -388,15 +388,7 @@ func (o *OpenVPN) RemoveService() (string, error) {
 
 // CreateForwardingDaemon creates daemon on unix-system.
 func (o *OpenVPN) CreateForwardingDaemon() error {
-	if runtime.GOOS == "darwin" {
-		return createNatRules(o.Path, o.Server.IP, o.Host.Port)
-	}
-
-	s, err := strconv.Atoi(o.ForwardingState)
-	if err != nil {
-		return err
-	}
-	return createNatRules(o.Path, o.Server.IP, s)
+	return createNatRules(o.Path, o.Server.IP, o.Host.Port)
 }
 
 // Update updates the product.

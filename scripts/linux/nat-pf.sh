@@ -43,35 +43,14 @@ then
 
     # creates rules
     /sbin/iptables -t nat -A POSTROUTING -s $server/24 -o $default -j MASQUERADE
-
-    frwd=$(/sbin/sysctl -n net.ipv4.ip_forward)
-    if [ "$frwd" != "1" ]
-    then
-        # enables ip forwarding
-        /sbin/sysctl -w net.ipv4.ip_forward=1
-    fi
 elif [ "$status" = "off" ]
 then
     if [ -n "$2" ]
     then
-	    forwarding=$2
-    else
-	    echo "No arguments supplied (forwarding)."
-	    exit 1
-    fi
-
-    if [ -n "$3" ]
-    then
-	    server=$3
+	    server=$2
     else
 	    echo "No arguments supplied (server)."
 	    exit 1
-    fi
-
-    if [ "$forwarding" = "0" ]
-    then
-        # disables ip forwarding
-        /sbin/sysctl -w net.ipv4.ip_forward=0
     fi
 
     # defines default internet interface

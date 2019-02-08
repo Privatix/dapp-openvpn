@@ -230,15 +230,9 @@ func checkInstallation(o *openvpn.OpenVPN) error {
 }
 
 func createEnv(o *openvpn.OpenVPN) error {
-	os := runtime.GOOS
-	if os != "windows" {
-		file := "/sbin/sysctl"
-		param := "net.ipv4.ip_forward"
-		if os == "darwin" {
-			file = "/usr/sbin/sysctl"
-			param = "net.inet.ip.forwarding"
-		}
-		out, err := exec.Command(file, "-n", param).Output()
+	if runtime.GOOS == "darwin" {
+		out, err := exec.Command("/usr/sbin/sysctl", "-n",
+			"net.inet.ip.forwarding").Output()
 		if err != nil {
 			return err
 		}
