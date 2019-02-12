@@ -88,6 +88,11 @@ func getCreds() (string, string) {
 	return user, pass
 }
 
+func callSess(result interface{}, method string, args ...interface{}) error {
+	creds := []interface{}{conf.Sess.Product, conf.Sess.Password}
+	return sesscl.Call(result, "sess_"+method, append(creds, args...)...)
+}
+
 func storeActiveChannel(ch string) {
 	name := filepath.Join(conf.ChannelDir, "active")
 

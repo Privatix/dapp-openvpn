@@ -27,3 +27,5 @@
 Gopkg.lock
 
 \.DS_Store
+
+Gopkg\.toml

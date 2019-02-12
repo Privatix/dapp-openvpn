@@ -45,9 +45,11 @@ adapter.
 
 Switch to the dapp-openvpn repository root directory.
 
-You can build all binaries using the go tool, placing the resulting binary in `$GOPATH/bin`:
+You can build all binaries using the go tool, placing the 
+resulting binary in `$GOPATH/bin`:
 
 ```bash
+./scripts/toml.sh ./Gopkg.toml.template > ./Gopkg.toml
 ./scripts/build.sh
 ```
 

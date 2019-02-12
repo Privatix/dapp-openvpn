@@ -117,7 +117,7 @@ func (m *Monitor) MonitorTraffic(ctx context.Context) error {
 	}
 }
 
-func (m *Monitor) write(cmd string) error {
+func (m *Monitor) writeAndWaitForSuccess(cmd string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -142,6 +142,12 @@ func (m *Monitor) write(cmd string) error {
 	return <-ret
 }
 
+func (m *Monitor) write(cmd string) error {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	return m.writeCommand(cmd)
+}
+
 func (m *Monitor) writeCommandEach(cmd string, period time.Duration, exit chan struct{}) error {
 	ticker := time.NewTicker(period)
 	defer ticker.Stop()
@@ -149,7 +155,7 @@ func (m *Monitor) writeCommandEach(cmd string, period time.Duration, exit chan s
 	for {
 		select {
 		case <-ticker.C:
-			_, err := m.conn.Write([]byte(cmd + "\n"))
+			err := m.writeCommand(cmd)
 			if err != nil {
 				return err
 			}
@@ -157,6 +163,11 @@ func (m *Monitor) writeCommandEach(cmd string, period time.Duration, exit chan s
 			return nil
 		}
 	}
+}
+
+func (m *Monitor) writeCommand(cmd string) error {
+	_, err := m.conn.Write([]byte(cmd + "\n"))
+	return err
 }
 
 func (m *Monitor) lookForPrefixOutput(timeout time.Duration, prefix string) error {
@@ -168,7 +179,7 @@ func (m *Monitor) lookForPrefixOutput(timeout time.Duration, prefix string) erro
 	for {
 		select {
 		case <-failchan:
-			m.logger.Error("looking for prefix output timeout")
+			logger.Error("looking for prefix output timeout")
 			return ErrCmdReceiveTimeout
 		default:
 			out, err := m.out.ReadString('\n')
@@ -186,7 +197,7 @@ func (m *Monitor) requestClients() error {
 }
 
 func (m *Monitor) setByteCountPeriod() error {
-	return m.write(fmt.Sprintf("bytecount %d", m.conf.ByteCountPeriod))
+	return m.writeAndWaitForSuccess(fmt.Sprintf("bytecount %d", m.conf.ByteCountPeriod))
 }
 
 func (m *Monitor) killSession(cn string) error {
@@ -203,11 +214,11 @@ func (m *Monitor) initConn() error {
 			return err
 		}
 	} else {
-		if err := m.write("state on"); err != nil {
+		if err := m.writeAndWaitForSuccess("state on"); err != nil {
 			return err
 		}
 
-		if err := m.write("hold release"); err != nil {
+		if err := m.writeAndWaitForSuccess("hold release"); err != nil {
 			return err
 		}
 
@@ -215,7 +226,7 @@ func (m *Monitor) initConn() error {
 		// for some reason. This needs to be further investigated.
 		if runtime.GOOS == "windows" {
 			time.Sleep(time.Millisecond * 100)
-			if err := m.write("hold release"); err != nil {
+			if err := m.writeAndWaitForSuccess("hold release"); err != nil {
 				return err
 			}
 		}
