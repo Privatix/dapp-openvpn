@@ -337,6 +337,10 @@ func changeOwner(o *openvpn.OpenVPN) error {
 }
 
 func update(o *openvpn.OpenVPN) error {
+	if runtime.GOOS == "linux" {
+		return o.Update()
+	}
+
 	if err := stopService(o); err != nil {
 		return err
 	}
