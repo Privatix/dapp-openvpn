@@ -26,6 +26,7 @@
         "ConfigPath": "/etc/openvpn/config/server.conf",
         "ExportConfigKeys": [
             "proto",
+            "port",
             "cipher",
             "ping-restart",
             "ping",

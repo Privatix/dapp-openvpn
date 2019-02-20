@@ -48,7 +48,8 @@ type Pusher struct {
 func NewConfig() *Config {
 	return &Config{
 		ExportConfigKeys: []string{"proto", "cipher", "ping-restart",
-			"ping", "connect-retry", "ca", "comp-lzo", "keepalive"},
+			"ping", "connect-retry", "ca",
+			"comp-lzo", "keepalive", "port"},
 		TimeOut: 12,
 	}
 }
