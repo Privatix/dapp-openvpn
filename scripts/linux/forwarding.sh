@@ -5,7 +5,7 @@ if [ "$frwd" != "1" ]
 then
     DIRECTORY=`dirname $0`
 
-    cd ${DIRECTORY}
+    cd "${DIRECTORY}"
     cd ../../../
     
     # enables ip forwarding in pre-start.sh

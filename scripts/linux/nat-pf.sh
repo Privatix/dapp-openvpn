@@ -42,7 +42,7 @@ then
     /bin/sed -i 's/^dns=dnsmasq/#&/' /etc/NetworkManager/NetworkManager.conf && /usr/sbin/service network-manager restart
 
     # creates rules
-    /sbin/iptables -t nat -A POSTROUTING -s $server/24 -o $default -j MASQUERADE
+    /sbin/iptables -t nat -A POSTROUTING -s "$server"/24 -o "$default" -j MASQUERADE
 elif [ "$status" = "off" ]
 then
     if [ -n "$2" ]
@@ -56,5 +56,5 @@ then
     # defines default internet interface
     default=$(/sbin/route | grep  default | awk '{print $8}')
 
-    /sbin/iptables -t nat -D POSTROUTING -s $server/24 -o $default -j MASQUERADE
+    /sbin/iptables -t nat -D POSTROUTING -s "$server"/24 -o "$default"   -j MASQUERADE
 fi

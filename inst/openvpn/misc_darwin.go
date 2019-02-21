@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/privatix/dapp-openvpn/inst/openvpn/path"
+	"github.com/privatix/dapp-openvpn/statik"
 )
 
 func serviceName(prefix, path string) string {
@@ -22,6 +23,7 @@ func daemonPath(name string) string {
 	return filepath.Join("/Library/LaunchDaemons", name+".plist")
 }
 
+// createNatRules creates daemon on Mac, which configures NAT rules.
 func createNatRules(p, server string, port int) error {
 	name := serviceName("nat", p)
 	file, err := os.Create(daemonPath(name))
@@ -30,7 +32,12 @@ func createNatRules(p, server string, port int) error {
 	}
 	defer file.Close()
 
-	templ, err := template.New("daemonTemplate").Parse(daemonTemplate)
+	data, err := statik.ReadFile("/ovpn/templates/mac-daemon.tpl")
+	if err != nil {
+		return err
+	}
+
+	templ, err := template.New("daemonTemplate").Parse(string(data))
 	if err != nil {
 		return err
 	}
@@ -58,29 +65,3 @@ func createNatRules(p, server string, port int) error {
 
 	return exec.Command("launchctl", "load", daemonPath(name)).Run()
 }
-
-var daemonTemplate = `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Disabled</key>
-    <false/>
-    <key>KeepAlive</key>
-    <dict>
-        <key>SuccessfulExit</key>
-        <false/>
-    </dict>
-    <key>Label</key>
-    <string>{{.Name}}</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>{{.Script}}</string>
-	<string>on</string>
-	<string>{{.Server}}</string>
-	<string>{{.Port}}</string>
-    </array>
-    <key>RunAtLoad</key>
-    <true/>
-</dict>
-</plist>
-`

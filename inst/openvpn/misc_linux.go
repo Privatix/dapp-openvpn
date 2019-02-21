@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/privatix/dapp-openvpn/inst/openvpn/path"
+	"github.com/privatix/dapp-openvpn/statik"
 )
 
 func serviceName(prefix, path string) string {
@@ -22,6 +23,7 @@ func daemonPath(name string) string {
 	return filepath.Join("/etc/systemd/system/", name+".service")
 }
 
+// createNatRules creates daemon on linux, which configures NAT rules.
 func createNatRules(p, server string, port int) error {
 	name := serviceName("nat", p)
 	file, err := os.Create(daemonPath(name))
@@ -30,7 +32,12 @@ func createNatRules(p, server string, port int) error {
 	}
 	defer file.Close()
 
-	templ, err := template.New("daemonTemplate").Parse(daemonTemplate)
+	data, err := statik.ReadFile("/ovpn/templates/linux-daemon.tpl")
+	if err != nil {
+		return err
+	}
+
+	templ, err := template.New("daemonTemplate").Parse(string(data))
 	if err != nil {
 		return err
 	}
@@ -56,25 +63,3 @@ func createNatRules(p, server string, port int) error {
 
 	return exec.Command("systemctl", "enable", daemonPath(name)).Run()
 }
-
-var daemonTemplate = `[Unit]
-Description={{.Name}}
-After=syslog.target network-online.target 
-Wants=network-online.target
-After=syslog.target
-After=postgresql.service
-
-[Service]
-Type=onshot
-ExecStart={{.Script}} on {{.Server}}
-ExecStop={{.Script}} off {{.Server}}
-Restart=on-failure
-RemainAfterExit=yes
-User=root
-Group=root
-StandardOutput=syslog
-StandardError=syslog
-
-[Install]
-WantedBy=multi-user.target
-`

@@ -338,6 +338,8 @@ func changeOwner(o *openvpn.OpenVPN) error {
 
 func update(o *openvpn.OpenVPN) error {
 	if runtime.GOOS == "linux" {
+		// doesn't need stop/start services,
+		// because container is used on linux
 		return o.Update()
 	}
 
