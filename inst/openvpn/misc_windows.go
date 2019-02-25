@@ -27,3 +27,7 @@ func setRegValue(guid, name string) error {
 func createNatRules(p, server string, port int) error {
 	return nil
 }
+
+func daemonPath(name string) string {
+	return ""
+}
