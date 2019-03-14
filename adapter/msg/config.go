@@ -268,12 +268,6 @@ func MakeFiles(logger log.Logger, dir, serviceEndpointAddress, username,
 			logger.Error(err.Error())
 			return ErrCreateDir
 		}
-	} else {
-		// If the configuration file and the access file exist,
-		// then complete the function execution.
-		if checkFile(configDst) && checkFile(accessDst) {
-			return nil
-		}
 	}
 
 	// If the configuration file does not exist,

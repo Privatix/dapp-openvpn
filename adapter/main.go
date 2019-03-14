@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/privatix/dappctrl/data"
 	"github.com/privatix/dappctrl/nat"
 	"github.com/privatix/dappctrl/sess"
@@ -44,7 +43,7 @@ var (
 	logger  log.Logger
 	tctrl   *tc.TrafficControl
 	fatal   = make(chan string)
-	sesscl  *rpc.Client
+	sesscl  *sess.Client
 )
 
 func createLogger() (log.Logger, io.Closer, error) {
@@ -86,8 +85,8 @@ func main() {
 	}
 	defer closer.Close()
 
-	sesscl, err = rpc.DialWebsocket(
-		context.Background(), conf.Sess.Endpoint, conf.Sess.Origin)
+	sesscl, err = sess.Dial(context.Background(), conf.Sess.Endpoint,
+		conf.Sess.Origin, conf.Sess.Product, conf.Sess.Password)
 	if err != nil {
 		panic("failed to connect to session server: " + err.Error())
 	}
@@ -110,7 +109,7 @@ func handleAuth() {
 	logger := logger.Add("method", "handleAuth")
 	user, pass := getCreds()
 
-	if err := callSess(nil, "authClient", user, pass); err != nil {
+	if err := sesscl.AuthClient(user, pass); err != nil {
 		logger.Fatal("failed to auth: " + err.Error())
 	}
 
@@ -128,9 +127,9 @@ func handleConnect() {
 		logger.Fatal("bad trusted_port value")
 	}
 
-	var offer data.Offering
-	if err = callSess(&offer, "startSession", loadChannel(),
-		os.Getenv("trusted_ip"), uint16(port)); err != nil {
+	var offer *data.Offering
+	offer, err = sesscl.StartSession(os.Getenv("trusted_ip"), loadChannel(), uint16(port))
+	if err != nil {
 		logger.Fatal("failed to start session: " + err.Error())
 	}
 
@@ -166,7 +165,7 @@ func handleDisconnect() {
 		panic("bad bytes_received value")
 	}
 
-	err = callSess(nil, "updateSession", loadChannel(), down+up, true)
+	err = sesscl.UpdateSession(loadChannel(), down+up, true)
 	if err != nil {
 		logger.Fatal("failed to stop session: " + err.Error())
 	}
@@ -181,7 +180,7 @@ func handleDisconnect() {
 func handleMonStarted(ch string) bool {
 	logger := logger.Add("method", "handleMonStarted", "channel", ch)
 
-	if err := callSess(nil, "startSession", ch, "", 0); err != nil {
+	if _, err := sesscl.StartSession("", ch, 0); err != nil {
 		logger.Fatal("failed to start session: " + err.Error())
 		return false
 	}
@@ -193,7 +192,7 @@ func handleMonStopped(ch string, up, down uint64) bool {
 	logger := logger.Add("method", "handleMonStopped",
 		"channel", ch, "up", up, "down", down)
 
-	err := callSess(nil, "updateSession", ch, down+up, true)
+	err := sesscl.UpdateSession(ch, down+up, true)
 	if err != nil {
 		logger.Fatal("failed to stop session: " + err.Error())
 		return false
@@ -206,7 +205,7 @@ func handleMonByteCount(ch string, up, down uint64) bool {
 	logger := logger.Add("method", "handleMonByteCount",
 		"channel", ch, "up", up, "down", down)
 
-	err := callSess(nil, "updateSession", ch, down+up, false)
+	err := sesscl.UpdateSession(ch, down+up, false)
 	if err != nil {
 		logger.Error("failed to update session: " + err.Error())
 		return false
@@ -260,7 +259,7 @@ func handlePusher(ctx context.Context, dir string) {
 
 	pusher := msg.NewPusher(conf.Pusher, logger,
 		func(config map[string]string) error {
-			return callSess(nil, "setProductConfig", config)
+			return sesscl.SetProductConfig(config)
 		})
 
 	params, err := pusher.VpnParams()
@@ -337,16 +336,14 @@ func handleClientMonitor() {
 	}
 
 	getEndpoint := func(clientKey string) (*data.Endpoint, error) {
-		var ept data.Endpoint
-		err := callSess(&ept, "getEndpoint", clientKey)
-		return &ept, err
+		ept, err := sesscl.GetEndpoint(clientKey)
+		return ept, err
 	}
 
 	var ctx context.Context
 	var stopOvpnAndMonitor func()
 	ch := make(chan *sess.ConnChangeResult)
-	subcl, err := sesscl.Subscribe(context.Background(), "sess", ch,
-		"connChange", conf.Sess.Product, conf.Sess.Password)
+	subcl, err := sesscl.ConnChange(ch)
 	if err != nil {
 		logger.Fatal("failed to subscribe to connection changes")
 	}
