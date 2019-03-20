@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -229,7 +230,7 @@ func checkInstallation(o *openvpn.OpenVPN) error {
 }
 
 func createEnv(o *openvpn.OpenVPN) error {
-	if !o.IsWindows {
+	if runtime.GOOS == "darwin" {
 		out, err := exec.Command("/usr/sbin/sysctl", "-n",
 			"net.inet.ip.forwarding").Output()
 		if err != nil {
@@ -311,7 +312,7 @@ func finalize(o *openvpn.OpenVPN) error {
 }
 
 func changeOwner(o *openvpn.OpenVPN) error {
-	if o.IsWindows {
+	if runtime.GOOS != "darwin" {
 		return nil
 	}
 
@@ -336,6 +337,12 @@ func changeOwner(o *openvpn.OpenVPN) error {
 }
 
 func update(o *openvpn.OpenVPN) error {
+	if runtime.GOOS == "linux" {
+		// doesn't need stop/start services,
+		// because container is used on linux
+		return o.Update()
+	}
+
 	if err := stopService(o); err != nil {
 		return err
 	}

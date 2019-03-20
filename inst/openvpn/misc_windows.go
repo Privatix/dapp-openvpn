@@ -23,3 +23,11 @@ func setRegValue(guid, name string) error {
 
 	return key.SetStringValue("Name", name)
 }
+
+func createNatRules(p, server string, port int) error {
+	return nil
+}
+
+func daemonPath(name string) string {
+	return ""
+}

@@ -13,5 +13,5 @@
 /inst/          @ubozov
 
 # notify devops team about changes in *.config.json
-*.config.json               @kelewind @velopokatun @ubozov @drew2a
-/inst/openvpn/path/path.go  @kelewind @velopokatun
+*.config.json               @kelewind @ubozov @drew2a
+/inst/openvpn/path/path.go  @kelewind

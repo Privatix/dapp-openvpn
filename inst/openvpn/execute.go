@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"syscall"
 
 	"github.com/privatix/dapp-openvpn/inst/openvpn/path"
@@ -33,6 +34,11 @@ func run(e *execute) error {
 	args := []string{}
 	if e.Type == path.Config.OVPN {
 		args = append(args, "--cd", e.Path)
+		if runtime.GOOS == "linux" {
+			if _, err := os.Stat(vpn); err != nil {
+				vpn = "/usr/sbin/openvpn"
+			}
+		}
 	}
 	args = append(args, "--config", config)
 	cmd := exec.Command(vpn, args...)

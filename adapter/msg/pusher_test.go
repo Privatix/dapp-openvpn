@@ -66,7 +66,13 @@ func TestPushConfig(t *testing.T) {
 
 	pusher := NewPusher(
 		createTestConfig(t, rootDir), logger, setProductConfig)
-	if err := pusher.PushConfiguration(context.Background()); err != nil {
+	vpnParams, err := pusher.VpnParams()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := pusher.PushConfiguration(
+		context.Background(), vpnParams); err != nil {
 		t.Fatal(err)
 	}
 }

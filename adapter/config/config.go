@@ -3,6 +3,7 @@ package config
 import (
 	"time"
 
+	"github.com/privatix/dappctrl/nat"
 	"github.com/privatix/dappctrl/util/log"
 
 	"github.com/privatix/dapp-openvpn/adapter/mon"
@@ -27,6 +28,10 @@ type sessConfig struct {
 	Password string
 }
 
+type natConfig struct {
+	*nat.Config
+}
+
 // Config is dapp-openvpn adapter configuration.
 type Config struct {
 	ChannelDir      string // Directory for common-name -> channel mappings.
@@ -34,6 +39,7 @@ type Config struct {
 	HeartbeatPeriod time.Duration // In milliseconds.
 	FileLog         *log.FileConfig
 	Monitor         *mon.Config
+	NAT             *natConfig  // NAT settings for Agent mode.
 	OpenVPN         *ovpnConfig // OpenVPN settings for client mode.
 	Pusher          *msg.Config
 	Sess            *sessConfig
@@ -48,6 +54,7 @@ func NewConfig() *Config {
 		HeartbeatPeriod: 2000,
 		FileLog:         log.NewFileConfig(),
 		Monitor:         mon.NewConfig(),
+		NAT:             &natConfig{Config: nat.NewConfig()},
 		OpenVPN: &ovpnConfig{
 			Name:       "openvpn",
 			ConfigRoot: "/etc/openvpn/config",
