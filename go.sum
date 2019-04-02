@@ -66,6 +66,8 @@ github.com/privatix/dapp-openvpn v0.0.0-20190401082524-cbd325f0e3fb h1:5xrQJ5tz5
 github.com/privatix/dapp-openvpn v0.0.0-20190401082524-cbd325f0e3fb/go.mod h1:vTZu0SPpZsYslUwvjlTRvPWq2iVkoR5bL7n1aqcz76o=
 github.com/privatix/dappctrl v0.0.0-20190401104017-3c55e38f445d h1:UxwkP+ZC2V/CIbXhpJDymJiTCPupRlR+Z3me3ngbLu4=
 github.com/privatix/dappctrl v0.0.0-20190401104017-3c55e38f445d/go.mod h1:WSJxnCObSRXHmyIg5Ju7S2MA1AB8FAgNU9xM/9J4ZL4=
+github.com/privatix/dappctrl v0.0.0-20190402145318-c4e4ba7395f9 h1:gP2lyo1ttP7wnEsUTAuqMffKw1S/PK13dZqFds3L2I0=
+github.com/privatix/dappctrl v0.0.0-20190402145318-c4e4ba7395f9/go.mod h1:WSJxnCObSRXHmyIg5Ju7S2MA1AB8FAgNU9xM/9J4ZL4=
 github.com/privatix/dappctrl v0.21.1 h1:LloJxlxt4SSV5H8D8HOVwGJMB5C2G1bp8bowpqURKbA=
 github.com/privatix/dappctrl v0.21.1/go.mod h1:My3ax8gOgQirBoTaJqMN+BahTfLMl5qxYW78bPOivtc=
 github.com/rakyll/statik v0.1.6 h1:uICcfUXpgqtw2VopbIncslhAmE5hwc4g20TEyEENBNs=
