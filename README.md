@@ -81,33 +81,6 @@ On the agent side it necessary to perform the following steps:
 
 -   Start the `adapter -config adapter.config.json` in the background with the configuration provided by the installer.
 
-#### Install dep dependency management tool
-
-linux:
-
-```bash
-curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-```
-
-macos:
-
-```bash
-brew install dep
-brew upgrade dep
-```
-
-windows:
-
-Latest release can be downloaded from this link: https://github.com/golang/dep/releases
-
-Run dep application:
-
-Go to the root directory of the project and run command:
-
-```bash
-dep ensure
-```
-
 #### Install statik
 
 ```
