@@ -36,20 +36,20 @@ echo
 echo go build
 echo
 
-echo $GOPATH/bin/${ADAPTER_NAME}
 go build -o $GOPATH/bin/${ADAPTER_NAME} -ldflags "-X main.Commit=$GIT_COMMIT \
     -X main.Version=$GIT_RELEASE" -tags=notest \
     ${DAPP_OPENVPN_DIR}${ADAPTER_MAIN} || exit 1
+echo $GOPATH/bin/${ADAPTER_NAME}
 
-echo $GOPATH/bin/${INSTALLER_NAME}
 go build -o $GOPATH/bin/${INSTALLER_NAME} -ldflags "-X main.Commit=$GIT_COMMIT \
     -X main.Version=$GIT_RELEASE" -tags=notest \
     ${DAPP_OPENVPN_DIR}${INSTALLER_MAIN} || exit 1
+echo $GOPATH/bin/${INSTALLER_NAME}
 
-echo $GOPATH/bin/${OPENVPN_INSTALLER_NAME}
 go build -o $GOPATH/bin/${OPENVPN_INSTALLER_NAME} -ldflags \
     "-X main.Commit=$GIT_COMMIT -X main.Version=$GIT_RELEASE" \
     ${DAPP_OPENVPN_DIR}${OPENVPN_INSTALLER_MAIN} || exit 1
+echo $GOPATH/bin/${OPENVPN_INSTALLER_NAME}
 
 echo
 echo done
