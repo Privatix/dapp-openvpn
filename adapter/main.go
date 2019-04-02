@@ -29,8 +29,6 @@ import (
 	"github.com/privatix/dapp-openvpn/adapter/tc"
 )
 
-//go:generate go generate ../vendor/github.com/privatix/dappctrl/data/schema.go
-
 // Values for versioning.
 var (
 	Commit  string

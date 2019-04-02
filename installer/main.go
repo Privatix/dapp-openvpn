@@ -10,8 +10,6 @@ import (
 	"github.com/privatix/dappctrl/data"
 )
 
-//go:generate go generate ../vendor/github.com/privatix/dappctrl/data/schema.go
-
 const appVersion = "0.12.0"
 
 // Errors.
