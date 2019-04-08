@@ -6,7 +6,7 @@
 
 OpenVPN [service plug-in](https://github.com/Privatix/privatix/blob/master/doc/service_plug-in.md) allows Agents and Clients to buy and sell their internet traffic in form of VPN service without 3rd party.
 
-    This service plug-in is a PoC service plugin-in for Privatix core.
+    This service plug-in is a PoC service for Privatix core.
 
 ## Custom integration includes
 
