@@ -6,7 +6,7 @@ Usage:
 Available Commands:
   install     Install product package
   remove      Remove product package
-  run	      Run service
+  run	        Run service
   start	      Start service
   stop	      Stop service
 Flags:
