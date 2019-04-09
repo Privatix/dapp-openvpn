@@ -6,7 +6,7 @@ Usage:
 Available Commands:
   install     Install product package
   remove      Remove product package
-  run	        Run service
+  run         Run service
   start	      Start service
   stop	      Stop service
 Flags:
@@ -19,18 +19,18 @@ const installHelp = `
 Usage:
 	installer install [flags]
 Flags:
-	--config	Configuration file
-  --help		Display help information
+  --config  Configuration file
+  --help    Display help information
   --role    Product role
-  --workdir	Product install directory
+  --workdir Product install directory
 `
 
 const templateHelp = `
 Usage:
-	installer %s [flags]
+  installer %s [flags]
 Flags:
-	--help		Display help information
-	--workdir	Product install directory
+  --help    Display help information
+  --workdir Product install directory
 `
 
 const envFile = "config/.env.config.json"
