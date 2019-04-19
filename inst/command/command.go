@@ -74,6 +74,7 @@ func installFlow() pipeline.Flow {
 		newOperator("validate", validateToInstall, nil),
 		newOperator("install tap", installTap, removeTap),
 		newOperator("create config", createConfig, removeConfig),
+		newOperator("record ports.txt", recordPortsToOpen, removePortsFile),
 		newOperator("create service", createService, removeService),
 		newOperator("create env", createEnv, removeEnv),
 		newOperator("change owner", changeOwner, nil),
