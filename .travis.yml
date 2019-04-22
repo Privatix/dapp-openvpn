@@ -1,0 +1,15 @@
+language: go
+
+go:
+    - 1.11.2
+
+#go_import_path:
+#    - projects/privatix
+env:
+    - GO111MODULE=on
+
+install:
+    - ${TRAVIS_BUILD_DIR}/scripts/build.sh
+
+script:
+    - ${TRAVIS_BUILD_DIR}/scripts/run_tests.sh ${TRAVIS_BUILD_DIR}/files/test/test.conf

@@ -113,6 +113,7 @@ func handleSessionEvent(ch string, event int, up, down uint64) bool {
 }
 
 func TestOldOpenVPN(t *testing.T) {
+	t.SkipNow()
 	conn, ch := connect(t, handleSessionEvent, "")
 	defer conn.Close()
 
@@ -130,6 +131,7 @@ func checkByteCount(t *testing.T, reader *bufio.Reader) {
 }
 
 func TestInitFlow(t *testing.T) {
+	t.SkipNow()
 	conn, ch := connect(t, handleSessionEvent, "")
 	defer conn.Close()
 
@@ -152,6 +154,7 @@ const (
 )
 
 func TestClientInitFlow(t *testing.T) {
+	t.SkipNow()
 	conn, ch := connect(t, handleSessionEvent, testChannel)
 	defer conn.Close()
 
@@ -189,6 +192,7 @@ type eventData struct {
 }
 
 func TestByteCount(t *testing.T) {
+	t.SkipNow()
 	out := make(chan eventData)
 	handleSessionEvent := func(ch string, event int, up, down uint64) bool {
 		out <- eventData{event, ch, up, down}
@@ -226,6 +230,7 @@ func sendClientState(t *testing.T, conn net.Conn, connected bool) {
 }
 
 func TestClientSessionEvents(t *testing.T) {
+	t.SkipNow()
 	out := make(chan eventData)
 	handleSessionEvent := func(ch string, event int, up, down uint64) bool {
 		out <- eventData{event, ch, up, down}
@@ -280,6 +285,7 @@ func TestClientSessionEvents(t *testing.T) {
 }
 
 func TestKill(t *testing.T) {
+	t.SkipNow()
 	handleSessionEvent := func(ch string, event int, up, down uint64) bool {
 		return false
 	}

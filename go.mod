@@ -1,9 +1,10 @@
 module github.com/privatix/dapp-openvpn
 
 require (
+	github.com/AlekSi/pointer v1.0.0
 	github.com/allegro/bigcache v1.2.0 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20190325233358-a123909ec740 // indirect
-	github.com/ethereum/go-ethereum v1.8.23
+	github.com/ethereum/go-ethereum v1.8.27
 	github.com/jpillora/backoff v0.0.0-20180909062703-3050d21c67d7 // indirect
 	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/privatix/dappctrl v0.0.0-20190412073235-9cab976b3bc4
