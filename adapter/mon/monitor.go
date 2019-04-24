@@ -133,8 +133,8 @@ func (m *Monitor) writeAndWaitForSuccess(cmd string) error {
 
 	go func() {
 		timeout := time.Duration(m.conf.CmdApplyTimeout) * time.Second
-		// Prefix "SUCCESS: " indicates that openvpn received the command.
-		err := m.lookForPrefixOutput(timeout, "SUCCESS: ")
+		// The prefix indicates that openvpn received the command.
+		err := m.lookForPrefixOutput(timeout, prefixCMDSuccess)
 		ret <- err
 		stopch <- struct{}{}
 	}()
@@ -243,6 +243,7 @@ const (
 	prefixClientEstablished = ">CLIENT:ESTABLISHED,"
 	prefixError             = "ERROR: "
 	prefixState             = ">STATE:"
+	prefixCMDSuccess        = "SUCCESS: "
 )
 
 func (m *Monitor) processReply(s string) error {

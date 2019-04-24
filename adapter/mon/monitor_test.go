@@ -113,10 +113,10 @@ func handleSessionEvent(ch string, event int, up, down uint64) bool {
 }
 
 func TestOldOpenVPN(t *testing.T) {
-	t.SkipNow()
 	conn, ch := connect(t, handleSessionEvent, "")
 	defer conn.Close()
 
+	send(t, conn, prefixCMDSuccess+"\n")
 	send(t, conn, prefixClientListHeader)
 	send(t, conn, prefixClientList+",,,,,,,,")
 
@@ -131,13 +131,13 @@ func checkByteCount(t *testing.T, reader *bufio.Reader) {
 }
 
 func TestInitFlow(t *testing.T) {
-	t.SkipNow()
 	conn, ch := connect(t, handleSessionEvent, "")
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
 
 	checkByteCount(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 
 	if str := receive(t, reader); str != "status 2" {
 		t.Fatalf("unexpected status command: %s", str)
@@ -154,21 +154,23 @@ const (
 )
 
 func TestClientInitFlow(t *testing.T) {
-	t.SkipNow()
 	conn, ch := connect(t, handleSessionEvent, testChannel)
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
 
 	checkByteCount(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 
 	if str := receive(t, reader); str != "state on" {
 		t.Fatalf("unexpected state command: %s", str)
 	}
+	send(t, conn, prefixCMDSuccess+"\n")
 
 	if str := receive(t, reader); str != "hold release" {
 		t.Fatalf("unexpected hold command: %s", str)
 	}
+	send(t, conn, prefixCMDSuccess+"\n")
 
 	exit(t, conn, ch)
 }
@@ -192,7 +194,6 @@ type eventData struct {
 }
 
 func TestByteCount(t *testing.T) {
-	t.SkipNow()
 	out := make(chan eventData)
 	handleSessionEvent := func(ch string, event int, up, down uint64) bool {
 		out <- eventData{event, ch, up, down}
@@ -205,7 +206,9 @@ func TestByteCount(t *testing.T) {
 	reader := bufio.NewReader(conn)
 
 	receive(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 	receive(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 
 	sendByteCount(t, conn)
 
@@ -230,7 +233,6 @@ func sendClientState(t *testing.T, conn net.Conn, connected bool) {
 }
 
 func TestClientSessionEvents(t *testing.T) {
-	t.SkipNow()
 	out := make(chan eventData)
 	handleSessionEvent := func(ch string, event int, up, down uint64) bool {
 		out <- eventData{event, ch, up, down}
@@ -243,8 +245,11 @@ func TestClientSessionEvents(t *testing.T) {
 	reader := bufio.NewReader(conn)
 
 	receive(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 	receive(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 	receive(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 
 	// Expect additional `hold release` for Windows.
 	if runtime.GOOS == "windows" {
@@ -285,7 +290,6 @@ func TestClientSessionEvents(t *testing.T) {
 }
 
 func TestKill(t *testing.T) {
-	t.SkipNow()
 	handleSessionEvent := func(ch string, event int, up, down uint64) bool {
 		return false
 	}
@@ -296,7 +300,9 @@ func TestKill(t *testing.T) {
 	reader := bufio.NewReader(conn)
 
 	receive(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 	receive(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 
 	sendByteCount(t, conn)
 
