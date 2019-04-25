@@ -36,6 +36,10 @@ echo
 echo go build
 echo
 
+if [[ ! -d "${GOPATH}/bin/" ]]; then
+    mkdir "${GOPATH}/bin/" || exit 1
+fi
+
 go build -o $GOPATH/bin/${ADAPTER_NAME} -ldflags "-X main.Commit=$GIT_COMMIT \
     -X main.Version=$GIT_RELEASE" -tags=notest \
     ${DAPP_OPENVPN_DIR}${ADAPTER_MAIN} || exit 1
