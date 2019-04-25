@@ -116,6 +116,7 @@ func TestOldOpenVPN(t *testing.T) {
 	conn, ch := connect(t, handleSessionEvent, "")
 	defer conn.Close()
 
+	send(t, conn, prefixCMDSuccess+"\n")
 	send(t, conn, prefixClientListHeader)
 	send(t, conn, prefixClientList+",,,,,,,,")
 
@@ -136,6 +137,7 @@ func TestInitFlow(t *testing.T) {
 	reader := bufio.NewReader(conn)
 
 	checkByteCount(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 
 	if str := receive(t, reader); str != "status 2" {
 		t.Fatalf("unexpected status command: %s", str)
@@ -158,14 +160,17 @@ func TestClientInitFlow(t *testing.T) {
 	reader := bufio.NewReader(conn)
 
 	checkByteCount(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 
 	if str := receive(t, reader); str != "state on" {
 		t.Fatalf("unexpected state command: %s", str)
 	}
+	send(t, conn, prefixCMDSuccess+"\n")
 
 	if str := receive(t, reader); str != "hold release" {
 		t.Fatalf("unexpected hold command: %s", str)
 	}
+	send(t, conn, prefixCMDSuccess+"\n")
 
 	exit(t, conn, ch)
 }
@@ -201,7 +206,9 @@ func TestByteCount(t *testing.T) {
 	reader := bufio.NewReader(conn)
 
 	receive(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 	receive(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 
 	sendByteCount(t, conn)
 
@@ -238,8 +245,11 @@ func TestClientSessionEvents(t *testing.T) {
 	reader := bufio.NewReader(conn)
 
 	receive(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 	receive(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 	receive(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 
 	// Expect additional `hold release` for Windows.
 	if runtime.GOOS == "windows" {
@@ -290,7 +300,9 @@ func TestKill(t *testing.T) {
 	reader := bufio.NewReader(conn)
 
 	receive(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 	receive(t, reader)
+	send(t, conn, prefixCMDSuccess+"\n")
 
 	sendByteCount(t, conn)
 

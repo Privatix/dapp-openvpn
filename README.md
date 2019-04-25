@@ -1,6 +1,6 @@
+[![Build Status](https://travis-ci.org/Privatix/dapp-openvpn.svg?branch=master)](https://travis-ci.org/Privatix/dapp-openvpn)
 [![Go report](http://goreportcard.com/badge/github.com/Privatix/dapp-openvpn)](https://goreportcard.com/report/github.com/Privatix/dapp-openvpn)
 [![Maintainability](https://api.codeclimate.com/v1/badges/af4e29689d76d8ccf974/maintainability)](https://codeclimate.com/github/Privatix/dapp-openvpn/maintainability)
-[![pullreminders](https://pullreminders.com/badge.svg)](https://pullreminders.com?ref=badge)
 
 # OpenVPN Service Plug-in
 
@@ -120,10 +120,10 @@ Usage of dapp-openvpn:
 
 ## Tests
 
-Run tests for all packages.
+Run tests for all packages:
 
 ```bash
-./scripts/run_tests.sh
+./scripts/run_tests.sh <path_to_the_test.conf>
 ```
 
 # Contributing
