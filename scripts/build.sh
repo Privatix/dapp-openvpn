@@ -9,6 +9,10 @@ fi
 GIT_COMMIT=$(git rev-list -1 HEAD)
 GIT_RELEASE=$(git tag -l --points-at HEAD)
 
+# if $GIT_RELEASE is zero:
+GIT_RELEASE=${GIT_RELEASE:-$(git rev-parse --abbrev-ref HEAD | grep -o "[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}")}
+
+
 ADAPTER_MAIN=/adapter
 ADAPTER_NAME=dappvpn
 
