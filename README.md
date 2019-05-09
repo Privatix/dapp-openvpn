@@ -1,12 +1,12 @@
+[![Build Status](https://travis-ci.org/Privatix/dapp-openvpn.svg?branch=master)](https://travis-ci.org/Privatix/dapp-openvpn)
 [![Go report](http://goreportcard.com/badge/github.com/Privatix/dapp-openvpn)](https://goreportcard.com/report/github.com/Privatix/dapp-openvpn)
 [![Maintainability](https://api.codeclimate.com/v1/badges/af4e29689d76d8ccf974/maintainability)](https://codeclimate.com/github/Privatix/dapp-openvpn/maintainability)
-[![pullreminders](https://pullreminders.com/badge.svg)](https://pullreminders.com?ref=badge)
 
 # OpenVPN Service Plug-in
 
 OpenVPN [service plug-in](https://github.com/Privatix/privatix/blob/master/doc/service_plug-in.md) allows Agents and Clients to buy and sell their internet traffic in form of VPN service without 3rd party.
 
-    This service plug-in is a PoC service plugin-in for Privatix core.
+    This service plug-in is a PoC service for Privatix core.
 
 ## Custom integration includes
 
@@ -49,7 +49,6 @@ You can build all binaries using the go tool, placing the
 resulting binary in `$GOPATH/bin`:
 
 ```bash
-./scripts/toml.sh ./Gopkg.toml.template > ./Gopkg.toml
 ./scripts/build.sh
 ```
 
@@ -80,33 +79,6 @@ On the agent side it necessary to perform the following steps:
 ### Running the client service
 
 -   Start the `adapter -config adapter.config.json` in the background with the configuration provided by the installer.
-
-#### Install dep dependency management tool
-
-linux:
-
-```bash
-curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-```
-
-macos:
-
-```bash
-brew install dep
-brew upgrade dep
-```
-
-windows:
-
-Latest release can be downloaded from this link: https://github.com/golang/dep/releases
-
-Run dep application:
-
-Go to the root directory of the project and run command:
-
-```bash
-dep ensure
-```
 
 #### Install statik
 
@@ -148,10 +120,10 @@ Usage of dapp-openvpn:
 
 ## Tests
 
-Run tests for all packages.
+Run tests for all packages:
 
 ```bash
-./scripts/run_tests.sh
+./scripts/run_tests.sh <path_to_the_test.conf>
 ```
 
 # Contributing

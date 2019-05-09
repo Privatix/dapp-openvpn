@@ -190,6 +190,21 @@ func removeConfig(o *openvpn.OpenVPN) error {
 	return o.RemoveConfig()
 }
 
+func recordPortsToOpen(o *openvpn.OpenVPN) error {
+	portsF, err := os.Create(filepath.Join(o.Path, "config/ports.txt"))
+	if err != nil {
+		return err
+	}
+	defer portsF.Close()
+
+	_, err = fmt.Fprintf(portsF, "%d(%s)", o.Host.Port, o.Proto)
+	return err
+}
+
+func removePortsFile(o *openvpn.OpenVPN) error {
+	return os.Remove(filepath.Join(o.Path, "config/ports.txt"))
+}
+
 func processedCommonFlags(ovpn *openvpn.OpenVPN) error {
 	h := flag.Bool("help", false, "Display installer help")
 	p := flag.String("workdir", "..", "Product install directory")

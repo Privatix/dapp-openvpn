@@ -2,16 +2,16 @@
 # https://help.github.com/articles/about-codeowners/
 
 # notify go-team about changes in go files
-*.go            @ubozov @furkhat
+*.go            @furkhat
 
 # notify drew2a about changes in scripts and settings
 /.github/       @drew2a
 /scripts/       @drew2a
 *.md            @drew2a
 
-# notify @urmat and @dzeckelev about changes in inst and installer
-/inst/          @ubozov
+# notify installer team about changes in inst and installer
+# /inst/          @ubozov
 
 # notify devops team about changes in *.config.json
-*.config.json               @kelewind @ubozov @drew2a
-/inst/openvpn/path/path.go  @kelewind
+*.config.json               @SHarrySeldon @drew2a
+/inst/openvpn/path/path.go  @SHarrySeldon

@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 
-PROJECT=github.com/privatix/dapp-openvpn
-
 if [ -z "${DAPP_OPENVPN_DIR}" ]
 then
-    DAPP_OPENVPN_DIR=$GOPATH/src/${PROJECT}
+    MY_PATH="`dirname \"$0\"`" # relative bash file path
+    DAPP_OPENVPN_DIR="`( cd \"$MY_PATH/..\" && pwd )`"  # absolutized and normalized dappctrl path
 fi
 
 GIT_COMMIT=$(git rev-list -1 HEAD)
 GIT_RELEASE=$(git tag -l --points-at HEAD)
+
+# if $GIT_RELEASE is zero:
+GIT_RELEASE=${GIT_RELEASE:-$(git rev-parse --abbrev-ref HEAD | grep -o "[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}")}
+
 
 ADAPTER_MAIN=/adapter
 ADAPTER_NAME=dappvpn
@@ -25,19 +28,7 @@ echo
 echo go get
 echo
 
-go get -d -v ${PROJECT}/...
-go get -u -v gopkg.in/reform.v1/reform
 go get -u -v github.com/rakyll/statik
-
-echo
-echo dep ensure
-echo
-
-if [ ! -f "${GOPATH}"/bin/dep ]; then
-    curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-fi
-rm -f Gopkg.lock
-dep ensure -v
 
 echo
 echo go generate
@@ -49,20 +40,24 @@ echo
 echo go build
 echo
 
-echo $GOPATH/bin/${ADAPTER_NAME}
+if [[ ! -d "${GOPATH}/bin/" ]]; then
+    mkdir "${GOPATH}/bin/" || exit 1
+fi
+
 go build -o $GOPATH/bin/${ADAPTER_NAME} -ldflags "-X main.Commit=$GIT_COMMIT \
     -X main.Version=$GIT_RELEASE" -tags=notest \
-    ${PROJECT}${ADAPTER_MAIN} || exit 1
+    ${DAPP_OPENVPN_DIR}${ADAPTER_MAIN} || exit 1
+echo $GOPATH/bin/${ADAPTER_NAME}
 
-echo $GOPATH/bin/${INSTALLER_NAME}
 go build -o $GOPATH/bin/${INSTALLER_NAME} -ldflags "-X main.Commit=$GIT_COMMIT \
     -X main.Version=$GIT_RELEASE" -tags=notest \
-    ${PROJECT}${INSTALLER_MAIN} || exit 1
+    ${DAPP_OPENVPN_DIR}${INSTALLER_MAIN} || exit 1
+echo $GOPATH/bin/${INSTALLER_NAME}
 
-echo $GOPATH/bin/${OPENVPN_INSTALLER_NAME}
 go build -o $GOPATH/bin/${OPENVPN_INSTALLER_NAME} -ldflags \
     "-X main.Commit=$GIT_COMMIT -X main.Version=$GIT_RELEASE" \
-    ${PROJECT}${OPENVPN_INSTALLER_MAIN} || exit 1
+    ${DAPP_OPENVPN_DIR}${OPENVPN_INSTALLER_MAIN} || exit 1
+echo $GOPATH/bin/${OPENVPN_INSTALLER_NAME}
 
 echo
 echo done

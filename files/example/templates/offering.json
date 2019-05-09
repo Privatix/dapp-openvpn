@@ -1,162 +1,157 @@
 {
-    "id": "efc61769-96c8-4c0d-b50a-e4d11fc30523",
-    "hash": "9ea9659a969dcb931c7f819de83e6e14da5316f5abe3c95ab8c638d5ff8dd51c",
-    "raw": {
-            "schema": {
-                "properties": {
-                    "additionalParams": {
-                        "default": "{}",
-                        "type": "string"
-                    },
-                    "agent": {
-                        "title": "agent uuid",
-                        "type": "string"
-                    },
-                    "billingInterval": {
-                        "title": "billing interval",
-                        "type": "number"
-                    },
-                    "billingType": {
-                        " enumNames": [
-                            "prepaid",
-                            "postpaid"
-                        ],
-                        "enum": [
-                            "prepaid",
-                            "postpaid"
-                        ],
-                        "title": "billing type",
-                        "type": "string"
-                    },
-                    "country": {
-                        "title": "country",
-                        "type": "string"
-                    },
-                    "freeUnits": {
-                        "title": "free units",
-                        "type": "number"
-                    },
-                    "maxBillingUnitLag": {
-                        "title": "max billing unit lag",
-                        "type": "number"
-                    },
-                    "maxSuspendTime": {
-                        "title": "max suspend time",
-                        "type": "number"
-                    },
-                    "minUnits": {
-                        "title": "min units",
-                        "type": "number"
-                    },
-                    "product": {
-                        "default": "1",
-                        "type": "string"
-                    },
-                    "serviceName": {
-                        "title": "Name of service (e.g. VPN)",
-                        "type": "string"
-                    },
-                    "setupPrice": {
-                        "title": "setup fee",
-                        "type": "number"
-                    },
-                    "supply": {
-                        "title": "service supply",
-                        "type": "number"
-                    },
-                    "template": {
-                        "default": "1",
-                        "type": "string"
-                    },
-                    "unitName": {
-                        "title": "like megabytes, minutes, etc",
-                        "type": "string"
-                    },
-                    "unitPrice": {
-                        "title": "unit price",
-                        "type": "number"
-                    },
-                    "unitType": {
-                        "title": "service unit",
-                        "type": "number"
-                    }
-                },
-                "required": [
-                    "serviceName",
-                    "supply",
-                    "unitName",
-                    "unitType",
-                    "billingType",
-                    "setupPrice",
-                    "unitPrice",
-                    "country",
-                    "minUnits",
-                    "billingInterval",
-                    "maxBillingUnitLag",
-                    "freeUnits",
-                    "template",
-                    "product",
-                    "agent",
-                    "additionalParams",
-                    "maxSuspendTime"
-                ],
-                "title": "Privatix VPN offering",
-                "type": "object"
+    "schema": {
+        "properties": {
+            "additionalParams": {
+                "default": "{}",
+                "type": "string"
             },
-            "uiSchema": {
-                "additionalParams": {
-                    "ui:widget": "hidden"
-                },
-                "agent": {
-                    "ui:widget": "hidden"
-                },
-                "billingInterval": {
-                    "ui:help": "Specified in unit_of_service. Represent, how often Client MUST provide payment approval to Agent."
-                },
-                "billingType": {
-                    "ui:help": "prepaid/postpaid"
-                },
-                "country": {
-                    "ui:help": "Country of service endpoint in ISO 3166-1 alpha-2 format."
-                },
-                "freeUnits": {
-                    "ui:help": "Used to give free trial, by specifying how many intervals can be consumed without payment"
-                },
-                "maxBillingUnitLag": {
-                    "ui:help": "Maximum payment lag in units after, which Agent will suspend serviceusage."
-                },
-                "maxSuspendTime": {
-                    "ui:help": "Maximum time without service usage. Agent will consider, that Client will not use service and stop providing it. Period is specified in minutes."
-                },
-                "minUnits": {
-                    "ui:help": "Used to calculate minimum deposit required"
-                },
-                "product": {
-                    "ui:widget": "hidden"
-                },
-                "serviceName": {
-                    "ui:help": "enter name of service"
-                },
-                "setupPrice": {
-                    "ui:help": "setup fee"
-                },
-                "supply": {
-                    "ui:help": "Maximum supply of services according to service offerings. It represents maximum number of clients that can consume this service offering concurrently."
-                },
-                "template": {
-                    "ui:widget": "hidden"
-                },
-                "unitName": {
-                    "ui:help": "MB/Minutes"
-                },
-                "unitPrice": {
-                    "ui:help": "PRIX that must be paid for unit_of_service"
-                },
-                "unitType": {
-                    "ui:help": "units or seconds"
-                }
+            "agent": {
+                "title": "agent uuid",
+                "type": "string"
+            },
+            "billingInterval": {
+                "title": "billing interval",
+                "type": "number"
+            },
+            "billingType": {
+                " enumNames": [
+                    "prepaid",
+                    "postpaid"
+                ],
+                "enum": [
+                    "prepaid",
+                    "postpaid"
+                ],
+                "title": "billing type",
+                "type": "string"
+            },
+            "country": {
+                "title": "country",
+                "type": "string"
+            },
+            "freeUnits": {
+                "title": "free units",
+                "type": "number"
+            },
+            "maxBillingUnitLag": {
+                "title": "max billing unit lag",
+                "type": "number"
+            },
+            "maxSuspendTime": {
+                "title": "max suspend time",
+                "type": "number"
+            },
+            "minUnits": {
+                "title": "min units",
+                "type": "number"
+            },
+            "product": {
+                "default": "1",
+                "type": "string"
+            },
+            "serviceName": {
+                "title": "Name of service (e.g. VPN)",
+                "type": "string"
+            },
+            "setupPrice": {
+                "title": "setup fee",
+                "type": "number"
+            },
+            "supply": {
+                "title": "service supply",
+                "type": "number"
+            },
+            "template": {
+                "default": "1",
+                "type": "string"
+            },
+            "unitName": {
+                "title": "like megabytes, minutes, etc",
+                "type": "string"
+            },
+            "unitPrice": {
+                "title": "unit price",
+                "type": "number"
+            },
+            "unitType": {
+                "title": "service unit",
+                "type": "number"
             }
         },
-    "kind": "offer"
+        "required": [
+            "serviceName",
+            "supply",
+            "unitName",
+            "unitType",
+            "billingType",
+            "setupPrice",
+            "unitPrice",
+            "country",
+            "minUnits",
+            "billingInterval",
+            "maxBillingUnitLag",
+            "freeUnits",
+            "template",
+            "product",
+            "agent",
+            "additionalParams",
+            "maxSuspendTime"
+        ],
+        "title": "Privatix VPN offering",
+        "type": "object"
+    },
+    "uiSchema": {
+        "additionalParams": {
+            "ui:widget": "hidden"
+        },
+        "agent": {
+            "ui:widget": "hidden"
+        },
+        "billingInterval": {
+            "ui:help": "Specified in unit_of_service. Represent, how often Client MUST provide payment approval to Agent."
+        },
+        "billingType": {
+            "ui:help": "prepaid/postpaid"
+        },
+        "country": {
+            "ui:help": "Country of service endpoint in ISO 3166-1 alpha-2 format."
+        },
+        "freeUnits": {
+            "ui:help": "Used to give free trial, by specifying how many intervals can be consumed without payment"
+        },
+        "maxBillingUnitLag": {
+            "ui:help": "Maximum payment lag in units after, which Agent will suspend serviceusage."
+        },
+        "maxSuspendTime": {
+            "ui:help": "Maximum time without service usage. Agent will consider, that Client will not use service and stop providing it. Period is specified in minutes."
+        },
+        "minUnits": {
+            "ui:help": "Used to calculate minimum deposit required"
+        },
+        "product": {
+            "ui:widget": "hidden"
+        },
+        "serviceName": {
+            "ui:help": "enter name of service"
+        },
+        "setupPrice": {
+            "ui:help": "setup fee"
+        },
+        "supply": {
+            "ui:help": "Maximum supply of services according to service offerings. It represents maximum number of clients that can consume this service offering concurrently."
+        },
+        "template": {
+            "ui:widget": "hidden"
+        },
+        "unitName": {
+            "ui:help": "MB/Minutes"
+        },
+        "unitPrice": {
+            "ui:help": "PRIX that must be paid for unit_of_service"
+        },
+        "unitType": {
+            "ui:help": "units or seconds"
+        }
+    }
 }
 
