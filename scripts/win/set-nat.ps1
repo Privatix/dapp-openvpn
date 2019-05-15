@@ -1,29 +1,31 @@
-#Requires -Version 3.0 -Modules NetAdapter
-#Requires -RunAsAdministrator
 <#
 .SYNOPSIS
     Set IP forwarding for OpenVPN TAP device.
 .DESCRIPTION
     Set IP forwarding for OpenVPN TAP device. This operation allows OpenVPN client to browse internet.
-    NOTE: internet facing adpater is considered as adpater with lowest route metric. This should be valid in most configurations, but not all. 
+    NOTE: internet facing adapter is considered as adapter with lowest route metric. This should be valid in most configurations, but not all.
 
 .PARAMETER TAPdeviceAddress
     Unique identifier of TAP device. It is identified by "PnPDeviceID" (Get-NetAdapter) and same as "Device instance path" in device manager.
 
 .EXAMPLE
-    .\start_server_nat.ps1 -TAPdeviceAddress 'ROOT\NET\0002' -Enabled
+    .\set-nat.ps1 -TAPdeviceAddress 'ROOT\NET\0002' -Enabled
 
     Description
     -----------
     Enables IP routing. Configures IP forwarding on internet adapter and TAP adapter. Starts "SharedAccess" and "RemoteAccess" services.
 
 .EXAMPLE
-    .\start_server_nat.ps1 -TAPdeviceAddress 'ROOT\NET\0002'
+    .\set-nat.ps1 -TAPdeviceAddress 'ROOT\NET\0002'
 
     Description
     -----------
     Disables internet sharing for VPN adapter with specified TAPdeviceAddress
 #>
+
+#Requires -Version 3.0 -Modules NetAdapter
+#Requires -RunAsAdministrator
+
 param (
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
@@ -38,48 +40,48 @@ param (
     Set internet connection sharing between two adapters
 
 .PARAMETER InetAdapterName
-    Name of adpater with internet connection
+    Name of adapter with internet connection
 
 .PARAMETER VPNAdapterName
     Name of TAP adapter, that should get connection to internet
 
 .PARAMETER Enabled
-    If passed - enable internet connection sharing. 
-    If not presented - disable internet connection sharing. 
+    If passed - enable internet connection sharing.
+    If not presented - disable internet connection sharing.
 
 .EXAMPLE
     Set-InternetConnectionSharing -InetAdapterName 'Ethernet' -VPNAdapterName 'Privatix VPN Server' -Enabled
 
     Description
     -----------
-    Enables internet sharing on "Ethernet" adpater, giving "Privatix VPN Server" adpater to use its internet connection.
+    Enables internet sharing on "Ethernet" adapter, giving "Privatix VPN Server" adapter to use its internet connection.
 
 .EXAMPLE
     Set-InternetConnectionSharing -InetAdapterName 'Ethernet' -VPNAdapterName 'Privatix VPN Server'
 
     Description
     -----------
-    Disables internet sharing on "Ethernet" adpater, disallowing "Privatix VPN Server" adpater to use its internet connection.
+    Disables internet sharing on "Ethernet" adapter, disallowing "Privatix VPN Server" adapter to use its internet connection.
 #>
 function Set-InternetConnectionSharing {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [ValidateScript(
-            {if ((Get-NetAdapter -Name $_ -ErrorAction SilentlyContinue -OutVariable inetAdapter) -and (($inetAdapter).Status -notin @('Disabled', 'Not Present') ))
-                {$true} 
+            { if ((Get-NetAdapter -Name $_ -ErrorAction SilentlyContinue -OutVariable inetAdapter) -and (($inetAdapter).Status -notin @('Disabled', 'Not Present') ))
+                { $true }
                 else {
-                    throw "$_ adpater not exists or disabled"
+                    throw "$_ adapter not exists or disabled"
                 }
             }
         )]
         $InetAdapterName,
         [Parameter(Mandatory)]
         [ValidateScript(
-            {if ((Get-NetAdapter -Name $_ -ErrorAction SilentlyContinue -OutVariable inetAdapter) -and (($inetAdapter).Status -notin @('Disabled', 'Not Present') ))
-                {$true} 
+            { if ((Get-NetAdapter -Name $_ -ErrorAction SilentlyContinue -OutVariable inetAdapter) -and (($inetAdapter).Status -notin @('Disabled', 'Not Present') ))
+                { $true }
                 else {
-                    throw "$_ adpater not exists or disabled"
+                    throw "$_ adapter not exists or disabled"
                 }
             }
         )]
@@ -101,9 +103,8 @@ function Set-InternetConnectionSharing {
 
             # Create a NetSharingManager object
             $ns = New-Object -ComObject HNetCfg.HNetShare
-        }      
+        }
 
-        if ($InetSharingConf.SharingEnabled) {throw "Connection sharing already enable on adapter $InetAdapterName"}
     }
 
     process {
@@ -117,7 +118,12 @@ function Set-InternetConnectionSharing {
         # check, if sharing is already configured
         $PhysicalAdapters = (Get-NetAdapter -Physical).Name
         $ns.EnumEveryConnection | Where-Object { $ns.NetConnectionProps.Invoke($_).Name -in $PhysicalAdapters } | ForEach-Object {
-            if ($ns.INetSharingConfigurationForINetConnection.Invoke($_).SharingEnabled) {$SharingConfigured = $true}
+            if ($ns.INetSharingConfigurationForINetConnection.Invoke($_).SharingEnabled) { $SharingConfigured = $true }
+        }
+
+        # if already configured, do not reconfigure and fail to preserve user settings
+        if ($Enabled -and $SharingConfigured) {
+            { throw "Connection sharing already enabled on adapter $InetAdapterName. Please, disable it and try again" }
         }
 
         if ($Enabled -and (-not $SharingConfigured)) {
@@ -125,14 +131,15 @@ function Set-InternetConnectionSharing {
                 $InetSharingConf.EnableSharing(0)
                 $VPNSharingConf.EnableSharing(1)
             }
-            catch {throw "Failed to enable internet sharing for public adpater $InetAdapterName and VPN adpater $VPNAdapterName. Original exception: $($Error[0].exception)"}
-        } 
+            catch { throw "Failed to enable internet sharing for public adapter $InetAdapterName and VPN adapter $VPNAdapterName. Original exception: $($Error[0].exception)" }
+        }
+
         if ($SharingConfigured -and (-not $Enabled)) {
             try {
                 $InetSharingConf.DisableSharing()
                 $VPNSharingConf.DisableSharing()
             }
-            catch {throw "Failed to disable internet sharing for public adpater $InetAdapterName and VPN adpater $VPNAdapterName. Original exception: $($Error[0].exception)"}
+            catch { throw "Failed to disable internet sharing for public adapter $InetAdapterName and VPN adapter $VPNAdapterName. Original exception: $($Error[0].exception)" }
         }
     }
 
@@ -145,7 +152,7 @@ function Set-InternetConnectionSharing {
 $minRouteMetric = (Get-NetRoute | Measure-Object RouteMetric -Minimum).Minimum
 $ifIndex = (Get-NetRoute | Where-Object { $_.RouteMetric -eq $minRouteMetric }).ifIndex | Select-Object -Unique
 $InetAdapterName = (Get-NetAdapter -Physical | Where-Object { $_.ifIndex -in $ifIndex }).Name
-# Find VPN server adpater by TAPdeviceAddress
+# Find VPN server adapter by TAPdeviceAddress
 $VPNAdapterName = (Get-NetAdapter | Where-Object { $_.PnPDeviceID -eq $TAPdeviceAddress }).Name
 
 if ($PSBoundParameters.ContainsKey('Enabled')) {
@@ -154,8 +161,8 @@ if ($PSBoundParameters.ContainsKey('Enabled')) {
     Get-ItemProperty -Path $registryPath -Name "IPEnableRouter" | Set-ItemProperty -Name "IPEnableRouter" -Value 1
 
     #start windows services
-    Get-Service -Name "SharedAccess" |  Set-Service -StartupType Automatic |  Start-Service
-    Get-Service -Name "RemoteAccess" |  Set-Service -StartupType Automatic |  Start-Service
+    Get-Service -Name "SharedAccess" | Set-Service -StartupType Automatic | Start-Service
+    Get-Service -Name "RemoteAccess" | Set-Service -StartupType Automatic | Start-Service
 
     Set-InternetConnectionSharing -InetAdapterName $InetAdapterName -VPNAdapterName $VPNAdapterName -Enabled $true
 }
