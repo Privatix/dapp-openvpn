@@ -71,7 +71,7 @@ function Set-InternetConnectionSharing {
             { if ((Get-NetAdapter -Name $_ -ErrorAction SilentlyContinue -OutVariable inetAdapter) -and (($inetAdapter).Status -notin @('Disabled', 'Not Present') ))
                 { $true }
                 else {
-                    throw "$_ adapter not exists or disabled"
+                    throw "`"$_`" adapter not exists or disabled"
                 }
             }
         )]
@@ -81,7 +81,7 @@ function Set-InternetConnectionSharing {
             { if ((Get-NetAdapter -Name $_ -ErrorAction SilentlyContinue -OutVariable inetAdapter) -and (($inetAdapter).Status -notin @('Disabled', 'Not Present') ))
                 { $true }
                 else {
-                    throw "$_ adapter not exists or disabled"
+                    throw "`"$_`" adapter not exists or disabled"
                 }
             }
         )]
@@ -123,7 +123,7 @@ function Set-InternetConnectionSharing {
 
         # if already configured, do not reconfigure and fail to preserve user settings
         if ($Enabled -and $SharingConfigured) {
-            { throw "Connection sharing already enabled on adapter $InetAdapterName. Please, disable it and try again" }
+            { throw "Connection sharing already enabled on adapter `"$InetAdapterName`". Please, disable it and try again" }
         }
 
         if ($Enabled -and (-not $SharingConfigured)) {
@@ -131,7 +131,7 @@ function Set-InternetConnectionSharing {
                 $InetSharingConf.EnableSharing(0)
                 $VPNSharingConf.EnableSharing(1)
             }
-            catch { throw "Failed to enable internet sharing for public adapter $InetAdapterName and VPN adapter $VPNAdapterName. Original exception: $($Error[0].exception)" }
+            catch { throw "Failed to enable internet sharing for public adapter `"$InetAdapterName`" and VPN adapter `"$VPNAdapterName`". Original exception: $($Error[0].exception)" }
         }
 
         if ($SharingConfigured -and (-not $Enabled)) {
@@ -139,7 +139,7 @@ function Set-InternetConnectionSharing {
                 $InetSharingConf.DisableSharing()
                 $VPNSharingConf.DisableSharing()
             }
-            catch { throw "Failed to disable internet sharing for public adapter $InetAdapterName and VPN adapter $VPNAdapterName. Original exception: $($Error[0].exception)" }
+            catch { throw "Failed to disable internet sharing for public adapter `"$InetAdapterName`" and VPN adapter `"$VPNAdapterName`". Original exception: $($Error[0].exception)" }
         }
     }
 
