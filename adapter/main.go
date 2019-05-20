@@ -360,7 +360,7 @@ func handleClientMonitor() {
 		mtx.Lock()
 
 		switch res.Status {
-		case sess.ConnStart:
+		case sess.ConnUnsuspend:
 			if ovpnCmd != nil {
 				logger.Warn("requested to start while " +
 					"OpenVPN is still running")
@@ -378,7 +378,7 @@ func handleClientMonitor() {
 			defer stopOvpnAndMonitor()
 			ovpnCmd = launchOpenVPN(ctx, res.Channel)
 
-		case sess.ConnStop:
+		case sess.ConnSuspend:
 			if ovpnCmd == nil {
 				logger.Warn("requested to stop while " +
 					"OpenVPN is not running")

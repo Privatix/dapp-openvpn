@@ -12,6 +12,7 @@
 *.out
 *.iml
 .idea
+.vscode
 
 # Path for binaries
 /bin
