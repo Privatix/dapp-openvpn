@@ -7,7 +7,7 @@ require (
 	github.com/ethereum/go-ethereum v1.8.27
 	github.com/jpillora/backoff v0.0.0-20180909062703-3050d21c67d7 // indirect
 	github.com/pborman/uuid v1.2.0 // indirect
-	github.com/privatix/dappctrl v0.0.0-20190412073235-9cab976b3bc4
+	github.com/privatix/dappctrl v0.0.0-20190527061908-d0151fd8098a
 	github.com/rakyll/statik v0.1.6
 	github.com/rdegges/go-ipify v0.0.0-20150526035502-2d94a6a86c40
 	github.com/sethvargo/go-password v0.1.2

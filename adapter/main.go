@@ -163,7 +163,7 @@ func handleDisconnect() {
 		panic("bad bytes_received value")
 	}
 
-	err = sesscl.UpdateSession(loadChannel(), down+up, true)
+	err = sesscl.StopSession(loadChannel())
 	if err != nil {
 		logger.Fatal("failed to stop session: " + err.Error())
 	}
@@ -175,7 +175,17 @@ func handleDisconnect() {
 	}
 }
 
-func handleMonStarted(ch string) bool {
+func handleMonitor(confFile string) {
+	if conf.ClientMode {
+		handleClientMonitor()
+	} else {
+		handleAgentMonitor(confFile)
+	}
+}
+
+type sessionHandler struct{}
+
+func (h sessionHandler) StartSession(ch string) bool {
 	logger := logger.Add("method", "handleMonStarted", "channel", ch)
 
 	if _, err := sesscl.StartSession("", ch, 0); err != nil {
@@ -186,51 +196,29 @@ func handleMonStarted(ch string) bool {
 	return true
 }
 
-func handleMonStopped(ch string, up, down uint64) bool {
-	logger := logger.Add("method", "handleMonStopped",
+func (h sessionHandler) UpdateSession(ch string, up, down uint64) bool {
+	logger := logger.Add("method", "handleMonByteCount",
 		"channel", ch, "up", up, "down", down)
 
-	err := sesscl.UpdateSession(ch, down+up, true)
+	err := sesscl.UpdateSession(ch, down+up)
+	if err != nil {
+		logger.Fatal("failed to update session: " + err.Error())
+		return false
+	}
+
+	return true
+}
+
+func (sessionHandler) StopSession(ch string) bool {
+	logger := logger.Add("method", "handleMonStopped", "channel", ch)
+
+	err := sesscl.StopSession(ch)
 	if err != nil {
 		logger.Fatal("failed to stop session: " + err.Error())
 		return false
 	}
 
 	return true
-}
-
-func handleMonByteCount(ch string, up, down uint64) bool {
-	logger := logger.Add("method", "handleMonByteCount",
-		"channel", ch, "up", up, "down", down)
-
-	err := sesscl.UpdateSession(ch, down+up, false)
-	if err != nil {
-		logger.Error("failed to update session: " + err.Error())
-		return false
-	}
-
-	return true
-}
-
-func handleMonitor(confFile string) {
-	if conf.ClientMode {
-		handleClientMonitor()
-	} else {
-		handleAgentMonitor(confFile)
-	}
-}
-
-func handleSession(ch string, event int, up, down uint64) bool {
-	switch event {
-	case mon.SessionStarted:
-		return handleMonStarted(ch)
-	case mon.SessionStopped:
-		return handleMonStopped(ch, up, down)
-	case mon.SessionByteCount:
-		return handleMonByteCount(ch, up, down)
-	default:
-		return false
-	}
 }
 
 func openExtPort(ctx context.Context, network string, port int) {
@@ -312,11 +300,25 @@ func handleAgentMonitor(confFile string) {
 
 	go handlePusher(ctx, dir)
 
-	monitor := mon.NewMonitor(conf.Monitor, logger, handleSession, channel)
+	monitor := mon.NewMonitor(conf.Monitor, logger, &sessionHandler{}, channel)
 	go func() {
 		fatal <- fmt.Sprintf("failed to monitor vpn traffic: %s",
 			monitor.MonitorTraffic(context.Background()))
 	}()
+
+	onConnStart := func(channel string) {
+		if err := sesscl.ServiceReady(channel); err != nil {
+			fatal <- "could not signal that service is ready"
+		}
+	}
+	onConnStop := func(channel string) {
+		// Call stop session to signal ctrl that we all done to terminate a service.
+		if !(sessionHandler{}).StopSession(channel) {
+			fatal <- "failed to stop session"
+		}
+	}
+
+	subscribeAndStartHandlingConnChanges(onConnStart, onConnStop)
 
 	logger.Fatal(<-fatal)
 }
@@ -329,7 +331,7 @@ var (
 func handleClientMonitor() {
 	if channel := loadActiveChannel(); len(channel) != 0 {
 		logger.Warn("interrupted connection detected: " + channel)
-		handleMonStopped(channel, 0, 0)
+		sessionHandler{}.StopSession(channel)
 		removeActiveChannel()
 	}
 
@@ -338,8 +340,41 @@ func handleClientMonitor() {
 		return ept, err
 	}
 
-	var ctx context.Context
-	var stopOvpnAndMonitor func()
+	stopOvpnAndMonitor := func() {}
+	defer stopOvpnAndMonitor()
+
+	onConnStart := func(channel string) {
+		if ovpnCmd != nil {
+			logger.Warn("requested to start while " +
+				"OpenVPN is still running")
+			return
+		}
+
+		err := prepare.ClientConfig(logger, channel, conf, getEndpoint)
+		if err != nil {
+			message := "failed to prepare client config: "
+			logger.Fatal(message + err.Error())
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		stopOvpnAndMonitor = cancel
+		ovpnCmd = launchOpenVPN(ctx, channel)
+	}
+
+	onConnStop := func(channel string) {
+		if ovpnCmd == nil {
+			logger.Warn("requested to stop while OpenVPN is not running")
+			sessionHandler{}.StopSession(channel)
+			return
+		}
+
+		stopOvpnAndMonitor()
+	}
+
+	subscribeAndStartHandlingConnChanges(onConnStart, onConnStop)
+}
+
+func subscribeAndStartHandlingConnChanges(onStart, onStop func(string)) {
 	ch := make(chan *sess.ConnChangeResult)
 	subcl, err := sesscl.ConnChange(ch)
 	if err != nil {
@@ -358,39 +393,13 @@ func handleClientMonitor() {
 		logger.Info(fmt.Sprintf("connection change: %v", res))
 
 		mtx.Lock()
-
 		switch res.Status {
 		case sess.ConnStart:
-			if ovpnCmd != nil {
-				logger.Warn("requested to start while " +
-					"OpenVPN is still running")
-				break
-			}
-
-			err := prepare.ClientConfig(
-				logger, res.Channel, conf, getEndpoint)
-			if err != nil {
-				message := "failed to prepare client config: "
-				logger.Fatal(message + err.Error())
-			}
-
-			ctx, stopOvpnAndMonitor = context.WithCancel(context.Background())
-			defer stopOvpnAndMonitor()
-			ovpnCmd = launchOpenVPN(ctx, res.Channel)
-
+			onStart(res.Channel)
 		case sess.ConnStop:
-			if ovpnCmd == nil {
-				logger.Warn("requested to stop while " +
-					"OpenVPN is not running")
-				handleMonStopped(res.Channel, 0, 0)
-				break
-			}
-
-			stopOvpnAndMonitor()
+			onStop(res.Channel)
 		}
-
 		mtx.Unlock()
-
 	}
 
 	logger.Fatal("unexpected end of subscription to connection changes")
@@ -439,7 +448,7 @@ func launchOpenVPN(ctx context.Context, channel string) *exec.Cmd {
 
 	go func() {
 		logger.Warn(fmt.Sprintf("OpenVPN exited: %v", cmd.Wait()))
-		handleMonStopped(channel, 0, 0)
+		sessionHandler{}.StopSession(channel)
 		removeActiveChannel()
 		mtx.Lock()
 		ovpnCmd = nil
@@ -448,7 +457,7 @@ func launchOpenVPN(ctx context.Context, channel string) *exec.Cmd {
 
 	time.Sleep(conf.OpenVPN.StartDelay * time.Millisecond)
 
-	monitor := mon.NewMonitor(conf.Monitor, logger, handleSession, channel)
+	monitor := mon.NewMonitor(conf.Monitor, logger, &sessionHandler{}, channel)
 	go func() {
 		err := monitor.MonitorTraffic(ctx)
 		logger.Warn("failed to monitor vpn traffic: " + err.Error())
