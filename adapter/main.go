@@ -188,7 +188,7 @@ type sessionHandler struct{}
 func (h sessionHandler) StartSession(ch string) bool {
 	logger := logger.Add("method", "handleMonStarted", "channel", ch)
 
-	if _, err := sesscl.StartSession("", ch, 0); err != nil {
+	if _, err := sesscl.StartSession(os.Getenv("trusted_ip"), ch, 0); err != nil {
 		logger.Fatal("failed to start session: " + err.Error())
 		return false
 	}
