@@ -37,39 +37,37 @@ type client struct {
 	commonName string
 }
 
+// SessionHandler is session events handler. If it's method returns false
+// in server mode, then the monitor kills the corresponding session.
+type SessionHandler interface {
+	StartSession(ch string) bool
+	UpdateSession(ch string, up, down uint64) bool
+	StopSession(ch string) bool
+}
+
 // Monitor is an OpenVPN monitor for observation of consumed VPN traffic and
 // for killing client VPN sessions.
 type Monitor struct {
 	conf            *Config
 	logger          log.Logger
-	handleSession   HandleSessionFunc
+	sessionHandler  SessionHandler
 	channel         string // Client mode channel (empty in server mode).
 	conn            net.Conn
 	mtx             sync.Mutex // To guard writing.
 	clients         map[uint]client
 	clientConnected bool
+	mu              sync.RWMutex
 	out             *bufio.Reader // Openvpn output.
 }
 
-// Session events.
-const (
-	SessionStarted   = iota // For client mode only.
-	SessionStopped   = iota // For client mode only.
-	SessionByteCount = iota
-)
-
-// HandleSessionFunc is a session event handler. If it returns false in server
-// mode, then the monitor kills the corresponding session.
-type HandleSessionFunc func(ch string, event int, up, down uint64) bool
-
 // NewMonitor creates a new OpenVPN monitor.
 func NewMonitor(conf *Config, logger log.Logger,
-	handleSession HandleSessionFunc, channel string) *Monitor {
+	sessionHandler SessionHandler, channel string) *Monitor {
 	return &Monitor{
-		conf:          conf,
-		logger:        logger,
-		handleSession: handleSession,
-		channel:       channel,
+		conf:           conf,
+		logger:         logger,
+		sessionHandler: sessionHandler,
+		channel:        channel,
 	}
 }
 
@@ -336,7 +334,7 @@ func (m *Monitor) processByteCount(s string) error {
 		" up %d, down %d", cl.channel, up, down))
 
 	go func() {
-		if !m.handleSession(cl.channel, SessionByteCount, up, down) {
+		if !m.sessionHandler.UpdateSession(cl.channel, up, down) {
 			m.killSession(cl.commonName)
 		}
 	}()
@@ -346,6 +344,9 @@ func (m *Monitor) processByteCount(s string) error {
 
 func (m *Monitor) processByteCountClient(s string) error {
 	logger := m.logger.Add("method", "processByteCountClient")
+
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
 
 	if !m.clientConnected {
 		return nil
@@ -367,7 +368,7 @@ func (m *Monitor) processByteCountClient(s string) error {
 		"openvpn byte count: up %d, down %d", up, down))
 
 	go func() {
-		m.handleSession(m.channel, SessionByteCount, up, down)
+		m.sessionHandler.UpdateSession(m.channel, up, down)
 	}()
 
 	return nil
@@ -378,17 +379,19 @@ func (m *Monitor) processState(s string) error {
 
 	connected := split(s)[1] == "CONNECTED"
 
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
 	if m.clientConnected && !connected {
 		logger.Warn("disconnected from server")
 		go func() {
-			m.handleSession(m.channel, SessionStopped, 0, 0)
+			m.sessionHandler.StopSession(m.channel)
 		}()
 		m.clientConnected = false
 	} else if !m.clientConnected && connected {
 		logger.Warn("connected to server")
-		go func() {
-			m.handleSession(m.channel, SessionStarted, 0, 0)
-		}()
+		// Need to create session before updating it. Thus making sync call.
+		m.sessionHandler.StartSession(m.channel)
 		m.clientConnected = true
 	}
 

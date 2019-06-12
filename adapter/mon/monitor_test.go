@@ -38,7 +38,7 @@ var (
 	logger log.Logger
 )
 
-func connect(t *testing.T, handleSession HandleSessionFunc,
+func connect(t *testing.T, handler SessionHandler,
 	channel string) (net.Conn, <-chan error) {
 	lst, err := net.Listen("tcp", conf.VPNMonitor.Addr)
 	if err != nil {
@@ -52,7 +52,7 @@ func connect(t *testing.T, handleSession HandleSessionFunc,
 	ch := make(chan error)
 	go func() {
 		mon := NewMonitor(
-			conf.VPNMonitor, logger, handleSession, channel)
+			conf.VPNMonitor, logger, handler, channel)
 		ch <- mon.MonitorTraffic(context.Background())
 		mon.Close()
 	}()
@@ -112,8 +112,38 @@ func handleSessionEvent(ch string, event int, up, down uint64) bool {
 	return true
 }
 
+type eventData struct {
+	method   string
+	ch       string
+	up, down uint64
+}
+
+type testHandler struct {
+	ok     bool
+	events chan eventData
+}
+
+func newTestHandler(ok bool) *testHandler {
+	return &testHandler{events: make(chan eventData, 3), ok: ok}
+}
+
+func (h *testHandler) StartSession(ch string) bool {
+	h.events <- eventData{method: "StartSession", ch: ch}
+	return h.ok
+}
+
+func (h *testHandler) UpdateSession(ch string, up, down uint64) bool {
+	h.events <- eventData{method: "UpdateSession", ch: ch, up: up, down: down}
+	return h.ok
+}
+
+func (h *testHandler) StopSession(ch string) bool {
+	h.events <- eventData{method: "StopSession", ch: ch, up: up, down: down}
+	return h.ok
+}
+
 func TestOldOpenVPN(t *testing.T) {
-	conn, ch := connect(t, handleSessionEvent, "")
+	conn, ch := connect(t, &testHandler{}, "")
 	defer conn.Close()
 
 	send(t, conn, prefixCMDSuccess+"\n")
@@ -131,7 +161,7 @@ func checkByteCount(t *testing.T, reader *bufio.Reader) {
 }
 
 func TestInitFlow(t *testing.T) {
-	conn, ch := connect(t, handleSessionEvent, "")
+	conn, ch := connect(t, &testHandler{}, "")
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
@@ -154,7 +184,7 @@ const (
 )
 
 func TestClientInitFlow(t *testing.T) {
-	conn, ch := connect(t, handleSessionEvent, testChannel)
+	conn, ch := connect(t, &testHandler{}, testChannel)
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
@@ -187,20 +217,9 @@ func sendByteCountClient(t *testing.T, conn net.Conn) {
 	send(t, conn, msg)
 }
 
-type eventData struct {
-	event    int
-	ch       string
-	up, down uint64
-}
-
 func TestByteCount(t *testing.T) {
-	out := make(chan eventData)
-	handleSessionEvent := func(ch string, event int, up, down uint64) bool {
-		out <- eventData{event, ch, up, down}
-		return true
-	}
-
-	conn, ch := connect(t, handleSessionEvent, "")
+	sessHandler := newTestHandler(true)
+	conn, ch := connect(t, sessHandler, "")
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
@@ -212,8 +231,8 @@ func TestByteCount(t *testing.T) {
 
 	sendByteCount(t, conn)
 
-	data := <-out
-	if data.event != SessionByteCount || data.ch != testChannel ||
+	data := <-sessHandler.events
+	if data.method != "UpdateSession" || data.ch != testChannel ||
 		data.down != down || data.up != up {
 		t.Fatalf("wrong up/down in agent mode")
 	}
@@ -233,13 +252,8 @@ func sendClientState(t *testing.T, conn net.Conn, connected bool) {
 }
 
 func TestClientSessionEvents(t *testing.T) {
-	out := make(chan eventData)
-	handleSessionEvent := func(ch string, event int, up, down uint64) bool {
-		out <- eventData{event, ch, up, down}
-		return true
-	}
-
-	conn, ch := connect(t, handleSessionEvent, testChannel)
+	sessHandler := newTestHandler(true)
+	conn, ch := connect(t, sessHandler, testChannel)
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
@@ -263,15 +277,15 @@ func TestClientSessionEvents(t *testing.T) {
 
 	sendClientState(t, conn, true)
 
-	data := <-out
-	if data.event != SessionStarted {
+	data := <-sessHandler.events
+	if data.method != "StartSession" {
 		t.Fatalf("wrong event for started session in client mode")
 	}
 
 	sendByteCountClient(t, conn)
 
-	data = <-out
-	if data.event != SessionByteCount ||
+	data = <-sessHandler.events
+	if data.method != "UpdateSession" ||
 		data.ch != testChannel ||
 		data.down != down || data.up != up {
 		t.Fatalf("wrong up/down in client mode")
@@ -279,8 +293,8 @@ func TestClientSessionEvents(t *testing.T) {
 
 	sendClientState(t, conn, false)
 
-	data = <-out
-	if data.event != SessionStopped {
+	data = <-sessHandler.events
+	if data.method != "StopSession" {
 		t.Fatalf("wrong event for stopped session in client mode")
 	}
 
@@ -290,11 +304,8 @@ func TestClientSessionEvents(t *testing.T) {
 }
 
 func TestKill(t *testing.T) {
-	handleSessionEvent := func(ch string, event int, up, down uint64) bool {
-		return false
-	}
-
-	conn, ch := connect(t, handleSessionEvent, "")
+	sessHandler := newTestHandler(false)
+	conn, ch := connect(t, sessHandler, "")
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)

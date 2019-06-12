@@ -433,5 +433,6 @@ func (o *OpenVPN) Update() error {
 		return err
 	}
 
+	// TODO: looks like useless step, newConfigDir has everything from configDir coppied.
 	return merge(newConfigDir, configDir)
 }
