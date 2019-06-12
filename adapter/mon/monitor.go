@@ -56,6 +56,7 @@ type Monitor struct {
 	mtx             sync.Mutex // To guard writing.
 	clients         map[uint]client
 	clientConnected bool
+	mu              sync.RWMutex
 	out             *bufio.Reader // Openvpn output.
 }
 
@@ -344,6 +345,9 @@ func (m *Monitor) processByteCount(s string) error {
 func (m *Monitor) processByteCountClient(s string) error {
 	logger := m.logger.Add("method", "processByteCountClient")
 
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
 	if !m.clientConnected {
 		return nil
 	}
@@ -375,6 +379,9 @@ func (m *Monitor) processState(s string) error {
 
 	connected := split(s)[1] == "CONNECTED"
 
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
 	if m.clientConnected && !connected {
 		logger.Warn("disconnected from server")
 		go func() {
@@ -383,9 +390,8 @@ func (m *Monitor) processState(s string) error {
 		m.clientConnected = false
 	} else if !m.clientConnected && connected {
 		logger.Warn("connected to server")
-		go func() {
-			m.sessionHandler.StartSession(m.channel)
-		}()
+		// Need to create session before updating it. Thus making sync call.
+		m.sessionHandler.StartSession(m.channel)
 		m.clientConnected = true
 	}
 
