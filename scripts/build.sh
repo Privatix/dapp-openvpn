@@ -6,6 +6,7 @@ then
     DAPP_OPENVPN_DIR="`( cd \"$MY_PATH/..\" && pwd )`"  # absolutized and normalized dappctrl path
 fi
 
+GIT_COMMIT=$(git rev-list -1 HEAD | head -n 1)
 if [ -z ${VERSION_TO_SET_IN_BUILDER} ]; then
     GIT_RELEASE=$(git tag -l --points-at HEAD | head -n 1)
     # if $GIT_RELEASE is zero:
