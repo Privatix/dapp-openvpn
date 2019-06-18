@@ -4,7 +4,7 @@
 	{"Admin" : true,"Command": "/bin/machinectl shell client /bin/sh /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/install-client.sh"}
     ],
     "Update": [
-        {"Admin" : true,"Command": "bin/inst update"}
+        {"Admin" : true,"Command": "/bin/machinectl shell client /bin/sh /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/update-client.sh"}
     ],
     "Start": [
         {"Admin" : true,"Command": "/bin/machinectl shell client /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/inst start"}
