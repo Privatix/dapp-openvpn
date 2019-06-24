@@ -351,21 +351,25 @@ func changeOwner(o *openvpn.OpenVPN) error {
 	return nil
 }
 
-func update(o *openvpn.OpenVPN) error {
+func update(o *openvpn.OpenVPN) (err error) {
 	if runtime.GOOS == "linux" {
 		// doesn't need stop/start services,
 		// because container is used on linux
 		return o.Update()
 	}
 
-	if err := stopService(o); err != nil {
+	err = stopService(o)
+	if err != nil {
 		return err
 	}
-
-	if err := o.Update(); err != nil {
-		if err := startService(o); err != nil {
-			return err
+	defer func() {
+		if err == nil {
+			err = startService(o)
 		}
+	}()
+
+	err = o.Update()
+	if err != nil {
 		return fmt.Errorf("failed to update product: %v", err)
 	}
 
