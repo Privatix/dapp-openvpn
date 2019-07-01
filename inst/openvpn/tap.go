@@ -10,7 +10,10 @@ import (
 	"strings"
 
 	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/encoding/japanese"
+	"golang.org/x/text/encoding/korean"
 	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/encoding/traditionalchinese"
 
 	"github.com/privatix/dapp-openvpn/inst/openvpn/path"
 )
@@ -200,8 +203,14 @@ func decode(b []byte) []byte {
 		out, _ = charmap.CodePage865.NewDecoder().Bytes(b)
 	case "866":
 		out, _ = charmap.CodePage866.NewDecoder().Bytes(b)
+	case "932":
+		out, _ = japanese.ShiftJIS.NewDecoder().Bytes(b)
 	case "936":
 		out, _ = simplifiedchinese.GBK.NewDecoder().Bytes(b)
+	case "949":
+		out, _ = korean.EUCKR.NewDecoder().Bytes(b)
+	case "950":
+		out, _ = traditionalchinese.Big5.NewDecoder().Bytes(b)
 	default:
 		out, _ = charmap.CodePage437.NewDecoder().Bytes(b)
 	}
