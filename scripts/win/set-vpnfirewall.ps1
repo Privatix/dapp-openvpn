@@ -46,10 +46,10 @@ param (
     [switch]$Remove,
     [Parameter(ParameterSetName = "Create")]
     [Parameter(ParameterSetName = "Remove")]
-    [ValidateScript( {Get-Service -Name $_ })]
+    [ValidateScript( { Get-Service -Name $_ })]
     [string]$ServiceName,
     [Parameter(ParameterSetName = "Create")]
-    [ValidateScript( {Test-Path $_ })]
+    [ValidateScript( { Test-Path $_ })]
     [string]$ProgramPath,
     [Parameter(ParameterSetName = "Create")]
     [ValidateRange(0, 65535)] 
@@ -59,10 +59,28 @@ param (
     [string]$Protocol = 'tcp'
 )
 if ($PSBoundParameters.ContainsKey('Create')) {
+    # Allow inbound connection to OpenVPN server
     New-NetFirewallRule -PolicyStore PersistentStore -Name $ServiceName -DisplayName "Privatix OpenVPN server" `
-        -Description "Inbound rule for Privatix OpenVPN server" -Group "Privatix" -Enabled True -Profile Any `
+        -Description "Inbound rule for Privatix OpenVPN server" -Group "Privatix OpenVPN server" -Enabled True -Profile Any `
         -Action Allow -Direction Inbound -LocalPort $Port -Protocol $Protocol -Program $ProgramPath | Out-Null
+    # Block connection to LAN
+    $LANsubnets = @("10.0.0.0/8", "192.168.0.0/16", "172.16.0.0/12")
+    foreach ($LANsubnet in $LANsubnets) {
+        try {
+            $i++
+            New-NetFirewallRule -PolicyStore PersistentStore -Name "Privatix OpenVPN server block LAN access $i" `
+                -DisplayName "Privatix OpenVPN server block $LANsubnet" `
+                -Description "Outbound rule for Privatix OpenVPN server that block access to LAN" `
+                -Group "Privatix OpenVPN server" -Enabled True -Profile Any `
+                -Action Block -Direction Outbound -Program $ProgramPath -Protocol Any -RemoteAddress $LANsubnet | Out-Null
+        } 
+        catch {
+            Write-Error "Failed to create firewall rule. Original exception: $($error[0].exception)"
+            exit 1
+        }
+    }
+
 } 
 if ($PSBoundParameters.ContainsKey('Remove')) {
-    Remove-NetFirewallRule -Name $ServiceName 
+    Remove-NetFirewallRule -Group "Privatix OpenVPN server" 
 }
