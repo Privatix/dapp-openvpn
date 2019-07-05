@@ -43,6 +43,12 @@ then
 
     # creates rules
     /sbin/iptables -t nat -A POSTROUTING -s "$server"/24 -o "$default" -j MASQUERADE
+
+    # create rules to prevent LAN access
+    iptables -I FORWARD -s "$server"/24 -d 10.0.0.0/8 -j DROP || exit 1
+    iptables -I FORWARD -s "$server"/24 -d 192.168.0.0/16 -j DROP || exit 1
+    iptables -I FORWARD -s "$server"/24 -d 172.16.0.0/12 -j DROP || exit 1
+
 elif [ "$status" = "off" ]
 then
     if [ -n "$2" ]
@@ -57,4 +63,9 @@ then
     default=$(/sbin/route | grep  default | awk '{print $8}')
 
     /sbin/iptables -t nat -D POSTROUTING -s "$server"/24 -o "$default"   -j MASQUERADE
+
+    # create rules to prevent LAN access
+    iptables -D FORWARD -s "$server"/24 -d 10.0.0.0/8 -j DROP || exit 1
+    iptables -D FORWARD -s "$server"/24 -d 192.168.0.0/16 -j DROP || exit 1
+    iptables -D FORWARD -s "$server"/24 -d 172.16.0.0/12 -j DROP || exit 1
 fi
