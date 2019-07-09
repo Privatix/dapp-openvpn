@@ -89,7 +89,7 @@ connect-retry {{if .ConnectRetry}}{{.ConnectRetry}}{{else}}5{{end}}
 # Enable compression on the VPN link.
 # Don't enable this unless it is also
 # enabled in the server config file.
-{{if .CompLZO}}{{.CompLZO}}{{else}};compress lz4{{end}}
+compress {{if .Compress}}{{.Compress}}{{else}}lz4{{end}}
 
 # Set log file verbosity.
 verb 3

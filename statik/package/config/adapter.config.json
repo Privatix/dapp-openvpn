@@ -29,7 +29,7 @@
             "ping",
             "connect-retry",
             "ca",
-            "comp-lzo",
+            "compress",
             "keepalive",
             "server"
         ],

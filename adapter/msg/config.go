@@ -25,9 +25,9 @@ const (
 	defaultServerPort     = "443"
 	defaultServer         = "10.217.3.0"
 
-	paramCompLZO = "comp-lzo"
-	paramProto   = "proto"
-	paramServer  = "server"
+	paramCompress = "compress"
+	paramProto    = "proto"
+	paramServer   = "server"
 
 	clientConfigFile     = "client.ovpn"
 	clientConfigTemplate = "/ovpn/templates/client-config.tpl"
@@ -55,7 +55,7 @@ type vpnClient struct {
 	Ca             string `json:"caData"`
 	Cipher         string `json:"cipher"`
 	ConnectRetry   string `json:"connect-retry"`
-	CompLZO        string `json:"comp-lzo"`
+	Compress       string `json:"compress"`
 	LogAppend      string `json:"-"`
 	ManagementPort uint16 `json:"-"`
 	Ping           string `json:"ping"`
@@ -82,7 +82,7 @@ func defaultVpnConfig() *vpnClient {
 		Port:           defaultServerPort,
 		Proto:          defaultProto,
 		ServerAddress:  defaultServerAddress,
-		Server:			defaultServer,
+		Server:         defaultServer,
 	}
 }
 
@@ -104,8 +104,8 @@ func (s *service) fillClientConfig(serviceEndpointAddress string,
 		return nil, ErrDecodeParams
 	}
 
-	if existParam(paramCompLZO, additionalParams) {
-		cfg.CompLZO = paramCompLZO
+	if existParam(paramCompress, additionalParams) {
+		cfg.Compress = paramCompress
 	}
 
 	if existParam(paramServer, additionalParams) {
