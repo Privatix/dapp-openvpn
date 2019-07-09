@@ -66,7 +66,7 @@ type vpnClient struct {
 	TapInterface   string `json:"-"`
 	UpScript       string `json:"-"`
 	DownScript     string `json:"-"`
-	Server         string `json:"10.217.3.0"`
+	Server         string `json:"server"`
 }
 
 type service struct{ logger log.Logger }
