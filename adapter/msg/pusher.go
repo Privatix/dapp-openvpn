@@ -49,7 +49,7 @@ func NewConfig() *Config {
 	return &Config{
 		ExportConfigKeys: []string{"proto", "cipher", "ping-restart",
 			"ping", "connect-retry", "ca",
-			"comp-lzo", "keepalive", "port"},
+			"comp-lzo", "keepalive", "port", "server"},
 		TimeOut: 12,
 	}
 }

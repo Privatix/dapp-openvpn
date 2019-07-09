@@ -2,6 +2,7 @@ local {{.Host.IP}}
 port {{.Host.Port}}
 proto {{.Proto}}
 dev tun
+topology "subnet"
 {{if not .IsWindows}}#{{end}}dev-node {{.Tap.GUID}}
 ca "config/ca.crt"
 cert "config/server.crt"
@@ -22,7 +23,8 @@ push "dhcp-option DNS 8.8.4.4"
 push "redirect-gateway def1"
 ifconfig-pool-persist "config/ipp.txt"
 keepalive 10 120
-comp-lzo
+compress lz4
+push "compress lz4"
 persist-key
 persist-tun
 {{if .IsWindows}}#{{end}}user {{.User}}

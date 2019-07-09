@@ -33,7 +33,8 @@
             "connect-retry",
             "ca",
             "comp-lzo",
-            "keepalive"
+            "keepalive",
+            "server"
         ],
         "TimeOut": 12
     },

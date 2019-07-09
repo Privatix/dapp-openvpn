@@ -23,9 +23,11 @@ const (
 	defaultProto          = "tcp-client"
 	defaultServerAddress  = "127.0.0.1"
 	defaultServerPort     = "443"
+	defaultServer         = "10.217.3.0"
 
 	paramCompLZO = "comp-lzo"
 	paramProto   = "proto"
+	paramServer  = "server"
 
 	clientConfigFile     = "client.ovpn"
 	clientConfigTemplate = "/ovpn/templates/client-config.tpl"
@@ -64,6 +66,7 @@ type vpnClient struct {
 	TapInterface   string `json:"-"`
 	UpScript       string `json:"-"`
 	DownScript     string `json:"-"`
+	Server         string `json:"10.217.3.0"`
 }
 
 type service struct{ logger log.Logger }
@@ -79,6 +82,7 @@ func defaultVpnConfig() *vpnClient {
 		Port:           defaultServerPort,
 		Proto:          defaultProto,
 		ServerAddress:  defaultServerAddress,
+		Server:			defaultServer,
 	}
 }
 
@@ -102,6 +106,10 @@ func (s *service) fillClientConfig(serviceEndpointAddress string,
 
 	if existParam(paramCompLZO, additionalParams) {
 		cfg.CompLZO = paramCompLZO
+	}
+
+	if existParam(paramServer, additionalParams) {
+		cfg.Server = paramServer
 	}
 
 	cfg.ServerAddress = serviceEndpointAddress

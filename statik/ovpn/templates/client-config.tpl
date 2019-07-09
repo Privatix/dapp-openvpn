@@ -7,7 +7,7 @@ dev tun
 proto {{if .Proto}}{{.Proto}}{{else}}tcp-client{{end}}
 
 # Encrypt packets with AES-256-CBC algorithm
-cipher {{if .Cipher}}{{.Cipher}}{{else}}AES-256-CBC{{end}}
+cipher {{if .Cipher}}{{.Cipher}}{{else}}AES-256-GCM{{end}}
 
 # Enable TLS and assume client role
 # during TLS handshake.
@@ -59,7 +59,23 @@ ping {{if .Ping}}{{.Ping}}{{else}}10{{end}}
 # username/password in interactive mode
 auth-user-pass {{.AccessFile}}
 
+# Pull settings from server
 pull
+# But allow only restricted parameters and values
+pull-filter accept "route {{.Server}}"
+pull-filter accept "ifconfig {{.Server}}"
+pull-filter accept "route-gateway {{.Server}}"
+pull-filter accept "peer-id"
+pull-filter accept "topology"
+pull-filter accept "cipher AES-256-GCM"
+pull-filter accept "ping"
+pull-filter accept "compress"
+pull-filter accept "dhcp-option DNS 8.8.8.8"
+pull-filter accept "dhcp-option DNS 8.8.4.4"
+pull-filter ignore ""
+
+# route all traffic through VPN
+redirect-gateway def1 block-local
 
 # take n as the number of seconds
 # to wait between connection retries
@@ -73,9 +89,7 @@ connect-retry {{if .ConnectRetry}}{{.ConnectRetry}}{{else}}5{{end}}
 # Enable compression on the VPN link.
 # Don't enable this unless it is also
 # enabled in the server config file.
-# Use fast LZO compression -- may add up
-# to 1 byte per packet for incompressible data.
-{{if .CompLZO}}{{.CompLZO}}{{else}};comp-lzo{{end}}
+{{if .CompLZO}}{{.CompLZO}}{{else}};compress lz4{{end}}
 
 # Set log file verbosity.
 verb 3
