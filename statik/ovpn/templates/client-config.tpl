@@ -69,10 +69,11 @@ pull-filter accept "cipher AES-256-GCM"
 pull-filter accept "ping"
 pull-filter accept "dhcp-option DNS 8.8.8.8"
 pull-filter accept "dhcp-option DNS 8.8.4.4"
+pull-filter accept "redirect-gateway def1"
 pull-filter ignore ""
 
 # Redirect all traffic to VPN 
-redirect-gateway def1 block-local
+redirect-gateway def1
 
 remote-cert-tls server
 # take n as the number of seconds
