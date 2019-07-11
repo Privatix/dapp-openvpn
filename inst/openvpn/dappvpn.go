@@ -118,7 +118,11 @@ func (d *DappVPN) StartService() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return service.Start()
+	s, err := service.Start()
+	if err != nil && err != daemon.ErrAlreadyRunning {
+		return "", err
+	}
+	return s, nil
 }
 
 // RunService executes dappvpn service.
@@ -148,7 +152,12 @@ func (d *DappVPN) StopService() (string, error) {
 		return "", nil
 	}
 
-	return service.Stop()
+	s, err := service.Stop()
+	if err != nil && err != daemon.ErrAlreadyStopped {
+		return "", err
+	}
+
+	return s, nil
 }
 
 // RemoveService removes the dappvpn service.
