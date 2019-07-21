@@ -15,7 +15,7 @@
 #     foreign_option_3='dhcp-option DOMAIN be.bnc.ch'
 #
 
-[ -x /etc/resolv.conf ] || exit 0
+[ -f /etc/resolv.conf ] || exit 0
 [ "$script_type" ] || exit 0
 [ "$dev" ] || exit 0
 
