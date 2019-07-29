@@ -1,7 +1,7 @@
 {
     "Path":"..",
     "Role":"server",
-    "Proto":"tcp",
+    "Proto":"udp",
     "Managment": {
         "Port": 7505
     }
