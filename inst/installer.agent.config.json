@@ -1,7 +1,10 @@
 {
-    "Path":"..",
-    "Role":"server",
-    "Proto":"udp",
+    "Path": "..",
+    "Role": "server",
+    "Proto": "udp",
+    "Host": {
+        "Port": 59000
+    },
     "Managment": {
         "Port": 7505
     }
