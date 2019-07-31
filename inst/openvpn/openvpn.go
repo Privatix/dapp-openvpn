@@ -285,7 +285,11 @@ func (o *OpenVPN) StartService() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return service.Start()
+	s, err := service.Start()
+	if err != nil && err != daemon.ErrAlreadyRunning {
+		return "", err
+	}
+	return s, nil
 }
 
 // RunService executes openvpn service.
@@ -357,7 +361,12 @@ func (o *OpenVPN) StopService() (string, error) {
 		return "", nil
 	}
 
-	return service.Stop()
+	s, err := service.Stop()
+	if err != nil && err != daemon.ErrAlreadyStopped {
+		return "", err
+	}
+
+	return s, nil
 }
 
 // RemoveService removes the openvpn service.

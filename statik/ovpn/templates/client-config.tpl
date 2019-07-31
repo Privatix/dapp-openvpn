@@ -60,7 +60,22 @@ ping {{if .Ping}}{{.Ping}}{{else}}10{{end}}
 auth-user-pass {{.AccessFile}}
 
 pull
+pull-filter accept "route 10.217.3."
+pull-filter accept "ifconfig 10.217.3"
+pull-filter accept "route-gateway 10.217.3"
+pull-filter accept "peer-id"
+pull-filter accept "topology"
+pull-filter accept "cipher AES-256-GCM"
+pull-filter accept "ping"
+pull-filter accept "dhcp-option DNS 8.8.8.8"
+pull-filter accept "dhcp-option DNS 8.8.4.4"
+pull-filter accept "redirect-gateway def1"
+pull-filter ignore ""
 
+# Redirect all traffic to VPN 
+redirect-gateway def1
+
+remote-cert-tls server
 # take n as the number of seconds
 # to wait between connection retries
 connect-retry {{if .ConnectRetry}}{{.ConnectRetry}}{{else}}5{{end}}

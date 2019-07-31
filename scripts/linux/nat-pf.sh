@@ -43,6 +43,10 @@ then
 
     # creates rules
     /sbin/iptables -t nat -A POSTROUTING -s "$server"/24 -o "$default" -j MASQUERADE
+    # block access from vpn net to local
+    /sbin/iptables -I FORWARD -s "$server"/24 -d 10.0.0.0/8 -j DROP
+    /sbin/iptables -I FORWARD -s "$server"/24 -d 192.168.0.0/16 -j DROP
+    /sbin/iptables -I FORWARD -s "$server"/24 -d 172.16.0.0/12 -j DROP
 elif [ "$status" = "off" ]
 then
     if [ -n "$2" ]
@@ -57,4 +61,7 @@ then
     default=$(/sbin/route | grep  default | awk '{print $8}')
 
     /sbin/iptables -t nat -D POSTROUTING -s "$server"/24 -o "$default"   -j MASQUERADE
+    /sbin/iptables -D FORWARD -s "$server"/24 -d 10.0.0.0/8 -j DROP
+    /sbin/iptables -D FORWARD -s "$server"/24 -d 192.168.0.0/16 -j DROP
+    /sbin/iptables -D FORWARD -s "$server"/24 -d 172.16.0.0/12 -j DROP
 fi

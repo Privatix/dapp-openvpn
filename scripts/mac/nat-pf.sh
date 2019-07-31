@@ -57,6 +57,11 @@ then
     ports="\npass in proto { tcp, udp } from any to any port $port"
     echo "$ports" >> /usr/local/nat-rules
 
+    # Add , block from VPN to LAN
+
+    block_tolan="rfc1918 = \"{ 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8 }\" \nvpnnet = \"{ $server/24 }\" \nblock in log quick from \$vpnnet to \$rfc1918"
+    echo "${block_tolan}" >> /usr/local/nat-rules
+
     frwd=$(/usr/sbin/sysctl -n net.inet.ip.forwarding)
     if [ "$frwd" != "1" ]
     then

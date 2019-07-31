@@ -42,8 +42,8 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 	downScriptPath := filepath.Join(p, path.Config.DownScript)
 	if runtime.GOOS == "linux" {
 		ovpnPath = "/usr/sbin/openvpn"
-		upScriptPath = "/etc/openvpn/update-resolv-conf"
-		downScriptPath = "/etc/openvpn/update-resolv-conf"
+		upScriptPath = filepath.Join(p, "bin/update-resolv-conf.sh")
+		downScriptPath = upScriptPath
 	}
 
 	maps := make(map[string]interface{})
@@ -118,7 +118,11 @@ func (d *DappVPN) StartService() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return service.Start()
+	s, err := service.Start()
+	if err != nil && err != daemon.ErrAlreadyRunning {
+		return "", err
+	}
+	return s, nil
 }
 
 // RunService executes dappvpn service.
@@ -148,7 +152,12 @@ func (d *DappVPN) StopService() (string, error) {
 		return "", nil
 	}
 
-	return service.Stop()
+	s, err := service.Stop()
+	if err != nil && err != daemon.ErrAlreadyStopped {
+		return "", err
+	}
+
+	return s, nil
 }
 
 // RemoveService removes the dappvpn service.

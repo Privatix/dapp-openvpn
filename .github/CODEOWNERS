@@ -10,8 +10,7 @@
 *.md            @drew2a
 
 # notify installer team about changes in inst and installer
-# /inst/          @ubozov
+# /inst/        @furkhat
 
 # notify devops team about changes in *.config.json
-*.config.json               @SHarrySeldon @drew2a
-/inst/openvpn/path/path.go  @SHarrySeldon
+*.config.json               @drew2a
