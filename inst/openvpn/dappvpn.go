@@ -42,8 +42,8 @@ func (d *DappVPN) Configurate(o *OpenVPN) error {
 	downScriptPath := filepath.Join(p, path.Config.DownScript)
 	if runtime.GOOS == "linux" {
 		ovpnPath = "/usr/sbin/openvpn"
-		upScriptPath = "/etc/openvpn/update-resolv-conf"
-		downScriptPath = "/etc/openvpn/update-resolv-conf"
+		upScriptPath = filepath.Join(p, "bin/update-resolv-conf.sh")
+		downScriptPath = upScriptPath
 	}
 
 	maps := make(map[string]interface{})
