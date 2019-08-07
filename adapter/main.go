@@ -190,7 +190,6 @@ func (h sessionHandler) StartSession(ch string) bool {
 
 	if _, err := sesscl.StartSession(os.Getenv("trusted_ip"), ch, 0); err != nil {
 		logger.Fatal("failed to start session: " + err.Error())
-		return false
 	}
 
 	return true
@@ -201,9 +200,11 @@ func (h sessionHandler) UpdateSession(ch string, up, down uint64) bool {
 		"channel", ch, "up", up, "down", down)
 
 	err := sesscl.UpdateSession(ch, down+up)
-	if err != nil {
-		logger.Fatal("failed to update session: " + err.Error())
+	if err == sess.ErrNonActiveChannel {
+		logger.Warn("could not update session: " + err.Error())
 		return false
+	} else if err != nil {
+		logger.Fatal("failed to update session: " + err.Error())
 	}
 
 	return true
@@ -215,7 +216,6 @@ func (sessionHandler) StopSession(ch string) bool {
 	err := sesscl.StopSession(ch)
 	if err != nil {
 		logger.Fatal("failed to stop session: " + err.Error())
-		return false
 	}
 
 	return true
