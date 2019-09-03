@@ -4,18 +4,18 @@
         {"Admin" : true,"Command": "bin\\inst.exe install --config ..\\config\\installer.agent.config.json"}
     ],
     "Update": [
-        {"Admin": false, "Command": "cp <OLD_PRODDIR>\\config\\.env.config.json <PRODDIR>\\config\\.env.config.json"},
-        {"Admin": false, "Command": "cp <OLD_PRODDIR>\\config\\.env.product.config.json <PRODDIR>\\config\\.env.product.config.json"},
-        {"Admin": false, "Command": "cp <OLD_PRODDIR>\\config\\ports.txt <PRODDIR>\\config\\ports.txt"},
-        {"Admin": false, "Command": "rm -Recurse -Force <PRODDIR>\\template"},
-        {"Admin": false, "Command": "rm -Recurse -Force <PRODDIR>\\data"},
-        {"Admin": false, "Command": "rm -Recurse -Force <PRODDIR>\\log"},
-        {"Admin": false, "Command": "cp -Recurse <OLD_PRODDIR>\\data <PRODDIR>\\data"},
-        {"Admin": false, "Command": "cp -Recurse <OLD_PRODDIR>\\template <PRODDIR>\\template"},
-        {"Admin": false, "Command": "cp -Recurse <OLD_PRODDIR>\\log <PRODDIR>\\log"},
-        {"Admin": false, "Command": "cp <OLD_PRODDIR>\\config\\adapter.config.json <PRODDIR>\\adapter.config.json"},
-        {"Admin": false, "Command": "cp <PRODDIR>\\template\\adapter.<ROLE>.config.json <PRODDIR>\\config\\adapter.config.json"},
-        {"Admin": false, "Command": "<PRODDIR>\\bin\\update-config.exe -source <OLD_PRODDIR>\\config\\adapter.config.json -dest <PRODDIR>\\config\\adapter.config.json -copyItems [['ChannelDir'],['FileLog','Filename'],['Monitor','Addr'],['OpenVPN','ConfigRoot'],['Pusher','CaCertPath'],['Pusher','ConfigPath'],['Sess','Endpoint'],['Sess','Product'],['Sess','Password']]"}
+        {"Admin": true, "Command": "powershell.exe -ExecutionPolicy Bypass -Command \"cp <OLD_PRODDIR>\\config\\.env.config.json <PRODDIR>\\config\\.env.config.json\""},
+        {"Admin": true, "Command": "powershell.exe -ExecutionPolicy Bypass -Command \"cp <OLD_PRODDIR>\\config\\.env.product.config.json <PRODDIR>\\config\\.env.product.config.json\""},
+        {"Admin": true, "Command": "powershell.exe -ExecutionPolicy Bypass -Command \"cp <OLD_PRODDIR>\\config\\ports.txt <PRODDIR>\\config\\ports.txt\""},
+        {"Admin": true, "Command": "powershell.exe -ExecutionPolicy Bypass -Command \"rm -Recurse -Force <PRODDIR>\\template\""},
+        {"Admin": true, "Command": "powershell.exe -ExecutionPolicy Bypass -Command \"rm -Recurse -Force <PRODDIR>\\data\""},
+        {"Admin": true, "Command": "powershell.exe -ExecutionPolicy Bypass -Command \"rm -Recurse -Force <PRODDIR>\\log\""},
+        {"Admin": true, "Command": "powershell.exe -ExecutionPolicy Bypass -Command \"cp -Recurse <OLD_PRODDIR>\\data <PRODDIR>\\data\""},
+        {"Admin": true, "Command": "powershell.exe -ExecutionPolicy Bypass -Command \"cp -Recurse <OLD_PRODDIR>\\template <PRODDIR>\\template\""},
+        {"Admin": true, "Command": "powershell.exe -ExecutionPolicy Bypass -Command \"cp -Recurse <OLD_PRODDIR>\\log <PRODDIR>\\log\""},
+        {"Admin": true, "Command": "powershell.exe -ExecutionPolicy Bypass -Command \"cp <OLD_PRODDIR>\\config\\adapter.config.json <PRODDIR>\\adapter.config.json\""},
+        {"Admin": true, "Command": "powershell.exe -ExecutionPolicy Bypass -Command \"cp <PRODDIR>\\template\\adapter.<ROLE>.config.json <PRODDIR>\\config\\adapter.config.json\""},
+        {"Admin": true, "Command": "\"<PRODDIR>\\bin\\update-config.exe\" -source \"<OLD_PRODDIR>\\config\\adapter.config.json\" -dest \"<PRODDIR>\\config\\adapter.config.json\" -copyItems \"[['ChannelDir'],['FileLog','Filename'],['Monitor','Addr'],['OpenVPN','ConfigRoot'],['Pusher','CaCertPath'],['Pusher','ConfigPath'],['Sess','Endpoint'],['Sess','Product'],['Sess','Password']]\""}
     ],
     "Start": [
         {"Admin" : true,"Command": "bin\\inst.exe start"}
