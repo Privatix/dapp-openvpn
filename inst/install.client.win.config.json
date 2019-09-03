@@ -15,7 +15,7 @@
         {"Admin": true, "Command": "powershell.exe -ExecutionPolicy Bypass -Command \" cp -Recurse<OLD_PRODDIR>\\template <PRODDIR>\\log\""},
         {"Admin": true, "Command": "powershell.exe -ExecutionPolicy Bypass -Command \" cp<OLD_PRODDIR>\\config\\adapter.config.json <PRODDIR>\\adapter.config.json\""},
         {"Admin": true, "Command": "powershell.exe -ExecutionPolicy Bypass -Command \" cp<PRODDIR>\\template\\adapter.<ROLE>.config.json <PRODDIR>\\config\\adapter.config.json\""},
-        {"Admin": true, "Command": "<PRODDIR>\\bin\\update-config.exe -source <OLD_PRODDIR>\\config\\adapter.config.json -dest <PRODDIR>\\config\\adapter.config.json -copyItems [['ChannelDir'],['FileLog','Filename'],['Monitor','Addr'],['OpenVPN','ConfigRoot'],['Pusher','CaCertPath'],['Pusher','ConfigPath'],['Sess','Endpoint'],['Sess','Product'],['Sess','Password']]"}
+        {"Admin": true, "Command": "\"<PRODDIR>\\bin\\update-config.exe\" -source \"<OLD_PRODDIR>\\config\\adapter.config.json\" -dest \"<PRODDIR>\\config\\adapter.config.json\" -copyItems \"[['ChannelDir'],['FileLog','Filename'],['Monitor','Addr'],['OpenVPN','ConfigRoot'],['Pusher','CaCertPath'],['Pusher','ConfigPath'],['Sess','Endpoint'],['Sess','Product'],['Sess','Password']]\""}
    ],
     "Start": [
         {"Admin" : true,"Command": "bin\\inst.exe start"}
