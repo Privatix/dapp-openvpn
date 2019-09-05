@@ -14,7 +14,7 @@
         {"Admin": true, "Command": "cp -pr <OLD_PRODDIR>/data <PRODDIR>/data"},
         {"Admin": true, "Command": "cp -pr <OLD_PRODDIR>/template <PRODDIR>/template"},
         {"Admin": true, "Command": "cp -pr <OLD_PRODDIR>/log <PRODDIR>/log"},
-        {"Admin": true, "Command": "cp <OLD_PRODDIR>/config/adapter.config.json <PRODDIR>/adapter.config.json"},
+        {"Admin": true, "Command": "cp <OLD_PRODDIR>/config/adapter.config.json <PRODDIR>/config/adapter.config.json"},
         {"Admin": true, "Command": "cp <PRODDIR>/template/adapter.<ROLE>.config.json <PRODDIR>/config/adapter.config.json"},
         {"Admin": true, "Command": "cp -p <OLD_PRODDIR>/config/ca.crt <PRODDIR>/config/ca.crt"},
         {"Admin": true, "Command": "cp -p <OLD_PRODDIR>/config/ca.key <PRODDIR>/config/ca.key"},
@@ -25,8 +25,12 @@
         {"Admin": true, "Command": "cp -p <OLD_PRODDIR>/config/server.key <PRODDIR>/config/server.key"},
         {"Admin": true, "Command": "<PRODDIR>/bin/update-config -source <OLD_PRODDIR>/config/adapter.config.json -dest <PRODDIR>/config/adapter.config.json -copyItems '[[\"ChannelDir\"],[\"OpenVPN\"],[\"FileLog\",\"Filename\"],[\"Monitor\",\"Addr\"],[\"OpenVPN\",\"ConfigRoot\"],[\"Pusher\",\"CaCertPath\"],[\"Pusher\",\"ConfigPath\"],[\"Sess\",\"Endpoint\"],[\"Sess\",\"Product\"],[\"Sess\",\"Password\"]]'"},
         {"Admin": true, "Command": "cd <OLD_PRODDIR>/../../etc/systemd/system/ && cp -p $(ls | grep openvpn_*) <PRODDIR>/../../etc/systemd/system/"},
+        {"Admin": true, "Command": "/bin/machinectl shell <ROLE> /bin/systemctl enable $(ls <PRODDIR>/../../etc/systemd/system/ | grep openvpn_*)"},
         {"Admin": true, "Command": "cd <OLD_PRODDIR>/../../etc/systemd/system/ && cp -p $(ls | grep dappvpn_*) <PRODDIR>/../../etc/systemd/system/"},
-        {"Admin": true, "Command": "cd <OLD_PRODDIR>/../../etc/systemd/system/ && cp -p $(ls | grep nat_*) <PRODDIR>/../../etc/systemd/system/"}
+        {"Admin": true, "Command": "/bin/machinectl shell <ROLE> /bin/systemctl enable $(ls <PRODDIR>/../../etc/systemd/system/ | grep dappvpn_*)"},
+        {"Admin": true, "Command": "cd <OLD_PRODDIR>/../../etc/systemd/system/ && cp -p $(ls | grep nat_*) <PRODDIR>/../../etc/systemd/system/"},
+        {"Admin": true, "Command": "/bin/machinectl shell <ROLE> /bin/systemctl enable $(ls <PRODDIR>/../../etc/systemd/system/ | grep nat_*)"},
+        {"Admin": true, "Command": "/bin/machinectl shell <ROLE> /bin/sh /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/install-openvpn.sh"}
     ],
     "Start": [
         {"Admin" : true,"Command": "/bin/machinectl shell agent /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/inst start"}

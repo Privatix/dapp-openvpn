@@ -9,7 +9,7 @@
         {"Admin": false, "Command": "cp -p <OLD_PRODDIR>/config/ports.txt <PRODDIR>/config/ports.txt"},
         {"Admin": true, "Command": "rm -rf <PRODDIR>/template && rm -rf <PRODDIR>/data && rm -rf <PRODDIR>/log && cp -pr <OLD_PRODDIR>/data <PRODDIR>/data && cp -pr <OLD_PRODDIR>/log <PRODDIR>/log"},
         {"Admin": false, "Command": "cp -pr <OLD_PRODDIR>/template <PRODDIR>/template"},
-        {"Admin": false, "Command": "cp -p <OLD_PRODDIR>/config/adapter.config.json <PRODDIR>/adapter.config.json"},
+        {"Admin": false, "Command": "cp -p <OLD_PRODDIR>/config/adapter.config.json <PRODDIR>/config/adapter.config.json"},
         {"Admin": false, "Command": "cp -p <PRODDIR>/template/adapter.<ROLE>.config.json <PRODDIR>/config/adapter.config.json"},
         {"Admin": false, "Command": "<PRODDIR>/bin/update-config -source <OLD_PRODDIR>/config/adapter.config.json -dest <PRODDIR>/config/adapter.config.json -copyItems '[[\"ChannelDir\"],[\"OpenVPN\"],[\"FileLog\",\"Filename\"],[\"Monitor\",\"Addr\"],[\"OpenVPN\",\"ConfigRoot\"],[\"Pusher\",\"CaCertPath\"],[\"Pusher\",\"ConfigPath\"],[\"Sess\",\"Endpoint\"],[\"Sess\",\"Product\"],[\"Sess\",\"Password\"]]'"},
         {"Admin": false, "Command": "chmod 0777 <PRODDIR>/bin/client-up.sh <PRODDIR>/bin/client-down.sh"}
