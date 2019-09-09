@@ -30,7 +30,8 @@
         {"Admin": true, "Command": "/bin/machinectl shell <ROLE> /bin/systemctl enable $(ls <PRODDIR>/../../etc/systemd/system/ | grep dappvpn_*)"},
         {"Admin": true, "Command": "cd <OLD_PRODDIR>/../../etc/systemd/system/ && cp -p $(ls | grep nat_*) <PRODDIR>/../../etc/systemd/system/"},
         {"Admin": true, "Command": "/bin/machinectl shell <ROLE> /bin/systemctl enable $(ls <PRODDIR>/../../etc/systemd/system/ | grep nat_*)"},
-        {"Admin": true, "Command": "/bin/machinectl shell <ROLE> /bin/sh /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/install-openvpn.sh"}
+        {"Admin": true, "Command": "/bin/machinectl shell <ROLE> /bin/sh /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/install-openvpn.sh"},
+        {"Admin" : true,"Command": "/bin/sh <PRODDIR>/bin/forwarding.sh"}
     ],
     "Start": [
         {"Admin" : true,"Command": "/bin/machinectl shell agent /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/inst start"}
