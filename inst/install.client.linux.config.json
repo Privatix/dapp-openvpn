@@ -4,7 +4,21 @@
 	{"Admin" : true,"Command": "/bin/machinectl shell client /bin/sh /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/install-client.sh"}
     ],
     "Update": [
-        {"Admin" : true,"Command": "/bin/machinectl shell client /bin/sh /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/update-client.sh"}
+        {"Admin": true, "Command": "cp -p <OLD_PRODDIR>/config/.env.config.json <PRODDIR>/config/.env.config.json"},
+        {"Admin": true, "Command": "cp -p <OLD_PRODDIR>/config/.env.product.config.json <PRODDIR>/config/.env.product.config.json"},
+        {"Admin": true, "Command": "cp -p <OLD_PRODDIR>/config/ports.txt <PRODDIR>/config/ports.txt"},
+        {"Admin": true, "Command": "rm -rf <PRODDIR>/template"},
+        {"Admin": true, "Command": "rm -rf <PRODDIR>/data"},
+        {"Admin": true, "Command": "rm -rf <PRODDIR>/log"},
+        {"Admin": true, "Command": "cp -pr <OLD_PRODDIR>/data <PRODDIR>/data"},
+        {"Admin": true, "Command": "cp -pr <OLD_PRODDIR>/template <PRODDIR>/template"},
+        {"Admin": true, "Command": "cp -pr <OLD_PRODDIR>/log <PRODDIR>/log"},
+        {"Admin": true, "Command": "cp -p <OLD_PRODDIR>/config/adapter.config.json <PRODDIR>/config/adapter.config.json"},
+        {"Admin": true, "Command": "cp -p <PRODDIR>/template/adapter.<ROLE>.config.json <PRODDIR>/config/adapter.config.json"},
+        {"Admin": true, "Command": "<PRODDIR>/bin/update-config -source <OLD_PRODDIR>/config/adapter.config.json -dest <PRODDIR>/config/adapter.config.json -copyItems '[[\"ChannelDir\"],[\"OpenVPN\"],[\"FileLog\",\"Filename\"],[\"Monitor\",\"Addr\"],[\"OpenVPN\",\"ConfigRoot\"],[\"Pusher\",\"CaCertPath\"],[\"Pusher\",\"ConfigPath\"],[\"Sess\",\"Endpoint\"],[\"Sess\",\"Product\"],[\"Sess\",\"Password\"]]'"},
+        {"Admin": true, "Command": "cd <OLD_PRODDIR>/../../etc/systemd/system/ && cp -p $(ls | grep dappvpn_*) <PRODDIR>/../../etc/systemd/system/"},
+        {"Admin": true, "Command": "/bin/machinectl shell <ROLE> /bin/systemctl enable $(ls <PRODDIR>/../../etc/systemd/system/ | grep dappvpn_*)"},
+        {"Admin": true, "Command": "/bin/machinectl shell <ROLE> /bin/sh /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/install-openvpn.sh"}
     ],
     "Start": [
         {"Admin" : true,"Command": "/bin/machinectl shell client /product/73e17130-2a1d-4f7d-97a8-93a9aaa6f10d/bin/inst start"}
