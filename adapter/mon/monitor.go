@@ -335,6 +335,7 @@ func (m *Monitor) processByteCount(s string) error {
 
 	go func() {
 		if !m.sessionHandler.UpdateSession(cl.channel, up, down) {
+			logger.Warn("could not update session, killing session.")
 			m.killSession(cl.commonName)
 		}
 	}()

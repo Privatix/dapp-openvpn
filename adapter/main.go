@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -176,6 +177,7 @@ func handleDisconnect() {
 }
 
 func handleMonitor(confFile string) {
+	logger.Info("handle monitor started")
 	if conf.ClientMode {
 		handleClientMonitor()
 	} else {
@@ -190,7 +192,6 @@ func (h sessionHandler) StartSession(ch string) bool {
 
 	if _, err := sesscl.StartSession(os.Getenv("trusted_ip"), ch, 0); err != nil {
 		logger.Fatal("failed to start session: " + err.Error())
-		return false
 	}
 
 	return true
@@ -202,8 +203,12 @@ func (h sessionHandler) UpdateSession(ch string, up, down uint64) bool {
 
 	err := sesscl.UpdateSession(ch, down+up)
 	if err != nil {
+		// HACK(furkhat): Compare by text.
+		if strings.Contains(err.Error(), "non-active channel") {
+			logger.Warn("could not update session: " + err.Error())
+			return false
+		}
 		logger.Fatal("failed to update session: " + err.Error())
-		return false
 	}
 
 	return true
@@ -215,7 +220,6 @@ func (sessionHandler) StopSession(ch string) bool {
 	err := sesscl.StopSession(ch)
 	if err != nil {
 		logger.Fatal("failed to stop session: " + err.Error())
-		return false
 	}
 
 	return true

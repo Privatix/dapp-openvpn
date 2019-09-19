@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
 
@@ -40,36 +39,8 @@ func main() {
 		if err := processor(*dir, *setAuth, t); err != nil {
 			return err
 		}
-		return writeAppVersion(t)
+		return nil
 	}); err != nil {
 		panic(err)
 	}
-}
-
-func writeAppVersion(tx *reform.TX) error {
-	versionSetting := &data.Setting{}
-	err := tx.FindOneTo(versionSetting, "key", data.SettingAppVersion)
-	if err == sql.ErrNoRows {
-		err = tx.Insert(&data.Setting{
-			Key:         data.SettingAppVersion,
-			Value:       appVersion,
-			Permissions: data.ReadOnly,
-			Name:        "App version",
-		})
-	} else if err == nil {
-		fmt.Printf("%s before update: %v\n",
-			data.SettingAppVersion, versionSetting.Value)
-
-		versionSetting.Value = appVersion
-		err = tx.Update(versionSetting)
-	}
-
-	if err != nil {
-		fmt.Println("failed to write app version: ", err)
-		return err
-	}
-
-	fmt.Printf("%s after update: %v\n",
-		data.SettingAppVersion, appVersion)
-	return err
 }
