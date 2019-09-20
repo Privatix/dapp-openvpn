@@ -29,7 +29,7 @@ catch {
     Write-Warning "Failed to disable Internet connetcion sharing for device: $TAPdeviceAddress"        
 }
 # Enable ICS
-.$ScriptPath -TAPdeviceAddress $TAPdeviceAddress -Enabled
+.$ScriptPath -TAPdeviceAddress $TAPdeviceAddress -Enabled -Force
 
 Get-Service "Privatix_OpenVPN*" | Restart-Service -Force
 
