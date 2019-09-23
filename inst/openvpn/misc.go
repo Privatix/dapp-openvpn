@@ -144,7 +144,7 @@ func enableNAT(p, device string) error {
 	script := filepath.Join(p, path.Config.PowerShellVpnNat)
 	args := buildPowerShellArgs(script,
 		"-TAPdeviceAddress", device,
-		"-Enabled", "-Force")
+		"-Enabled")
 	return runPowerShellCommand(args...)
 }
 

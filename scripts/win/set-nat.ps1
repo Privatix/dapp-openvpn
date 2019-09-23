@@ -8,12 +8,6 @@
 .PARAMETER TAPdeviceAddress
     Unique identifier of TAP device. It is identified by "PnPDeviceID" (Get-NetAdapter) and same as "Device instance path" in device manager.
 
-.PARAMETER Enabled
-    If specified - enable ICS. If ommited - disable.
-
-.PARAMETER Force
-    If specified - force to set ICS, even if ICS is already set.
-
 .EXAMPLE
     .\set-nat.ps1 -TAPdeviceAddress 'ROOT\NET\0002' -Enabled
 
@@ -36,8 +30,7 @@ param (
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [string]$TAPdeviceAddress,
-    [switch]$Enabled,
-    [switch]$Force
+    [switch]$Enabled
 )
 
 <#
@@ -52,13 +45,23 @@ param (
 .PARAMETER VPNAdapterName
     Name of TAP adapter, that should get connection to internet
 
+.PARAMETER Enabled
+    If passed - enable internet connection sharing.
+    If not presented - disable internet connection sharing.
+
 .EXAMPLE
-    Set-InternetConnectionSharing -InetAdapterName 'Ethernet' -VPNAdapterName 'Privatix VPN Server'
+    Set-InternetConnectionSharing -InetAdapterName 'Ethernet' -VPNAdapterName 'Privatix VPN Server' -Enabled
 
     Description
     -----------
     Enables internet sharing on "Ethernet" adapter, giving "Privatix VPN Server" adapter to use its internet connection.
 
+.EXAMPLE
+    Set-InternetConnectionSharing -InetAdapterName 'Ethernet' -VPNAdapterName 'Privatix VPN Server'
+
+    Description
+    -----------
+    Disables internet sharing on "Ethernet" adapter, disallowing "Privatix VPN Server" adapter to use its internet connection.
 #>
 function Set-InternetConnectionSharing {
     [CmdletBinding()]
@@ -82,7 +85,9 @@ function Set-InternetConnectionSharing {
                 }
             }
         )]
-        $VPNAdapterName
+        $VPNAdapterName,
+        [Parameter(Mandatory)]
+        [bool]$Enabled
     )
 
     begin {
@@ -104,56 +109,43 @@ function Set-InternetConnectionSharing {
 
     process {
         # Get internet connected adapter internet connection sharing configuration
-        try{
-            $InetConn = $ns.EnumEveryConnection | Where-Object { $ns.NetConnectionProps.Invoke($_).Name -eq $InetAdapterName }
-            $InetSharingConf = $ns.INetSharingConfigurationForINetConnection.Invoke($InetConn)
-        } catch {
-            throw "Failed to get internet connected adapter ICS configuration  adapter:`"$InetAdapterName`". Original exception: $($Error[0].exception)"
-        }
+        $InetConn = $ns.EnumEveryConnection | Where-Object { $ns.NetConnectionProps.Invoke($_).Name -eq $InetAdapterName }
+        $InetSharingConf = $ns.INetSharingConfigurationForINetConnection.Invoke($InetConn)
         # Get VPN server adapter internet connection sharing configuration
-        try{
-            $VPNConn = $ns.EnumEveryConnection | Where-Object { $ns.NetConnectionProps.Invoke($_).Name -eq $VPNAdapterName }
-            $VPNSharingConf = $ns.INetSharingConfigurationForINetConnection.Invoke($VPNConn)
-        } catch {
-            throw "Failed to get VPN server adapter adapter ICS configuration  adapter:`"$VPNAdapterName`". Original exception: $($Error[0].exception)"
+        $VPNConn = $ns.EnumEveryConnection | Where-Object { $ns.NetConnectionProps.Invoke($_).Name -eq $VPNAdapterName }
+        $VPNSharingConf = $ns.INetSharingConfigurationForINetConnection.Invoke($VPNConn)
+
+        # check, if sharing is already configured
+        $PhysicalAdapters = (Get-NetAdapter -Physical).Name
+        $ns.EnumEveryConnection | Where-Object { $ns.NetConnectionProps.Invoke($_).Name -in $PhysicalAdapters } | ForEach-Object {
+            if ($ns.INetSharingConfigurationForINetConnection.Invoke($_).SharingEnabled) { $SharingConfigured = $true }
         }
 
-        try {
-            $InetSharingConf.EnableSharing(0)
-            $VPNSharingConf.EnableSharing(1)
+        # if already configured, do not reconfigure and fail to preserve user settings
+        if ($Enabled -and $SharingConfigured) {
+            { throw "Connection sharing already enabled on adapter `"$InetAdapterName`". Please, disable it and try again" }
         }
-        catch { throw "Failed to enable internet sharing for public adapter `"$InetAdapterName`" and VPN adapter `"$VPNAdapterName`". Original exception: $($Error[0].exception)" }
 
+        if ($Enabled -and (-not $SharingConfigured)) {
+            try {
+                $InetSharingConf.EnableSharing(0)
+                $VPNSharingConf.EnableSharing(1)
+            }
+            catch { throw "Failed to enable internet sharing for public adapter `"$InetAdapterName`" and VPN adapter `"$VPNAdapterName`". Original exception: $($Error[0].exception)" }
+        }
+
+        if ($SharingConfigured -and (-not $Enabled)) {
+            try {
+                $InetSharingConf.DisableSharing()
+                $VPNSharingConf.DisableSharing()
+            }
+            catch { throw "Failed to disable internet sharing for public adapter `"$InetAdapterName`" and VPN adapter `"$VPNAdapterName`". Original exception: $($Error[0].exception)" }
+        }
     }
 
     end {
         [System.Runtime.Interopservices.Marshal]::ReleaseComObject($ns) | Out-Null
     }
-}
-
-<#
-.SYNOPSIS
-    Reset all previously set ICS
-#>
-function Reset-InternetConnectionSharing {
-    try {
-        Get-WmiObject -Namespace "ROOT\Microsoft\HomeNet" -Class "HNet_ConnectionProperties" `
-        | Set-WmiInstance -Arguments @{IsIcsPrivate = "false"; IsIcsPublic = "false"}
-    } catch { 
-        Write-Warning -Message "Failed to reset ICS. Original exception $($error[0].exception)"
-    }
-    if ((Get-Service -Name "SharedAccess").Status -eq "Running") {
-        Restart-Service -Name "SharedAccess"
-    }
-}
-<#
-.SYNOPSIS
-    Checks if ICS already configured
-#>
-function Test-ICSconfigured {
-    $ICSSet = Get-WmiObject -Namespace "ROOT\Microsoft\HomeNet" -Class "HNet_ConnectionProperties" `
-        | Where-Object {$_.IsIcsPrivate -eq $true -or $_.IsIcsPublic -eq $true}
-    if ($ICSSet) {return $true} else {return $false}    
 }
 
 # Find Internet connected adapter assuming it has lowest metric
@@ -171,18 +163,9 @@ if ($PSBoundParameters.ContainsKey('Enabled')) {
     #start windows services
     Get-Service -Name "SharedAccess" | Set-Service -StartupType Automatic | Start-Service
     Get-Service -Name "RemoteAccess" | Set-Service -StartupType Automatic | Start-Service
-    
-    if (Test-ICSconfigured) {
-        if ($PSBoundParameters.ContainsKey('Force')) {
-            Reset-InternetConnectionSharing
-        } else {
-            throw "Connection sharing already enabled on adapter `"$InetAdapterName`". Please, disable it first or use Force flag"
-        }
-    }
-  
-    Set-InternetConnectionSharing -InetAdapterName $InetAdapterName -VPNAdapterName $VPNAdapterName
+
+    Set-InternetConnectionSharing -InetAdapterName $InetAdapterName -VPNAdapterName $VPNAdapterName -Enabled $true
 }
 else {
-    Reset-InternetConnectionSharing
-    Get-ItemProperty -Path $registryPath -Name "IPEnableRouter" | Set-ItemProperty -Name "IPEnableRouter" -Value 0
+    Set-InternetConnectionSharing -InetAdapterName $InetAdapterName -VPNAdapterName $VPNAdapterName -Enabled $false
 }
